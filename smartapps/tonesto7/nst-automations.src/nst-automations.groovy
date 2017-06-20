@@ -27,8 +27,8 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.3" }
-def appVerDate() { "6-14-2017" }
+def appVersion() { "5.1.4" }
+def appVerDate() { "6-20-2017" }
 
 preferences {
 	//startPage
@@ -2832,7 +2832,7 @@ def getExtConditions( doEvent = false ) {
 		def cur = parent?.getWData()
 		def weather = parent.getWeatherDevice()
 
-		if(cur) {
+		if(cur && weather && cur?.current_observation) {
 			atomicState?.curWeather = cur?.current_observation
 			atomicState?.curWeatherTemp_f = Math.round(cur?.current_observation?.temp_f).toInteger()
 			atomicState?.curWeatherTemp_c = Math.round(cur?.current_observation?.temp_c.toDouble())
@@ -3285,7 +3285,7 @@ def extTmpDpOrTempEvt(type) {
 	if(atomicState?.disableAutomation) { return }
 	else {
 		atomicState.NeedwUpd = true
-		getExtConditions()
+		if(settings?.extTmpUseWeather) { getExtConditions() }
 
 		def lastTempWithinThreshold = atomicState?.extTmpLastWithinThreshold
 		def tempWithinThreshold = extTmpTempOk()
