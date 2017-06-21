@@ -36,11 +36,11 @@ definition(
 
 include 'asynchttp_v1'
 
-def appVersion() { "5.1.5" }
-def appVerDate() { "6-19-2017" }
+def appVersion() { "5.1.6" }
+def appVerDate() { "6-21-2017" }
 def minVersions() {
 	return [
-		"automation":["val":513, "desc":"5.1.3"],
+		"automation":["val":514, "desc":"5.1.4"],
 		"thermostat":["val":512, "desc":"5.1.2"],
 		"protect":["val":511, "desc":"5.1.1"],
 		"presence":["val":511, "desc":"5.1.1"],
@@ -2448,7 +2448,8 @@ def getInstAutoTypesDesc() {
 	def disItems = []
 	def nItems = [:]
 	def schMotItems = []
-	atomicState?.autoSaVer = minVersions()?.automation?.desc
+	//atomicState?.autoSaVer = minVersions()?.automation?.desc
+	atomicState?.autoSaVer = null
 	childApps?.each { a ->
 		def type = a?.getAutomationType()
 		def ver
