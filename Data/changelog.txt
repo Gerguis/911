@@ -1,3 +1,11 @@
+V5.1.6 (June 21th, 2017):
+▔▔▔▔▔▔▔▔▔▔▔
+Manager App:
+ • FIXED: Version checks for automations
+
+Automation App 5.1.4:
+ • UPDATED: Fixed weather checks for external temperature automation
+
 V5.1.5 (June 19th, 2017):
 ▔▔▔▔▔▔▔▔▔▔▔
 Manager App:
