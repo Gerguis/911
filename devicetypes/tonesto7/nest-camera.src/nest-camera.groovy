@@ -13,7 +13,7 @@ import groovy.time.TimeCategory
 
 preferences { }
 
-def devVer() { return "5.1.1" }
+def devVer() { return "5.1.2" }
 
 metadata {
 	definition (name: "${textDevName()}", author: "Anthony S.", namespace: "tonesto7") {
@@ -302,8 +302,9 @@ def processEvent() {
 			if(results?.app_url) { state?.app_url = results?.app_url?.toString() }
 			if(results?.web_url) { state?.web_url = results?.web_url?.toString() }
 			if(results?.last_event) {
-				if(results?.last_event.start_time && results?.last_event.end_time) { lastEventDataEvent(results?.last_event) }
+				state?.animation_url = null
 				if(results?.last_event?.animated_image_url) { state?.animation_url = results?.last_event?.animated_image_url }
+				if(results?.last_event.start_time && results?.last_event.end_time) { lastEventDataEvent(results?.last_event) }
 			}
 			deviceVerEvent(eventData?.latestVer.toString())
 			vidHistoryTimeEvent()
@@ -530,6 +531,7 @@ def lastEventDataEvent(data) {
 	state.lastEventTime = "${formatDt2(Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", data?.start_time.toString()), "h:mm:ssa")} to ${formatDt2(Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", data?.end_time.toString()), "h:mm:ssa")}"
 	if(state?.lastEventData) { state.lastEventData == null }
 
+	def tryPic = false
 	if(!state?.lastCamEvtData || (curStartDt != newStartDt || curEndDt != newEndDt) && (hasPerson || hasMotion || hasSound) || isStateChange(device, "lastEventType", evtType.toString())  || isStateChange(device, "lastEventZones", evtZoneNames.toString())) {
 		sendEvent(name: 'lastEventStart', value: newStartDt, descriptionText: "Last Event Start is ${newStartDt}", displayed: false)
 		sendEvent(name: 'lastEventEnd', value: newEndDt, descriptionText: "Last Event End is ${newEndDt}", displayed: false)
@@ -537,18 +539,27 @@ def lastEventDataEvent(data) {
 		sendEvent(name: 'lastEventZones', value: evtZoneNames.toString(), descriptionText: "Last Event Zones: ${evtZoneNames}", displayed: false)
 		state.lastCamEvtData = ["startDt":newStartDt, "endDt":newEndDt, "hasMotion":hasMotion, "hasSound":hasSound, "hasPerson":hasPerson, "actZones":(data?.activity_zone_ids ?: null)]
 		Logger("└────────────────────────────────")
+		Logger("│	URL: ${state?.animation_url ?: "None"}")
 		Logger("│	Zones: ${evtZoneNames ?: "None"}")
 		Logger("│	End Time: (${newEndDt})")
 		Logger("│	Start Time: (${newStartDt})")
 		Logger("│	Type: ${evtType}")
 		Logger("┌──────────New Camera Event──────────")
 		addCheckinReason("lastEventData")
+		tryPic = true
 	} else {
 		LogAction("Last Event Start Time: (${newStartDt}) - Zones: ${evtZoneNames} | Original State: (${curStartDt})")
 		LogAction("Last Event End Time: (${newEndDt}) - Zones: ${evtZoneNames} | Original State: (${curEndDt})")
 		LogAction("Last Event Type: (${evtType}) - Zones: ${evtZoneNames}")
 	}
 	motionSoundEvtHandler()
+	if(tryPic) {
+		if(state?.videoHistoryEnabled == "Enabled") {
+			takePicture(state?.animation_url)
+		} else {
+			takePicture(state?.snapshot_url)
+		}
+	}
 }
 
 def motionSoundEvtHandler() {
@@ -561,7 +572,7 @@ def motionSoundEvtHandler() {
 
 def motionEvtHandler(data) {
 	def tf = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
-		tf.setTimeZone(getTimeZone())
+	tf.setTimeZone(getTimeZone())
 	def dtNow = new Date()
 	def curMotion = device.currentState("motion")?.stringValue
 	def motionStat = "inactive"
@@ -816,7 +827,7 @@ void off() {
 }
 
 void take() {
-	takePicture()
+	takePicture(state?.snapshot_url)
 }
 
 private getPictureName() {
@@ -828,12 +839,12 @@ private getImageWidth() {
 	return 1280
 }
 
-private takePicture() {
+private takePicture(url) {
 	try {
-		if(state?.isOnline) {
+		if(state?.isOnline && url) {
 			def imageBytes
 			def params = [
-				uri: state?.snapshot_url,
+				uri: url,
 				requestContentType: "application/x-www-form-urlencoded"
 			]
 			httpGet(params) { resp ->
