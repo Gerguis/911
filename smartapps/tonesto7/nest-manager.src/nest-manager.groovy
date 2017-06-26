@@ -44,7 +44,7 @@ def minVersions() {
 		"thermostat":["val":512, "desc":"5.1.2"],
 		"protect":["val":511, "desc":"5.1.1"],
 		"presence":["val":511, "desc":"5.1.1"],
-		"weather":["val":511, "desc":"5.1.1"],
+		"weather":["val":512, "desc":"5.1.2"],
 		"camera":["val":512, "desc":"5.1.2"],
 		"stream":["val":100, "desc":"1.0.0"]
 	]
@@ -8075,7 +8075,7 @@ def sendChildExceptionData(devType, devVer, ex, methodName) {
 	if(ex instanceof java.lang.NullPointerException) {// || ex instanceof java.lang.SecurityException) {
 		return
 	} else {
-		exString = ex.message.toString()
+		exString = ex?.message?.toString()
 	}
 	exCnt = atomicState?.childExceptionCnt ? atomicState?.childExceptionCnt + 1 : 1
 	atomicState?.childExceptionCnt = exCnt ?: 1
