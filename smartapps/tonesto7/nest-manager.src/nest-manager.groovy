@@ -3487,10 +3487,12 @@ def didChange(old, newer, type, src) {
 					atomicState?.forceChildUpd = true
 					LogTrace("structure old newer not the same ${atomicState?.structures}")
 					// whatChanged(t0, t1, "/structures", "structure")
-					if(settings?.showDataChgdLogs == true && atomicState?.enRemDiagLogging != true) {
+					if(atomicState?.enRemDiagLogging == true || settings?.showDataChgdLogs != true) {
+						LogAction("API Structure Data HAS Changed ($srcStr)", "info", true)
+					} else {
 						def chgs = getChanges(t0, t1, "/structures", "structure")
 						if(chgs) { LogAction("STRUCTURE Changed ($srcStr): ${chgs}", "info", true) }
-					} else { LogAction("API Structure Data HAS Changed ($srcStr)", "info", true) }
+					}
 				}
 				atomicState?.structData = newer
 			}
@@ -3555,7 +3557,7 @@ def didChange(old, newer, type, src) {
 						}
 					}
 				}
-				if(devChg && settings?.showDataChgdLogs != true) {
+				if(devChg && (atomicState?.enRemDiagLogging == true || settings?.showDataChgdLogs != true)) {
 					LogAction("API Device Data HAS Changed ($srcStr)", "info", true)
 				}
 				atomicState?.deviceData = newer
@@ -3566,12 +3568,14 @@ def didChange(old, newer, type, src) {
 				atomicState.needChildUpd = true
 				atomicState.metaData = newer
 				//whatChanged(old, newer, "/metadata", "metadata")
-				if(settings?.showDataChgdLogs == true && atomicState?.enRemDiagLogging != true) {
+				if(atomicState?.enRemDiagLogging == true || settings?.showDataChgdLogs != true) {
+					LogAction("API MetaData Data HAS Changed ($srcStr)", "info", true)
+				} else {
 					def chgs = getChanges(old, newer, "/metadata", "metadata")
 					if(chgs) {
 						LogAction("METADATA Changed ($srcStr): ${chgs}", "info", true)
 					}
-				} else { LogAction("API MetaData Data HAS Changed ($srcStr)", "info", true) }
+				}
 			}
 		}
 	}
@@ -7971,6 +7975,76 @@ def renderDiagUrl() {
 }
 
 def renderManagerData() {
+	try {
+		def setDesc = getMapDescStr(getSettings())
+		def stateDesc = getMapDescStr(getState()?.findAll())
+		def metaDesc = getMapDescStr(getMetadata())
+		def html = """
+			<head>
+				<style>
+					.center { text-align: center; font-size: 3.5vw;}
+					.links { padding: 10px; font-size: 4.4vw; }
+				</style>
+			</head>
+			<body>
+				<div>
+					<h1>Manager Settings Data</h1>
+					<div>
+						<p>${setDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<br></br>
+						<br></br>
+						<p>${stateDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<br></br>
+						<br></br>
+						<p>${metaDesc.toString().replaceAll("\n", "<br></br>")}</p>
+					</div>
+				</div>
+			</body>
+		"""
+		render contentType: "text/html", data: html
+	} catch (ex) { log.error "renderManagerData Exception:", ex }
+}
+
+def renderAutomationData() {
+	try {
+		def html = """
+			<head>
+				<style>
+					.center { text-align: center; font-size: 3.5vw;}
+					.links { padding: 10px; font-size: 2.1vw; }
+				</style>
+			</head>
+			<body>
+
+		"""
+		getAllChildApps()?.each { cApp ->
+			def setDesc = getMapDescStr(cApp?.getSettings())
+			def stateDesc = getMapDescStr(cApp?.getState()?.findAll { !(it?.key in ["remDiagLogDataStore"]) })
+			def metaDesc = getMapDescStr(cApp?.getMetadata())
+			html += """
+					<div>
+						<h1>${cApp?.getLabel()} Data</h1>
+						<div>
+							<p>${setDesc.toString().replaceAll("\n", "<br></br>")}</p>
+							<br></br>
+							<br></br>
+							<p>${stateDesc.toString().replaceAll("\n", "<br></br>")}</p>
+							<br></br>
+							<br></br>
+							<p>${metaDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						</div>
+					</div>
+					</br>
+					</br>
+					</br>
+			"""
+		}
+		html += """</body>"""
+		render contentType: "text/html", data: html
+	} catch (ex) { log.error "renderAutomationData Exception:", ex }
+}
+
+def renderDeviceData() {
 	try {
 		def setDesc = getMapDescStr(getSettings())
 		def stateDesc = getMapDescStr(getState()?.findAll())
