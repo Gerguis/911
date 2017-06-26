@@ -3025,7 +3025,9 @@ def extTmpTempOk() {
 			desiredTemp = getDesiredTemp()
 			if(!desiredTemp) {
 				desiredTemp = intTemp
-				LogAction("extTmpTempOk: No Desired Temp found, using interior Temp", "warn", true)
+				if(!modeOff) {
+					LogAction("extTmpTempOk: No Desired Temp found, using interior Temp", "warn", true)
+				}
 				retval = false
 			} else {
 				tempDiff = Math.abs(extTemp - desiredTemp)
