@@ -37,7 +37,7 @@ definition(
 include 'asynchttp_v1'
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "6-21-2017" }
+def appVerDate() { "6-26-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
