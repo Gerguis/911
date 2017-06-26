@@ -108,7 +108,14 @@ mappings {
 		path("/oauth/initialize") 	{action: [GET: "oauthInitUrl"]}
 		path("/oauth/callback") 	{action: [GET: "callback"]}
 		//Renders Json Data
-		path("/renderInstallId")	{action: [GET: "renderInstallId"]}
+		if(atomicState?.enRemDiagLogging == true) {
+			path("/renderDiagUrl")		{action: [GET: "renderDiagUrl"]}
+			path("/renderLogData")		{action: [GET: "renderLogData"]}
+			path("/renderManagerData")	{action: [GET: "renderManagerData"]}
+			path("/renderAutomationData")	{action: [GET: "renderAutomationData"]}
+			path("/renderDeviceData")	{action: [GET: "renderDeviceData"]}
+		}
+		path("/renderInstallId")		{action: [GET: "renderInstallId"]}
 		path("/renderInstallData")	{action: [GET: "renderInstallData"]}
 		path("/receiveEventData") 	{action: [POST: "receiveEventData"]}
 		path("/streamStatus")		{action: [POST: "receiveStreamStatus"]}
@@ -1560,7 +1567,7 @@ def debugPrefPage() {
 			input (name: "childDebug", type: "bool", title: "Show Device Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
 		}
 		section("Remote Diagnostics:") {
-			href "remoteDiagPage", title: "Stream Logs to Developer?", description: "", image: getAppImg("diagnostic_icon.png")
+			href "remoteDiagPage", title: "Allow Developer to View Your Logs?", description: "", image: getAppImg("diagnostic_icon.png")
 		}
 		section ("Reset Application Data") {
 			input (name: "resetAllData", type: "bool", title: "Reset Application Data?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
@@ -1578,34 +1585,25 @@ def debugPrefPage() {
 
 def remoteDiagPage () {
 	def execTime = now()
-	dynamicPage(name: "remoteDiagPage", title: "Send Logs to the Developer", refreshInterval: (atomicState?.enRemDiagLogging ? 30 : 0), install: false) {
+	dynamicPage(name: "remoteDiagPage", title: "Allow Developer to View Your Logs", install: false) {
 		def diagAllowed = atomicState?.appData?.database?.allowRemoteDiag == true ? true : false
-		def diagDevAuth = (atomicState?.remDiagClientId in atomicState?.appData?.clientRemDiagAuth?.clients) ? true : false
-		//log.debug "diagAllowed: $diagAllowed | diagDevAuth: $diagDevAuth"
+
+		//log.debug "diagAllowed: $diagAllowed"
 		section() {
 			def formatVal = settings?.useMilitaryTime ? "MMM d, yyyy - HH:mm:ss" : "MMM d, yyyy - h:mm:ss a"
 			def tf = new SimpleDateFormat(formatVal)
 			if(getTimeZone()) { tf.setTimeZone(getTimeZone()) }
-			paragraph title: "How will this work?", "Once enabled this SmartApp will send manager and automation logs the developers Firebase database for review.  Turn off to remove all data from the remote site."
+			paragraph title: "How will this work?", "Once enabled this SmartApp will create a child app to store your logs in this diagnostic app and you will share the url with the developer.  Turn off to remove the diag app and all data."
 			paragraph "This will automatically turn off 2 hours"
 			input (name: "enRemDiagLogging", type: "bool", title: "Enable Remote Diag?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("diagnostic_icon.png"))
 		}
-		remDiagProcChange(diagAllowed,settings?.enRemDiagLogging)
+		remDiagProcChange(diagAllowed, settings?.enRemDiagLogging)
+
 		section() {
 			if(atomicState?.enRemDiagLogging) {
-				href url: getAppEndpointUrl("renderInstallId"), style:"embedded", title:"Provide this ID to Developer", description:"${atomicState?.remDiagClientId}\nTap to Allow Sharing",
-						required: true,state: null
-				def str = diagDevAuth ? "This ClientId is Authorized by Developer to stream logs to the remote server." : "This client is not authorized to stream logs. Please contact the developer if you have issues"
-				paragraph str, required: true, state: (diagDevAuth ? "complete" : null)
-			}
-		}
-		section() {
-			if(atomicState?.remDiagLogDataStore?.size() >= 0) {
-				def str = ""
-				str += "Current Logs in the Data Store: (${atomicState?.remDiagLogDataStore?.size()})"
-				if(atomicState?.remDiagDataSentDt) { str += "\n\nLast Sent Data to DB:\n${formatDt2(atomicState?.remDiagDataSentDt)} | (${getLastRemDiagSentSec()} sec ago)" }
-				if(atomicState?.remDiagLogSentCnt) { str += "\n\nLogs sent to DB: (${atomicState?.remDiagLogSentCnt})" }
-				paragraph str, state: "complete"
+				href url: getAppEndpointUrl("renderDiagUrl"), style:"external", title:"Provide this URL to Developer", description:"Tap to View and Share", required: true,state: null
+				def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
+				paragraph str, required: true, state: "complete"
 			}
 		}
 		incRemDiagLoadCnt()
@@ -1613,83 +1611,31 @@ def remoteDiagPage () {
 	}
 }
 
+def getRemDiagApp() {
+	def remDiagApp = null
+	def cApps = getChildApps()
+	cApps?.each { ca ->
+		if(ca?.getAutoType() == "remDiag") {
+			remDiagApp = ca
+		}
+	}
+	return remDiagApp
+}
+
 void remDiagProcChange(diagAllowed, setOn) {
 	if(diagAllowed && setOn) {
+		def remDiagApp = getRemDiagApp()
 		if(!atomicState?.enRemDiagLogging && atomicState?.remDiagLogActivatedDt == null) {
 			LogAction("Remote Diagnostic Logs activated", "info", true)
-			clearRemDiagData()
-			chkRemDiagClientId()
 			atomicState?.enRemDiagLogging = true
 			atomicState?.remDiagLogActivatedDt = getDtNow()
-			sendSetAndStateToFirebase()
+			initRemDiagApp()
 		}
 	} else {
 		if(atomicState?.remDiagLogActivatedDt != null && (!diagAllowed || !setOn)) {
 			LogAction("Remote Diagnostic Logs deactivated", "info", true)
 			atomicState?.enRemDiagLogging = false
-			clearRemDiagData()
 			atomicState?.remDiagLogActivatedDt = null	// require toggle off then on again to force back on after timeout
-		}
-	}
-}
-
-void chkRemDiagClientId() {
-	if(!atomicState?.remDiagClientId || atomicState?.remDiagClientId != atomicState?.installationId) { atomicState?.remDiagClientId = atomicState?.installationId	}
-}
-
-def clearRemDiagData(force=false) {
-	if(!settings?.enRemDiagLogging || force) {
-		if(atomicState?.remDiagClientId && removeRemDiagData()) { atomicState?.remDiagClientId = null }
-	}
-	atomicState?.remDiagLogDataStore = null
-	//atomicState?.remDiagLogActivatedDt = null	// NOT done to have force off then on to re-enable
-	atomicState?.remDiagDataSentDt = null
-	atomicState?.remDiagLogSentCnt = null
-	LogAction("Cleared Diag data", "info", true)
-}
-
-def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
-	//LogTrace("saveLogtoRemDiagStore($msg, $type, $logSrcType)")
-	if(parent) { return }
-	if(atomicState?.appData?.database?.allowRemoteDiag && (atomicState?.remDiagClientId in atomicState?.appData?.clientRemDiagAuth?.clients)) {
-		if(atomicState?.enRemDiagLogging) {
-			if(getStateSizePerc() >= 90) {
-				// this is log.xxxx to avoid looping/recursion
-				log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
-				return
-			}
-			def data = atomicState?.remDiagLogDataStore ?: []
-			def item = ["dt":getDtNow().toString(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
-			data << item
-			atomicState?.remDiagLogDataStore = data
-			if(atomicState?.remDiagLogDataStore?.size() > 20 || getLastRemDiagSentSec() > 600 || getStateSizePerc() >= 75) {
-				sendRemDiagData()
-				atomicState?.remDiagLogDataStore = []
-			}
-		}
-	}
-	if(atomicState?.enRemDiagLogging) {
-		def turnOff = false
-		def reasonStr = ""
-		if(getRemDiagActSec() > (3600 * 2)) {
-			turnOff = true
-			reasonStr += "was active for last 2 hours "
-		}
-		if(!atomicState?.appData?.database?.allowRemoteDiag || !(atomicState?.remDiagClientId in atomicState?.appData?.clientRemDiagAuth?.clients)) {
-			turnOff = true
-			reasonStr += "appData does not allow"
-		}
-		if(turnOff) {
-			settingUpdate("enRemDiagLogging", "false","bool")
-			atomicState?.enRemDiagLogging = false
-			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
-			def cApps = getChildApps()
-			if(cApps) {
-				cApps?.sort()?.each { chld ->
-					chld?.update()
-				}
-			}
-			clearRemDiagData()
 		}
 	}
 }
@@ -1704,28 +1650,6 @@ def genRandId(int length){
 	return result
 }
 */
-
-def sendRemDiagData() {
-	def data = atomicState?.remDiagLogDataStore
-	if(data?.size()) {
-		chkRemDiagClientId()
-		if(atomicState?.remDiagClientId) {
-			def json = new groovy.json.JsonOutput().toJson(data)
-			sendFirebaseData(json, "${getDbRemDiagPath()}/clients/${atomicState?.remDiagClientId}.json", "post", "Remote Diag Logs")
-			def lsCnt = !atomicState?.remDiagLogSentCnt ? data?.size() : atomicState?.remDiagLogSentCnt+data?.size()
-			atomicState?.remDiagLogSentCnt = lsCnt
-			atomicState?.remDiagDataSentDt = getDtNow()
-		}
-	}
-}
-
-def sendSetAndStateToFirebase() {
-	chkRemDiagClientId()
-	if(atomicState?.remDiagClientId) {
-		sendFirebaseData(createManagerBackupDataJson(), "${getDbRemDiagPath()}/clients/${atomicState?.remDiagClientId}/setandstate.json", "put", "Remote Diag Logs")
-		atomicState?.remDiagDataSentDt = getDtNow()
-	}
-}
 
 def getRemDiagActSec() { return !atomicState?.remDiagLogActivatedDt ? 100000 : GetTimeDiffSeconds(atomicState?.remDiagLogActivatedDt, null, "getRemDiagActSec").toInteger() }
 def getLastRemDiagSentSec() { return !atomicState?.remDiagDataSentDt ? 1000 : GetTimeDiffSeconds(atomicState?.remDiagDataSentDt, null, "getLastRemDiagSentSec").toInteger() }
@@ -2154,6 +2078,7 @@ def initialize() {
 def reInitBuiltins() {
 	initWatchdogApp()
 	initNestModeApp()
+	initRemDiagApp()
 }
 
 def initNestModeApp() {
@@ -2437,6 +2362,32 @@ def initWatchdogApp() {
 	}
 }
 
+def initRemDiagApp() {
+	LogTrace("initRemDiagApp")
+	def remDiagApp = getChildApps()?.findAll { it?.getAutomationType() == "remDiag" }
+	def keepApp = atomicState?.enRemDiagLogging == true ? true : false
+	if(keepApp && remDiagApp?.size() < 1) {
+		LogAction("Installing Remote Diag App", "info", true)
+		try {
+			addChildApp(appNamespace(), autoAppName(), getRemDiagAppChildName(), [settings:[remDiagFlag:["type":"bool", "value":true]]])
+		} catch (ex) {
+			appUpdateNotify(true)
+		}
+	} else if(remDiagApp?.size() >= 1) {
+		def cnt = 1
+		remDiagApp?.each { chld ->
+			if(keepApp && cnt == 1) {
+				LogTrace("initRemDiagApp: Running Update Command on Remote Diag")
+				chld.update()
+			} else if(!keepApp || cnt > 1) {
+				LogAction("initRemDiagApp: Deleting Extra Remote Diag (${chld?.id})", "warn", true)
+				deleteChildApp(chld)
+			}
+			cnt = cnt+1
+		}
+	}
+}
+
 def isAutoAppInst() {
 	def chldCnt = 0
 	childApps?.each { cApp ->
@@ -2446,7 +2397,7 @@ def isAutoAppInst() {
 }
 
 def getInstAutoTypesDesc() {
-	def dat = ["nestMode":0,"watchDog":0, "disabled":0, "schMot":["tSched":0, "remSen":0, "fanCtrl":0, "fanCirc":0, "conWat":0, "extTmp":0, "leakWat":0, "humCtrl":0]]
+	def dat = ["nestMode":0,"watchDog":0, "disabled":0, "schMot":["tSched":0, "remSen":0, "fanCtrl":0, "fanCirc":0, "conWat":0, "extTmp":0, "leakWat":0, "humCtrl":0, "remDiag":0 ]]
 	def disItems = []
 	def nItems = [:]
 	def schMotItems = []
@@ -2522,6 +2473,14 @@ def getInstAutoTypesDesc() {
  						deleteChildApp(a)
  					}
  					break
+				case "remDiag":
+					dat["remDiag"] = dat["remDiag"] ? dat["remDiag"]+1 : 1
+ 					if(dat.remDiag > 1) {
+ 						dat.remDiag = dat.remDiag - 1
+ 						LogAction("Deleting Extra Remote Diagnostic (${a?.id})", "warn", true)
+ 						deleteChildApp(a)
+ 					}
+ 					break
  				default:
  					LogAction("Deleting Unknown Automation (${a?.id})", "warn", true)
  					deleteChildApp(a)
@@ -2534,6 +2493,7 @@ def getInstAutoTypesDesc() {
 	def str = ""
 	str += (dat?.watchDog > 0 || dat?.nestMode > 0 || dat?.schMot || dat?.disabled > 0) ? "Installed Automations:" : ""
 	str += (dat?.watchDog > 0) ? "\n• Watchdog (Active)" : ""
+	str += (dat?.remDiag > 0) ? "\n• Diagnostic (Active)" : ""
 	str += (dat?.nestMode > 0) ? ((dat?.nestMode > 1) ? "\n• Nest Home/Away (${dat?.nestMode})" : "\n• Nest Home/Away (Active)") : ""
 	def sch = dat?.schMot.findAll { it?.value > 0}
 	str += (sch?.size()) ? "\n• Thermostat (${sch?.size()})" : ""
@@ -3527,7 +3487,7 @@ def didChange(old, newer, type, src) {
 					atomicState?.forceChildUpd = true
 					LogTrace("structure old newer not the same ${atomicState?.structures}")
 					// whatChanged(t0, t1, "/structures", "structure")
-					if(settings?.showDataChgdLogs == true) {
+					if(settings?.showDataChgdLogs == true && atomicState?.enRemDiagLogging != true) {
 						def chgs = getChanges(t0, t1, "/structures", "structure")
 						if(chgs) { LogAction("STRUCTURE Changed ($srcStr): ${chgs}", "info", true) }
 					} else { LogAction("API Structure Data HAS Changed ($srcStr)", "info", true) }
@@ -3546,7 +3506,7 @@ def didChange(old, newer, type, src) {
 						LogTrace("thermostat old newer not the same ${t1}")
 						if(t1 && old && old?.thermostats && newer?.thermostats && old?.thermostats[t1] && newer?.thermostats[t1]) {
 							// whatChanged(old?.thermostats[t1], newer?.thermostats[t1], "/devices/thermostats/${t1}", "thermostat")
-							if(settings?.showDataChgdLogs == true) {
+							if(settings?.showDataChgdLogs == true && atomicState?.enRemDiagLogging != true) {
 								def chgs = getChanges(old?.thermostats[t1], newer?.thermostats[t1], "/devices/thermostats/${t1}", "thermostat")
 								if(chgs) {
 									LogAction("THERMOSTAT Changed ($srcStr) | ${getChildDeviceLabel(t1)}: ${chgs}", "info", true)
@@ -3566,7 +3526,7 @@ def didChange(old, newer, type, src) {
 						LogTrace("protect old newer not the same ${t1}")
 						if(t1 && old && old?.smoke_co_alarms && newer?.smoke_co_alarms && old?.smoke_co_alarms[t1] && newer?.smoke_co_alarms[t1]) {
 							// whatChanged(old?.smoke_co_alarms[t1], newer?.smoke_co_alarms[t1], "/devices/smoke_co_alarms/${t1}", "protect")
-							if(settings?.showDataChgdLogs == true) {
+							if(settings?.showDataChgdLogs == true && atomicState?.enRemDiagLogging != true) {
 								def chgs = getChanges(old?.smoke_co_alarms[t1], newer?.smoke_co_alarms[t1], "/devices/smoke_co_alarms/${t1}", "protect")
 								if(chgs) {
 									LogAction("PROTECT Changed ($srcStr) | ${getChildDeviceLabel(t1)}: ${chgs}", "info", true)
@@ -3586,7 +3546,7 @@ def didChange(old, newer, type, src) {
 						LogTrace("camera old newer not the same ${t1}")
 						if(t1 && old && old?.cameras && newer?.cameras && old?.cameras[t1] && newer?.cameras[t1]) {
 							//whatChanged(old?.cameras[t1], newer?.cameras[t1], "/devices/cameras/${t1}", "camera")
-							if(settings?.showDataChgdLogs == true) {
+							if(settings?.showDataChgdLogs == true && atomicState?.enRemDiagLogging != true) {
 								def chgs = getChanges(old?.cameras[t1], newer?.cameras[t1], "/devices/cameras/${t1}", "camera")
 								if(chgs) {
 									LogAction("CAMERA Changed ($srcStr) | ${getChildDeviceLabel(t1)}: ${chgs}", "info", true)
@@ -3606,7 +3566,7 @@ def didChange(old, newer, type, src) {
 				atomicState.needChildUpd = true
 				atomicState.metaData = newer
 				//whatChanged(old, newer, "/metadata", "metadata")
-				if(settings?.showDataChgdLogs == true) {
+				if(settings?.showDataChgdLogs == true && atomicState?.enRemDiagLogging != true) {
 					def chgs = getChanges(old, newer, "/metadata", "metadata")
 					if(chgs) {
 						LogAction("METADATA Changed ($srcStr): ${chgs}", "info", true)
@@ -6417,46 +6377,6 @@ def deviceHandlerTest() {
 		atomicState.devHandlersTested = true
 		return true
 	}
-	try {
-		def d1 = addChildDevice(app.namespace, getThermostatChildName(), "testNestThermostat-Install123", null, [label:"Nest Thermostat:InstallTest"])
-		def d2 = addChildDevice(app.namespace, getPresenceChildName(), "testNestPresence-Install123", null, [label:"Nest Presence:InstallTest"])
-		def d3 = addChildDevice(app.namespace, getProtectChildName(), "testNestProtect-Install123", null, [label:"Nest Protect:InstallTest"])
-		def d4 = addChildDevice(app.namespace, getWeatherChildName(), "testNestWeather-Install123", null, [label:"Nest Weather:InstallTest"])
-		def d5 = addChildDevice(app.namespace, getCameraChildName(), "testNestCamera-Install123", null, [label:"Nest Camera:InstallTest"])
-
-		LogAction("d1: ${d1.label} | d2: ${d2.label} | d3: ${d3.label} | d4: ${d4.label} | d5: ${d5.label}", "debug", true)
-		atomicState.devHandlersTested = true
-		removeTestDevs()
-		//runIn(4, "removeTestDevs")
-		return true
-	}
-	catch (ex) {
-		if(ex instanceof physicalgraph.app.exception.UnknownDeviceTypeException) {
-			LogAction("Device Handlers are missing: ${getThermostatChildName()}, ${getPresenceChildName()}, and ${getProtectChildName()}, Verify the Device Handlers are installed and Published via the IDE", "error", true)
-		} else {
-			log.error "deviceHandlerTest Exception:", ex
-			sendExceptionData(ex, "deviceHandlerTest")
-		}
-		atomicState.devHandlersTested = false
-		return false
-	}
-}
-
-def removeTestDevs() {
-	try {
-		def names = [ "testNestThermostat-Install123", "testNestPresence-Install123", "testNestProtect-Install123", "testNestWeather-Install123", "testNestCamera-Install123" ]
-		names?.each { dev ->
-			//log.debug "dev: $dev"
-			def delete = app.getChildDevices(true).findAll { it?.deviceNetworkId == dev }
-			//log.debug "delete: ${delete}"
-			if(delete) {
-				delete.each { deleteChildDevice(it.deviceNetworkId) }
-			}
-		}
-	} catch (ex) {
-		log.error "deviceHandlerTest Exception:", ex
-		sendExceptionData(ex, "removeTestDevs")
-	}
 }
 
 def preReqCheck() {
@@ -6763,21 +6683,20 @@ def Logger(msg, type, logSrc=null) {
 				break
 		}
 		//log.debug "Logger remDiagTest: $msg | $type | $logSrc"
-		if(!parent) { saveLogtoRemDiagStore(themsg, type, logSrc) }
-		else {
-			if(atomicState?.enRemDiagLogging == null) {
-				atomicState?.enRemDiagLogging = parent?.state?.enRemDiagLogging
-				if(atomicState?.enRemDiagLogging == null) {
-					atomicState?.enRemDiagLogging = false
-				}
-				//log.debug "set enRemDiagLogging to ${atomicState?.enRemDiagLogging}"
-			}
-			if(atomicState?.enRemDiagLogging) {
-				parent.saveLogtoRemDiagStore(themsg, type, logSrc)
-			}
+		def remDiagApp = getRemDiagApp()
+		if(atomicState?.enRemDiagLogging && remDiagApp) {
+			remDiagApp?.saveLogtoRemDiagStore(themsg, type, logSrc)
 		}
 	}
 	else { log.error "${labelstr}Logger Error - type: ${type} | msg: ${msg} | logSrc: ${logSrc}" }
+}
+
+def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
+	LogTrace("saveLogtoRemDiagStore($msg, $type, $logSrcType)")
+	def remDiagApp = getRemDiagApp()
+	if(atomicState?.appData?.database?.allowRemoteDiag && atomicState?.enRemDiagLogging && remDiagApp) {
+		remDiagApp?.saveLogtoRemDiagStore(msg, type, logSrcType)
+	}
 }
 
 def fixState() {
@@ -6945,6 +6864,7 @@ def getCameraChildName()	{ return getChildName("Nest Camera") }
 
 def getAutoAppChildName()	{ return getChildName(autoAppName()) }
 def getWatDogAppChildName()	{ return getChildName("Nest Location ${location.name} Watchdog") }
+def getRemDiagAppChildName(){ return getChildName("NST Diagnostics") }
 
 def getChildName(str)		{ return "${str}${appDevName()}" }
 
@@ -6953,7 +6873,7 @@ def getShardUrl()			{ return getApiServerUrl() }
 def getCallbackUrl()		{ return "https://graph.api.smartthings.com/oauth/callback" }
 def getBuildRedirectUrl()	{ return "${serverUrl}/oauth/initialize?appId=${app.id}&access_token=${atomicState?.accessToken}&apiServerUrl=${shardUrl}" }
 def getNestApiUrl()			{ return "https://developer-api.nest.com" }
-def getAppEndpointUrl(subPath)	{ return "${apiServerUrl("/api/smartapps/installations/${app.id}/${subPath}?access_token=${atomicState.accessToken}")}" }
+def getAppEndpointUrl(subPath)	{ return "${apiServerUrl("/api/smartapps/installations/${app.id}${subPath ? "/${subPath}" : ""}?access_token=${atomicState.accessToken}")}" }
 def getHelpPageUrl()		{ return "http://thingsthataresmart.wiki/index.php?title=NST_Manager" }
 def getIssuePageUrl()		{ return "https://github.com/tonesto7/nest-manager/issues" }
 def slackMsgWebHookUrl()	{ return "https://hooks.slack.com/services/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" }
@@ -8005,18 +7925,88 @@ def renderInstallId() {
 	} catch (ex) { log.error "renderInstallId Exception:", ex }
 }
 
+def renderLogData() {
+	try {
+		def remDiagApp = getRemDiagApp()
+		def resultStr = "Hmmm. Something might be wrong... No log was data returned!!!"
+
+		def logData = remDiagApp?.getRemLogData()
+		if(logData) {
+			resultStr = logData
+		}
+		render contentType: "text/html", data: resultStr
+	} catch (ex) { log.error "renderLogData Exception:", ex }
+}
+
+def renderDiagUrl() {
+	try {
+		def logUrl = getAppEndpointUrl("renderLogData")
+		def managerUrl = getAppEndpointUrl("renderManagerData")
+		def autoUrl = getAppEndpointUrl("renderAutomationData")
+		def deviceUrl = getAppEndpointUrl("renderDeviceData")
+		def html = """
+			<head>
+				<style>
+					.center { text-align: center; font-size: 3.5vw;}
+					.links { padding: 10px; font-size: 4.4vw; }
+				</style>
+			</head>
+			<body>
+				<div class="center">
+					<h1>Remote Diagnostic Links</h1>
+					<div class="center">
+						<a class="links" href="${logUrl}">View Log Data</a>
+						<br></br>
+					  	<a class="links" href="${managerUrl}">All Manager Data</a>
+						<br></br>
+						<a class="links" href="${autoUrl}">All Automation Data</a>
+						<br></br>
+						<a class="links" href="${deviceUrl}">All Device Data</a>
+					</div>
+				</div>
+			</body>
+		"""
+		render contentType: "text/html", data: html
+	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
+}
+
+def renderManagerData() {
+	try {
+		def setDesc = getMapDescStr(getSettings())
+		def stateDesc = getMapDescStr(getState()?.findAll())
+		def metaDesc = getMapDescStr(getMetadata())
+		def html = """
+			<head>
+				<style>
+					.center { text-align: center; font-size: 3.5vw;}
+					.links { padding: 10px; font-size: 4.4vw; }
+				</style>
+			</head>
+			<body>
+				<div>
+					<h1>Manager Settings Data</h1>
+					<div>
+						<p>${setDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<br></br>
+						<br></br>
+						<p>${stateDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<br></br>
+						<br></br>
+						<p>${metaDesc.toString().replaceAll("\n", "<br></br>")}</p>
+					</div>
+				</div>
+			</body>
+		"""
+		render contentType: "text/html", data: html
+	} catch (ex) { log.error "renderManagerData Exception:", ex }
+}
+
 def sendInstallData() {
 	sendFirebaseData(createInstallDataJson(), "installData/clients/${atomicState?.installationId}.json", null, "heartbeat")
 }
 
 def removeInstallData() {
 	return removeFirebaseData("installData/clients/${atomicState?.installationId}.json")
-}
-
-def removeRemDiagData(childId) {
-	LogAction("Removing Remote Diags", "info", true)
-	removeFirebaseData("${getDbRemDiagPath()}/clients/${atomicState?.remDiagClientId}.json")
-	return removeFirebaseData("${getDbRemDiagPath()}/clients/${atomicState?.remDiagClientId}/setandstate.json")
 }
 
 def sendInstallSlackNotif() {
@@ -8037,7 +8027,6 @@ def sendInstallSlackNotif() {
 }
 
 def getDbExceptPath() { return atomicState?.appData?.database?.newexceptionPath ?: "newexceptionData" }
-def getDbRemDiagPath() { return atomicState?.appData?.database?.remoteDiagPath ?: "remoteDiagLogs" }
 
 def sendExceptionData(ex, methodName, isChild = false, autoType = null) {
 	def labelstr = ""
@@ -8402,6 +8391,7 @@ def getAutoTypeLabel() {
 
 	if(type == "nMode")	{ typeLabel = "${newName} (NestMode)" }
 	else if(type == "watchDog")	{ typeLabel = "Nest Location ${location.name} Watchdog"}
+	else if(type == "remDiag")	{ typeLabel = "NST Diagnostics"}
 	else if(type == "schMot")	{ typeLabel = "${newName} (${schMotTstat?.label})" }
 
 	if(appLbl != "Nest Manager" && appLbl != "${appLabel()}") {
@@ -8467,6 +8457,9 @@ def getAutoIcon(type) {
 				break
 			case "watchDog":
 				return getAppImg("watchdog_icon.png")
+				break
+			case "remDiag":
+				return getAppImg("diag_icon.png")
 				break
 		}
 	}

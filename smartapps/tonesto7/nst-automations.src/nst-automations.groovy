@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.4" }
-def appVerDate() { "6-20-2017" }
+def appVerDate() { "6-26-2017" }
 
 preferences {
 	//startPage
@@ -48,6 +48,7 @@ preferences {
 	page(name: "schMotModePage")
 	page(name: "setDayModeTimePage")
 	page(name: "watchDogPage")
+	page(name: "diagnosticsPage")
 	page(name: "schMotSchedulePage")
 	page(name: "scheduleConfigPage")
 	page(name: "tstatConfigAutoPage")
@@ -368,8 +369,9 @@ def mainAutoPage(params) {
 	else { atomicState.automationType = params?.autoType; autoType = params?.autoType }
 
 	// If the selected automation has not been configured take directly to the config page.  Else show main page
-	if(autoType == "nMode" && !isNestModesConfigured())		{ return nestModePresPage() }
+	if(autoType == "nMode" && !isNestModesConfigured())			{ return nestModePresPage() }
 	else if(autoType == "watchDog" && !isWatchdogConfigured())	{ return watchDogPage() }
+	else if(autoType == "remDiag" && !isDiagnosticsConfigured()){ return diagnosticsPage() }
 	else if(autoType == "schMot" && !isSchMotConfigured())		{ return schMotModePage() }
 
 	else {
@@ -423,6 +425,12 @@ def mainAutoPage(params) {
 								"\n\nVoice Notifications:${t1}" : ""
 						def watDogDesc = isWatchdogConfigured() ? "${watDesc}" : null
 						href "watchDogPage", title: "Nest Location Watchdog", description: watDogDesc ?: "Tap to configure", state: (watDogDesc ? "complete" : null), image: getAppImg("watchdog_icon.png")
+					}
+					if(autoType == "remDiag") {
+						//paragraph title:"Watch your Nest Location for Events:", ""
+						def diagDesc = ""
+						def remDiagDesc = isDiagnosticsConfigured() ? "${diagDesc}" : null
+						href "diagnosticsPage", title: "NST Diagnostics", description: remDiagDesc ?: "Tap to configure", state: (remDiagDesc ? "complete" : null), image: getAppImg("diag_icon.png")
 					}
 				}
 			}
@@ -574,6 +582,11 @@ def initAutoApp() {
 	if(settings["watchDogFlag"]) {
 		atomicState?.automationType = "watchDog"
 	}
+	if(settings["remDiagFlag"]) {
+		// if(!atomicState?.accessToken) { getAccessToken() }
+		atomicState?.automationType = "remDiag"
+		// atomicState?.endpointUrl = getAppEndpointUrl(null)
+	}
 	else if (restoreId != null && restoreComplete == false) {
 		LogAction("Restored AutomationType: (${settings?.automationTypeFlag})", "info", true)
 		if(parent?.callRestoreState(app, restoreId)) {
@@ -694,6 +707,21 @@ def initAutoApp() {
 	scheduleAutomationEval(30)
 }
 
+def getAccessToken() {
+	try {
+		if(!atomicState?.accessToken) { atomicState?.accessToken = createAccessToken() }
+		else { return true }
+	}
+	catch (ex) {
+		def msg = "Error: OAuth is not Enabled for ${appName()}!.  Please click remove and Enable Oauth under the SmartApp App Settings in the IDE"
+		sendPush(msg)
+		log.error "getAccessToken Exception", ex
+		LogAction("getAccessToken Exception | $msg", "warn", true)
+		sendExceptionData(ex, "getAccessToken")
+		return false
+	}
+}
+
 def uninstAutomationApp() {
 	//LogTrace("uninstAutomationApp")
 	def autoType = getAutoType()
@@ -728,6 +756,7 @@ def getAutoTypeLabel() {
 
 	if(type == "nMode")	{ typeLabel = "${newName} (NestMode)" }
 	else if(type == "watchDog")	{ typeLabel = "Nest Location ${location.name} Watchdog"}
+	else if(type == "remDiag")	{ typeLabel = "NST Diagnostics"}
 	else if(type == "schMot")	{ typeLabel = "${newName} (${schMotTstat?.label})" }
 
 	if(appLbl != "Nest Manager" && appLbl != "${appLabel()}") {
@@ -804,6 +833,7 @@ def getAutoIcon(type) {
 def automationsInst() {
 	atomicState.isNestModesConfigured = isNestModesConfigured() ? true : false
 	atomicState.isWatchdogConfigured = 	isWatchdogConfigured() ? true : false
+	atomicState.isDiagnosticsConfigured = isDiagnosticsConfigured() ? true : false
 	atomicState.isSchMotConfigured = 	isSchMotConfigured() ? true : false
 
 	atomicState.isLeakWatConfigured = 	isLeakWatConfigured() ? true : false
@@ -1140,6 +1170,11 @@ def subscribeToEvents() {
 			}
 		}
 	}
+
+	//remDiag Subscriptions
+	if(autoType == "remDiag") {
+
+	}
 }
 
 def scheduler() {
@@ -1228,6 +1263,11 @@ def runAutomationEval() {
 		case "watchDog":
 			if(isWatchdogConfigured()) {
 				watchDogCheck()
+			}
+			break
+		case "remDiag":
+			if(isDiagnosticsConfigured()) {
+				//watchDogCheck()
 			}
 			break
 		default:
@@ -1437,6 +1477,25 @@ def getWatDogRepeatMsgDelayVal() { return !watDogRepeatMsgDelay ? 3600 : watDogR
 def isWatchdogConfigured() {
 	return (atomicState?.automationType == "watchDog") ? true : false
 }
+
+/******************************************************************************
+|						WATCHDOG AUTOMATION LOGIC CODE						  |
+*******************************************************************************/
+def remDiagPrefix() { return "remDiag" }
+
+def diagnosticsPage() {
+	def pName = remDiagPrefix()
+	dynamicPage(name: "diagnosticsPage", title: "NST Manager Diagnostics", uninstall: false, install: true) {
+		section("Status") {
+			paragraph "There is nothing to show yet"
+		}
+	}
+}
+
+def isDiagnosticsConfigured() {
+	return (atomicState?.automationType == "remDiag") ? true : false
+}
+
 
 /////////////////////THERMOSTAT AUTOMATION CODE LOGIC ///////////////////////
 
@@ -7373,6 +7432,91 @@ def devPageFooter(var, eTime) {
 
 def askAlexaImgUrl() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/AskAlexa512.png" }
 
+def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
+	LogTrace("saveLogtoRemDiagStore($msg, $type, $logSrcType)")
+	if(atomicState?.automationType == "remDiag") {
+		def stateSz = getStateSizePerc()
+		if(stateSz >= 90) {
+			// this is log.xxxx to avoid looping/recursion
+			log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
+			return
+		}
+		def data = atomicState?.remDiagLogDataStore ?: []
+		def item = ["dt":getDtNow(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
+		data << item
+		log.debug "(${data?.size()} | State: ${stateSz}%) | item: $item"
+		atomicState?.remDiagLogDataStore = data
+	}
+}
+
+def getRemLogData() {
+	try {
+		def logData = atomicState?.remDiagLogDataStore
+		def resultStr = ""
+		def tf = new SimpleDateFormat("h:mm:ss a")
+		tf.setTimeZone(getTimeZone())
+		if(logData?.size() > 0) {
+			logData?.each { logItem ->
+				def tCls = ""
+				switch(logItem?.type) {
+					case "info":
+						tCls = "label label-info"
+						break
+					case "warn":
+						tCls = "label label-warning"
+						break
+					case "error":
+						tCls = "label label-danger"
+						break
+					case "trace":
+						tCls = "label label-trace"
+						break
+					case "debug":
+						tCls = "label label-debug"
+						break
+					default:
+						tCls = "label label-debug"
+						break
+				}
+				resultStr += """
+					<br></br><span>${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}: <span class="$tCls">${logItem?.type}</span> | Src: ${logItem?.src} | ${logItem?.msg}</span>
+				"""
+			}
+			return """
+				<head>
+					<style>
+						.center { text-align: center; font-size: 3.5vw;}
+						.logs { text-align: left; padding: 10px, 5px; font-size: 1.5vw; }
+						.dtHlt { background-color: #rgb(187, 180, 184); }
+						.label { display: inline; padding: .2em .6em .3em; font-size: 75%; font-weight: bold; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25em; }
+						.label-info { background-color: #5bc0de; }
+						.label-trace { background-color: #777777; }
+						.label-warning { background-color: #f0ad4e; }
+						.label-debug { background-color: #337ab7; }
+						.label-danger { background-color: #d9534f; }
+					</style>
+				</head>
+				<body>
+					<div class="center">
+						<h1>NST Manager Logs</h1>
+						<h3>This Includes Automations, Device, Manager Logs</h3>
+						<div class="logs">
+							<p>${resultStr}</p>
+						</div>
+					</div>
+				</body>
+			"""
+		}
+	} catch (ex) { log.error "renderLogData Exception:", ex }
+	return null
+}
+
+def clearRemDiagData(force=false) {
+	atomicState?.remDiagLogDataStore = null
+	//atomicState?.remDiagLogActivatedDt = null	// NOT done to have force off then on to re-enable
+	LogAction("Cleared Diag data", "info", true)
+}
+
 /*
 
 //Things that I need to clear up on updates go here
@@ -7421,13 +7565,13 @@ def getHelpPageUrl()			{ return "http://thingsthataresmart.wiki/index.php?title=
 def getAutoHelpPageUrl()		{ return "http://thingsthataresmart.wiki/index.php?title=Nest_Manager#Nest_Automations" }
 def getAppImg(imgName, on = null)	{ return (!disAppIcons || on) ? "https://raw.githubusercontent.com/${gitPath()}/Images/App/$imgName" : "" }
 def getDevImg(imgName, on = null)	{ return (!disAppIcons || on) ? "https://raw.githubusercontent.com/${gitPath()}/Images/Devices/$imgName" : "" }
-
+def getAppEndpointUrl(subPath)	{ return atomicState?.accessToken ? "${apiServerUrl("/api/smartapps/installations/${app.id}${subPath ? "/${subPath}" : ""}?access_token=${atomicState.accessToken}")}" : null }
 def getChildAppVer(appName) { return appName?.appVersion() ? "v${appName?.appVersion()}" : "" }
 def getUse24Time()			{ return useMilitaryTime ? true : false }
 
 //Returns app State Info
 def getStateSize()			{ return state?.toString().length() }
-def getStateSizePerc()			{ return (int) ((stateSize / 100000)*100).toDouble().round(0) } //
+def getStateSizePerc()		{ return (int) ((stateSize / 100000)*100).toDouble().round(0) } //
 
 def debugStatus() { return !appDebug ? "Off" : "On" }
 def deviceDebugStatus() { return !childDebug ? "Off" : "On" }
@@ -7684,7 +7828,7 @@ def Logger(msg, type, logSrc=null) {
 				//log.debug "set enRemDiagLogging to ${atomicState?.enRemDiagLogging}"
 			}
 			if(atomicState?.enRemDiagLogging) {
-				parent.saveLogtoRemDiagStore(themsg, type, logSrc)
+				parent?.saveLogtoRemDiagStore(themsg, type, logSrc)
 			}
 		}
 	}
