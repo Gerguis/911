@@ -1350,6 +1350,7 @@ def getCamHtml() {
 			</body>
 		</html>
 		"""
+/* """ */
 		incHtmlLoadCnt()
 		render contentType: "text/html", data: mainHtml, status: 200
 	}
