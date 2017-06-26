@@ -3030,7 +3030,7 @@ def extTmpTempOk() {
 			} else {
 				tempDiff = Math.abs(extTemp - desiredTemp)
 				str = "enough different (${tempDiff})"
-				def insideThresh = getTemperatureScale() == "C" ? 2 : 4
+				def insideThresh = getExtTmpInsideTempDiffVal()
 				LogAction("extTmpTempOk: Outside Temp: ${extTemp} | Desired Temp: ${desiredTemp} | Inside Temp Threshold: ${insideThresh} | Outside Temp Threshold: ${diffThresh} | Actual Difference: ${tempDiff} | Outside Dew point: ${curDp} | Dew point Limit: ${dpLimit}", "debug", false)
 
 				if(diffThresh && tempDiff < diffThresh) {
@@ -3073,6 +3073,7 @@ def extTmpTempOk() {
 
 def extTmpScheduleOk() { return autoScheduleOk(extTmpPrefix()) }
 def getExtTmpTempDiffVal() { return !settings?.extTmpDiffVal ? 1.0 : settings?.extTmpDiffVal.toDouble() }
+def getExtTmpInsideTempDiffVal() { return !settings?.extTmpInsideDiffVal ? (getTemperatureScale() == "C" ? 2 : 4) : settings?.extTmpInsideDiffVal.toDouble() }
 def getExtTmpWhileOnDtSec() { return !atomicState?.extTmpChgWhileOnDt ? 100000 : GetTimeDiffSeconds(atomicState?.extTmpChgWhileOnDt, null, "getExtTmpWhileOnDtSec").toInteger() }
 def getExtTmpWhileOffDtSec() { return !atomicState?.extTmpChgWhileOffDt ? 100000 : GetTimeDiffSeconds(atomicState?.extTmpChgWhileOffDt, null, "getExtTmpWhileOffDtSec").toInteger() }
 
@@ -5019,7 +5020,8 @@ def schMotModePage() {
 						extDesc += (!settings?.extTmpUseWeather && settings?.extTmpTempSensor) ? "\n • Sensor: (${getExtTmpTemperature()}${tempScaleStr})" : ""
 						extDesc += (settings?.extTmpUseWeather && !settings?.extTmpTempSensor) ? "\n • Weather: (${getExtTmpTemperature()}${tempScaleStr})" : ""
 						//TODO need this in schedule
-						extDesc += settings?.extTmpDiffVal ? "\n • Threshold: (${settings?.extTmpDiffVal}${tempScaleStr})" : ""
+						extDesc += settings?.extTmpDiffVal ? "\n • Outside Threshold: (${settings?.extTmpDiffVal}${tempScaleStr})" : ""
+						extDesc += settings?.extInsideTmpDiffVal ? "\n • Inside Threshold: (${settings?.extTmpInsideDiffVal}${tempScaleStr})" : ""
 						extDesc += settings?.extTmpOffDelay ? "\n • ECO Delay: (${getEnumValue(longTimeSecEnum(), settings?.extTmpOffDelay)})" : ""
 						extDesc += settings?.extTmpOnDelay ? "\n • On Delay: (${getEnumValue(longTimeSecEnum(), settings?.extTmpOnDelay)})" : ""
 						extDesc += (settings?.extTmpTempSensor || settings?.extTmpUseWeather) ? "\n • Restrictions Active: (${autoScheduleOk(extTmpPrefix()) ? "NO" : "YES"})" : ""
@@ -5508,8 +5510,10 @@ this does not work...
 					}
 				}
 				if(settings?.extTmpUseWeather || settings?.extTmpTempSensor) {
-					section("When the threshold Temp is Reached\nSet the Thermostat to ECO") {
-						input name: "extTmpDiffVal", type: "decimal", title: "When internal and external temp difference is within this many degrees (${tempScaleStr})?", defaultValue: 1.0, submitOnChange: true, required: true,
+					section("When the threshold Temps are Reached\nSet the Thermostat to ECO") {
+						input name: "extTmpDiffVal", type: "decimal", title: "When desired and external temp difference is at least this many degrees (${tempScaleStr})?", defaultValue: 1.0, submitOnChange: true, required: true,
+								image: getAppImg("temp_icon.png")
+						input name: "extTmpInsideDiffVal", type: "decimal", title: "AND When desired and internal temp difference is within this many degrees (${tempScaleStr})?", defaultValue: getTemperatureScale() == "C" ? 2.0 : 4.0, submitOnChange: true, required: true,
 								image: getAppImg("temp_icon.png")
 					}
 					section("Delay Values:") {
