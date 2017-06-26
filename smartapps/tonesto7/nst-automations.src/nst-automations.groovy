@@ -3030,7 +3030,8 @@ def extTmpTempOk() {
 			} else {
 				tempDiff = Math.abs(extTemp - desiredTemp)
 				str = "enough different (${tempDiff})"
-				LogAction("extTmpTempOk: Outside Temp: ${extTemp} | Desired Temp: ${desiredTemp} | Temp Threshold: ${diffThresh} | Actual Difference: ${tempDiff} | Outside Dew point: ${curDp} | Dew point Limit: ${dpLimit}", "debug", false)
+				def insideThresh = getTemperatureScale() == "C" ? 2 : 4
+				LogAction("extTmpTempOk: Outside Temp: ${extTemp} | Desired Temp: ${desiredTemp} | Inside Temp Threshold: ${insideThresh} | Outside Temp Threshold: ${diffThresh} | Actual Difference: ${tempDiff} | Outside Dew point: ${curDp} | Dew point Limit: ${dpLimit}", "debug", false)
 
 				if(diffThresh && tempDiff < diffThresh) {
 					retval = false
@@ -3042,10 +3043,12 @@ def extTmpTempOk() {
 				if(modeCool || oldMode == "cool" || (!canHeat && canCool)) {
 					str = "greater than"
 					if(extTempHigh) { retval = false; tempOk = false }
+					else if (intTemp > desiredTemp+insideThresh) { retval = false; tempOk = false } // too hot inside
 				}
 				if(modeHeat || oldMode == "heat" || (!canCool && canHeat)) {
 					str = "less than"
 					if(extTempLow) { retval = false; tempOk = false }
+					else if (intTemp < desiredTemp-insideThresh) { retval = false; tempOk = false } // too cold inside
 				}
 				LogAction("extTmpTempOk: extTempHigh: ${extTempHigh} | extTempLow: ${extTempLow}", "debug", false)
 			}
@@ -3054,7 +3057,7 @@ def extTmpTempOk() {
 			LogAction("extTmpTempOk: ${retval} Dewpoint: (${curDp}°${getTemperatureScale()}) is ${dpOk ? "ok" : "TOO HIGH"}", "info", false)
 		} else {
 			if(!modeAuto) {
-				LogAction("extTmpTempOk: ${retval} Desired Inside Temp: (${desiredTemp}°${getTemperatureScale()}) is ${tempOk ? "" : "Not"} ${str} $diffThresh° of Outside Temp: (${extTemp}°${getTemperatureScale()}) Inside Temp: (${intTemp})", "info", false)
+				LogAction("extTmpTempOk: ${retval} Desired Inside Temp: (${desiredTemp}°${getTemperatureScale()}) is ${tempOk ? "" : "Not"} ${str} $diffThresh° of Outside Temp: (${extTemp}°${getTemperatureScale()}) Inside Temp: (${intTemp}) Inside Threshold: ${insideThresh}", "info", false)
 			} else {
 				LogAction("extTmpTempOk: ${retval} Exterior Temperature (${extTemp}°${getTemperatureScale()}) is ${tempOk ? "" : "Not"} ${str} using $diffThresh° offset |  Inside Temp: (${intTemp})", "info", false)
 
