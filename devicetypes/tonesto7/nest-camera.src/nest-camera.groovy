@@ -124,6 +124,9 @@ metadata {
 		//details(["devCamHtml", "isStreaming", "take", "refresh", "motion", "cameraDetails", "sound"])
 		details(["videoPlayer", "isStreaming", "take", "refresh", "devCamHtml", "cameraDetails", "motion", "sound" ])
 	}
+	preferences {
+		input "enableEvtSnapShot", "bool", title: "Take Snapshot on Motion Events", description: "", defaultValue: true, displayDuringSetup: false
+	}
 }
 
 mappings {
@@ -267,6 +270,7 @@ def processEvent() {
 			def results = eventData?.data
 			//log.debug "results: $results"
 			state.isBeta = eventData?.isBeta == true ? true : false
+			state.takeSnapOnEvt = eventData?.camTakeSnapOnEvt == true ? true : false
 			state.restStreaming = eventData?.restStreaming == true ? true : false
 			state.showLogNamePrefix = eventData?.logPrefix == true ? true : false
 			state.enRemDiagLogging = eventData?.enRemDiagLogging == true ? true : false
@@ -333,6 +337,11 @@ def getDataByName(String name) {
 
 def getDeviceStateData() {
 	return getState()
+}
+
+def evtSnapShotOk() {
+	if(state?.takeSnapOnEvt != true) { return false }
+	return settings?.enableEvtSnapShot == true ? true : false
 }
 
 def addCheckinReason(str) {
@@ -538,15 +547,16 @@ def lastEventDataEvent(data) {
 		sendEvent(name: 'lastEventType', value: evtType, descriptionText: "Last Event Type was ${evtType}", displayed: false)
 		sendEvent(name: 'lastEventZones', value: evtZoneNames.toString(), descriptionText: "Last Event Zones: ${evtZoneNames}", displayed: false)
 		state.lastCamEvtData = ["startDt":newStartDt, "endDt":newEndDt, "hasMotion":hasMotion, "hasSound":hasSound, "hasPerson":hasPerson, "actZones":(data?.activity_zone_ids ?: null)]
+		tryPic = evtSnapShotOk()
 		Logger("└────────────────────────────────")
-		Logger("│	URL: ${state?.animation_url ?: "None"}")
+		//Logger("│	URL: ${state?.animation_url ?: "None"}")
+		Logger("│	Took Snapshot: ${tryPic}")
 		Logger("│	Zones: ${evtZoneNames ?: "None"}")
 		Logger("│	End Time: (${newEndDt})")
 		Logger("│	Start Time: (${newStartDt})")
 		Logger("│	Type: ${evtType}")
 		Logger("┌──────────New Camera Event──────────")
 		addCheckinReason("lastEventData")
-		tryPic = true
 	} else {
 		LogAction("Last Event Start Time: (${newStartDt}) - Zones: ${evtZoneNames} | Original State: (${curStartDt})")
 		LogAction("Last Event End Time: (${newEndDt}) - Zones: ${evtZoneNames} | Original State: (${curEndDt})")

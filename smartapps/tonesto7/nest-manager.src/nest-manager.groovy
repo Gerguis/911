@@ -198,7 +198,8 @@ def authPage() {
 def mainPage() {
 	//LogTrace("mainPage")
 	def execTime = now()
-	def setupComplete = (!atomicState?.newSetupComplete || !atomicState.isInstalled) ? false : true
+	def isInstalled = atomicState?.isInstalled
+	def setupComplete = (!atomicState?.newSetupComplete || !isInstalled) ? false : true
 	return dynamicPage(name: "mainPage", title: "", nextPage: (!setupComplete ? "reviewSetupPage" : null), install: setupComplete, uninstall: false) {
 		section("") {
 			href "changeLogPage", title: "", description: "${appInfoDesc()}", image: getAppImg("nst_manager_icon%402x.png", true)
@@ -207,35 +208,41 @@ def mainPage() {
 				href "pollPrefPage", title: "", state: ((atomicState?.restStreamingOn && rStrEn) ? "complete" : null), image: getAppImg("two_way_icon.png"),
 						description: "Nest Streaming: (${(!atomicState?.restStreamingOn || !rStrEn) ? "Inactive" : "Active"})"
 			}
-			if(atomicState?.appData && !appDevType() && isAppUpdateAvail()) {
-				href url: stIdeLink(), style:"external", required: false, title:"An Update is Available for ${appName()}!",
-						description:"Current: v${appVersion()} | New: ${atomicState?.appData?.updater?.versions?.app?.ver}\n\nTap to Open the IDE in Browser", state: "complete", image: getAppImg("update_icon.png")
-			}
-			if(atomicState?.appData && !appDevType() && atomicState?.clientBlacklisted) {
-				paragraph "This ID is blacklisted, please update software!\nIf software is up to date, contact developer", required: true, state: null
+			if(atomicState?.appData && !appDevType()) {
+				if(isAppUpdateAvail()) {
+					href url: stIdeLink(), style:"external", required: false, title:"An Update is Available for ${appName()}!",
+							description:"Current: v${appVersion()} | New: ${atomicState?.appData?.updater?.versions?.app?.ver}\n\nTap to Open the IDE in Browser", state: "complete", image: getAppImg("update_icon.png")
+				}
+				if(atomicState?.clientBlacklisted) {
+					paragraph "This ID is blacklisted, please update software!\nIf software is up to date, contact developer", required: true, state: null
+				}
 			}
 		}
-		if(atomicState?.isInstalled) {
+		if(isInstalled) {
 			if(settings?.structures && !atomicState?.structures) { atomicState.structures = settings?.structures }
 			section("Devices & Location:") {
 				paragraph "Home/Away Status: (${strCapitalize(getLocationPresence())})", title: "Location: ${atomicState?.structName}", state: "complete",  image: getAppImg("thermostat_icon.png")
 				def t1 = getDevicesDesc(false)
 				def devDesc = t1 ? "${t1}\n\nTap to modify devices" : "Tap to configure"
 				href "deviceSelectPage", title: "Manage Devices", description: devDesc, state: "complete", image: "blank_icon.png"
+				def devSelected = (atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras || atomicState?.presDevice || atomicState?.weatherDevice))
+				if(devSelected) {
+					href "devPrefPage", title: "Device Customization", description: "Tap to configure", image: getAppImg("device_pref_icon.png")
+				}
 			}
 			//getDevChgDesc()
 		}
-		if(!atomicState?.isInstalled) {
+		if(!isInstalled) {
 			devicesPage()
 		}
-		if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras)) {
+		if(isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras)) {
 			def t1 = getInstAutoTypesDesc()
 			def autoDesc = t1 ? "${t1}\n\nTap to modify" : null
 			section("Manage Automations:") {
 				href "automationsPage", title: "Automations", description: (autoDesc ? autoDesc : "Tap to configure"), state: (autoDesc ? "complete" : null), image: getAppImg("automation_icon.png")
 			}
 		}
-		if(atomicState?.isInstalled) {
+		if(isInstalled) {
 			section("Notifications Options:") {
 				def t1 = getAppNotifConfDesc()
 				href "notifPrefPage", title: "Notifications", description: (t1 ? "${t1}\n\nTap to modify" : "Tap to configure"), state: (t1 ? "complete" : null),
@@ -351,12 +358,6 @@ def devicesPage() {
 			atomicState.weatherDevice = settings?.weatherDevice ?: null
 		}
 		if(isInstalled) {
-			def devSelected = (atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras || atomicState?.presDevice || atomicState?.weatherDevice))
-			if(devSelected) {
-				section("Device Preferences:") {
-					href "devPrefPage", title: "Device Customization", description: "Tap to configure", image: getAppImg("device_pref_icon.png")
-				}
-			}
 			if(atomicState?.protects) {
 				section("Nest Protect Alarm Simulation:") {
 					if(atomicState?.protects) {
@@ -382,7 +383,8 @@ def devPrefPage() {
 		if(atomicState?.cameras) {
 			section("Camera Devices:") {
 				if(atomicState?.appData?.eventStreaming?.enabled == true || getDevOpt() || betaMarker()) {
-					input ("motionSndChgWaitVal", "enum", title: "Wait before Camera Motion and Sound is marked Inactive?", required: false, defaultValue: 60, metadata: [values:waitValAltEnum(true)], submitOnChange: true, image: getAppImg("motion_icon.png"))
+					input "camTakeSnapOnEvt", "bool", title: "Take Snapshot on Motion Events?", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("motion_icon.png")
+					input "motionSndChgWaitVal", "enum", title: "Delay before Motion/Sound Events are marked Inactive?", required: false, defaultValue: 60, metadata: [values:waitValAltEnum(true)], submitOnChange: true, image: getAppImg("motion_icon.png")
 					atomicState.needChildUpd = true
 				} else {
 					paragraph "No Camera Device Options Yet..."
@@ -3723,6 +3725,7 @@ def updateChildData(force = false) {
 		def devBannerData = atomicState?.devBannerData ?: null
 		def streamingActive = atomicState?.restStreamingOn == true ? true : false
 		def isBeta = betaMarker()
+		def camTakeSnapOnEvt = settings?.camTakeSnapOnEvt == false ? false : true
 
 		def curWeatherTemp
 		if(atomicState?.thermostats && getWeatherDeviceInst()) {
@@ -3819,7 +3822,8 @@ def updateChildData(force = false) {
 				def camData = ["data":atomicState?.deviceData?.cameras[devId], "mt":useMt, "debug":dbg, "logPrefix":logNamePrefix,
 						"tz":nestTz, "htmlInfo":htmlInfo, "apiIssues":api, "allowDbException":allowDbException, "latestVer":latestCamVer()?.ver?.toString(), "clientBl":clientBl,
 						"hcTimeout":hcCamTimeout, "mobileClientType":mobClientType, "enRemDiagLogging":remDiag, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg,
-						"streamNotify":nPrefs?.dev?.camera?.streamMsg, "devBannerData":devBannerData, "restStreaming":streamingActive, "motionSndChgWaitVal":motionSndChgWaitVal, "isBeta":isBeta ]
+						"streamNotify":nPrefs?.dev?.camera?.streamMsg, "devBannerData":devBannerData, "restStreaming":streamingActive, "motionSndChgWaitVal":motionSndChgWaitVal,
+						"isBeta":isBeta, "camTakeSnapOnEvt": camTakeSnapOnEvt ]
 				def oldCamData = atomicState?."oldCamData${devId}"
 				def cDataChecksum = generateMD5_A(camData.toString())
 				atomicState."oldCamData${devId}" = cDataChecksum
