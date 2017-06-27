@@ -790,8 +790,6 @@ def getStateVal(var) {
 	return state[var] ?: null
 }
 
-def getAutoType() { return !parent ? "" : atomicState?.automationType }
-
 def getAutoIcon(type) {
 	if(type) {
 		switch(type) {
@@ -877,6 +875,8 @@ def getAutomationsInstalled() {
 def getAutomationType() {
 	return atomicState?.automationType ?: null
 }
+
+def getAutoType() { return !parent ? "" : atomicState?.automationType }
 
 def getIsAutomationDisabled() {
 	def dis = atomicState?.disableAutomation
@@ -7570,6 +7570,7 @@ def getRemLogData() {
 					  </div>
 				</body>
 			"""
+/* "" */
 		}
 	} catch (ex) { log.error "renderLogData Exception:", ex }
 	return null
