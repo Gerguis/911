@@ -2378,6 +2378,9 @@ def initRemDiagApp() {
 	LogTrace("initRemDiagApp")
 	def remDiagApp = getChildApps()?.findAll { it?.getAutomationType() == "remDiag" }
 	def keepApp = atomicState?.enRemDiagLogging == true ? true : false
+	if(!keepApp) {
+		settingUpdate("enRemDiagLogging", "false","bool")
+	}
 	if(keepApp && remDiagApp?.size() < 1) {
 		LogAction("Installing Remote Diag App", "info", true)
 		try {
@@ -6610,6 +6613,7 @@ def connectionStatus(message, redirectUrl = null) {
 		</body>
 		</html>
 		"""
+/* """ */
 	render contentType: 'text/html', data: html
 }
 
@@ -6645,7 +6649,7 @@ def clientSecret() {
 |									LOGGING AND Diagnostic										|
 *************************************************************************************************/
 def LogTrace(msg, logSrc=null) {
-	def trOn = (appDebug && advAppDebug) ? true : false
+	def trOn = (appDebug && advAppDebug && !enRemDiagLogging && !atomicState?.enRemDiagLogging) ? true : false
 	if(trOn) {
 		def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "NestManager") : logSrc
 		Logger(msg, "trace", theLogSrc)
@@ -6706,7 +6710,8 @@ def Logger(msg, type, logSrc=null) {
 
 def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 	//log.trace "saveLogtoRemDiagStore($msg, $type, $logSrcType)"
-	if(getStateSizePerc() >= 90) {
+	if(!enRemDiagLogging) { return }
+	if(getStateSizePerc() >= 80) {
 		log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
 		return
 	}
