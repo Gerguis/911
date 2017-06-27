@@ -6755,7 +6755,7 @@ def fixState() {
 	def before = getStateSizePerc()
 	if(!parent) {
 		if(!atomicState?.resetAllData && resetAllData) {
-			def data = getState()?.findAll { !(it?.key in ["accessToken", "authToken", "enRemDiagLogging", "installationId", "remDiagLogActivatedDt", "installData", "remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt", "resetAllData", "pollingOn", "apiCommandCnt", "autoMigrationComplete" ]) }
+			def data = getState()?.findAll { !(it?.key in ["accessToken", "authToken", "tokenExpires", "tokenCreatedDt", "enRemDiagLogging", "installationId", "remDiagLogActivatedDt", "installData", "remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt", "resetAllData", "pollingOn", "apiCommandCnt", "autoMigrationComplete" ]) }
 			data.each { item ->
 				state.remove(item?.key.toString())
 			}
@@ -7675,7 +7675,7 @@ def getMapDescStr(data) {
 	def cnt = 1
 	data?.sort()?.each { par ->
 		if(par?.value instanceof Map || par?.value instanceof List || par?.value instanceof ArrayList) {
-			str += "${cnt>1 ? "\n" : ""} • ${par?.key.toString()}:"
+			str += "${cnt>1 ? "\n\n" : ""} • ${par?.key.toString()}:"
 			if(par?.value instanceof Map) {
 				def map2 = par?.value
 				def cnt2 = 1
@@ -7742,7 +7742,7 @@ def getMapDescStr(data) {
 				}
 			}
 		} else {
-			str += "${cnt>1 ? "\n" : "\n"} • ${par?.key.toString()}: (${par?.value})"
+			str += "${cnt>1 ? "\n\n" : "\n"} • ${par?.key.toString()}: (${par?.value})"
 		}
 		cnt = cnt+1
 	}
@@ -8083,9 +8083,12 @@ def renderManagerData() {
 	try {
 		def setDesc = getMapDescStr(getSettings())
 		def noShow = ["authToken", "accessToken"]
-		def t1 = getState()?.findAll { !(it?.key in noShow) }
-		def t0 = t1?.sort()?.findAll()
-		def stateDesc = getMapDescStr(t0)
+		def stData = getState()?.sort()?.findAll { !(it.key in noShow) }
+		def stateData = [:]
+		stData?.sort().each { item ->
+			stateData[item?.key] = item?.value
+		}
+		def stateDesc = getMapDescStr(stateData)
 		def metaDesc = getMapDescStr(getMetadata())
 		def html = """
 			<head>
@@ -8098,13 +8101,11 @@ def renderManagerData() {
 				<div>
 					<h1>Manager Settings Data</h1>
 					<div>
-						<p>${setDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
 						<br></br>
+						<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
 						<br></br>
-						<p>${stateDesc.toString().replaceAll("\n", "<br></br>")}</p>
-						<br></br>
-						<br></br>
-						<p>${metaDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
 					</div>
 				</div>
 			</body>
@@ -8133,13 +8134,11 @@ def renderAutomationData() {
 					<div>
 						<h1>${cApp?.getLabel()} Data</h1>
 						<div>
-							<p>${setDesc.toString().replaceAll("\n", "<br></br>")}</p>
+							<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
 							<br></br>
+							<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
 							<br></br>
-							<p>${stateDesc.toString().replaceAll("\n", "<br></br>")}</p>
-							<br></br>
-							<br></br>
-							<p>${metaDesc.toString().replaceAll("\n", "<br></br>")}</p>
+							<p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
 						</div>
 					</div>
 					</br>
@@ -8157,9 +8156,12 @@ def renderDeviceData() {
 	try {
 		def setDesc = getMapDescStr(getSettings())
 		def noShow = ["authToken", "accessToken"]
-		def t1 = getState()?.findAll { !(it?.key in noShow) }
-		def t0 = t1?.sort()?.findAll()
-		def stateDesc = getMapDescStr(t0)
+		def stData = getState()?.sort()?.findAll { !(it.key in noShow) }
+		def stateData = [:]
+		stData?.sort().each { item ->
+			stateData[item?.key] = item?.value
+		}
+		def stateDesc = getMapDescStr(stateData)
 		def metaDesc = getMapDescStr(getMetadata())
 		def html = """
 			<head>
@@ -8691,11 +8693,11 @@ def fixTempSetting(Double temp) {
 	def newtemp = temp
 	if(temp != null) {
 		if(getTemperatureScale() == "C") {
-			if(temp > 35) {    // setting was done in F
+			if(temp > 35) {		// setting was done in F
 				newtemp = roundTemp( (newtemp - 32.0) * (5 / 9) as Double) //
 			}
 		} else if(getTemperatureScale() == "F") {
-			if(temp < 40) {    // setting was done in C
+			if(temp < 40) {		// setting was done in C
 				newtemp = roundTemp( ((newtemp * (9 / 5) as Double) + 32.0) ).toInteger() //
 			}
 		}
