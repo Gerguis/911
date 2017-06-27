@@ -7488,31 +7488,81 @@ def getRemLogData() {
 						break
 				}
 				resultStr += """
-					<br></br><span>${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}: <span class="$tCls">${logItem?.type}</span> | Src: ${logItem?.src} | ${logItem?.msg}</span>
+					<br></br><span>${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}: <span class="$tCls">${logItem?.type}</span> | ${logItem?.src.toString().toUpperCase()} | ${logItem?.msg}</span>
 				"""
 			}
 			return """
 				<head>
+					<meta charset="utf-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+					<meta name="description" content="NST Diagnostics - Logs">
+					<meta name="author" content="Anthony S.">
+					<link rel="icon" href="../../favicon.ico">
+
+					<title>NST Diagnostics - Logs</title>
+					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+					<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+					<link rel="stylesheet" href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
+
 					<style>
-						.center { text-align: center; font-size: 3.5vw;}
-						.logs { text-align: left; padding: 10px, 5px; font-size: 1.5vw; }
-						.dtHlt { background-color: #rgb(187, 180, 184); }
-						.label { display: inline; padding: .2em .6em .3em; font-size: 75%; font-weight: bold; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25em; }
-						.label-info { background-color: #5bc0de; }
-						.label-trace { background-color: #777777; }
-						.label-warning { background-color: #f0ad4e; }
-						.label-debug { background-color: #337ab7; }
-						.label-danger { background-color: #d9534f; }
+					.logs { text-align: left; padding: 0, 0; font-size: 1.4vw; }
+					.dtHlt { background-color: #rgb(187, 180, 184); }
+					.label { display: inline; padding: .2em .6em .3em; font-size: 75%; font-weight: bold; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25em; }
+					.label-info { background-color: #5bc0de; }
+					.label-trace { background-color: #777777; }
+					.label-warning { background-color: #f0ad4e; }
+					.label-debug { background-color: #337ab7; }
+					.label-danger { background-color: #d9534f; }
+					html {
+					  position: relative;
+					  min-height: 100%;
+					}
+					body {
+					  /* Margin bottom by footer height */
+					  margin-bottom: 60px;
+					}
+
+					.container {
+					  width: auto;
+					  max-width: 98%;
+					  padding: 0 5px;
+					}
+
+					.centerText {
+					  text-align: center;
+					  font-size: 3.5vw;
+					}
+					.links {
+					  padding: 10px;
+					  font-size: 18px;
+					}
+					.logoIcn {
+					  width: 48px;
+					  height: 48px;
+					}
+					.shortcutBtns {
+					  width: 140px;
+					}
 					</style>
 				</head>
 				<body>
-					<div class="center">
-						<h1>NST Manager Logs</h1>
-						<h3>This Includes Automations, Device, Manager Logs</h3>
-						<div class="logs">
-							<p>${resultStr}</p>
-						</div>
-					</div>
+					<div class="container">
+					 <div class="page-header">
+					  <div class="centerText">
+					   <h1><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/log.png">NST Manager Logs</img></h1>
+					   <h3>This Includes Automations, Device, Manager Logs</h3>
+					  </div>
+					  <div class="panel panel-primary">
+					   <div class="panel-heading">
+						<h1 class="panel-title">Log Stream:</h1>
+					   </div>
+					   <div class="panel-body">
+						   <div class="logs">
+							   <p>${resultStr}</p>
+						   </div>
+					   </div>
+					  </div>
 				</body>
 			"""
 		}

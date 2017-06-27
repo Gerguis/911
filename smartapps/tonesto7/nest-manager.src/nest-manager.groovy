@@ -37,7 +37,7 @@ definition(
 include 'asynchttp_v1'
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "6-26-2017" }
+def appVerDate() { "6-27-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -562,7 +562,7 @@ def infoPage () {
 			href url: getIssuePageUrl(), style:"embedded", required:false, title:"View | Report Issues",
 				description:"Tap to open in browser", state: "complete", image: getAppImg("issue_icon.png")
 			href "feedbackPage", title: "Send Developer Feedback", description: "", image: getAppImg("feedback_icon.png")
-			href "remoteDiagPage", title: "Send Logs to Developer", description: "", image: getAppImg("diagnostic_icon.png")
+			href "remoteDiagPage", title: "Collect Logs for Diagnosis", description: "", image: getAppImg("diagnostic_icon.png")
 		}
 		section("Credits:") {
 			paragraph title: "Creator:", "Anthony S. (@tonesto7)", state: "complete"
@@ -1567,7 +1567,7 @@ def debugPrefPage() {
 			input (name: "childDebug", type: "bool", title: "Show Device Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
 		}
 		section("Remote Diagnostics:") {
-			href "remoteDiagPage", title: "Allow Developer to View Your Logs?", description: "", image: getAppImg("diagnostic_icon.png")
+			href "remoteDiagPage", title: "View Diagnostic Info?", description: "", image: getAppImg("diagnostic_icon.png")
 		}
 		section ("Reset Application Data") {
 			input (name: "resetAllData", type: "bool", title: "Reset Application Data?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
@@ -1595,13 +1595,13 @@ def remoteDiagPage () {
 			if(getTimeZone()) { tf.setTimeZone(getTimeZone()) }
 			paragraph title: "How will this work?", "Once enabled this SmartApp will create a child app to store your logs in this diagnostic app and you will share the url with the developer.  Turn off to remove the diag app and all data."
 			paragraph "This will automatically turn off 48 hours"
-			input (name: "enRemDiagLogging", type: "bool", title: "Enable Remote Diag?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("diagnostic_icon.png"))
+			input (name: "enRemDiagLogging", type: "bool", title: "Enable Log Collection?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("diagnostic_icon.png"))
 		}
 		remDiagProcChange(diagAllowed, settings?.enRemDiagLogging)
 
 		section() {
 			if(atomicState?.enRemDiagLogging) {
-				href url: getAppEndpointUrl("renderDiagUrl"), style:"external", title:"Provide this URL to Developer", description:"Tap to View and Share", required: true,state: null
+				href url: getAppEndpointUrl("renderDiagUrl"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
 				def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
 				paragraph str, required: true, state: "complete"
 			}
@@ -7997,82 +7997,106 @@ def renderDiagUrl() {
 		def deviceUrl = getAppEndpointUrl("renderDeviceData")
 		def html = """
 		<head>
-			<meta charset="utf-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-			<meta name="description" content="NST Diagnostics">
-			<meta name="author" content="Anthony S.">
-			<link rel="icon" href="../../favicon.ico">
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+ <meta name="description" content="NST Diagnostics">
+ <meta name="author" content="Anthony S.">
+ <link rel="icon" href="../../favicon.ico">
 
-			<title>NST Diagnostics</title>
-			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+ <title>NST Diagnostics</title>
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+ <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+ <link rel="stylesheet" href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/diaghomepage.min.css">
+ <style>
+	html {
+	  position: relative;
+	  min-height: 100%;
+	}
+	body {
+	  /* Margin bottom by footer height */
+	  margin-bottom: 60px;
+	}
 
-			<style>
-				html {
-					position: relative;
-					min-height: 100%;
-				}
-				body {
-					/* Margin bottom by footer height */
-					margin-bottom: 60px;
-				}
+	.container {
+	  width: auto;
+	  max-width: 800px;
+	  padding: 0 15px;
+	}
 
-				.container {
-					width: auto;
-					max-width: 680px;
-					padding: 0 15px;
-				}
+	.centerText {
+	  text-align: center;
+	  font-size: 3.5vw;
+	}
+	.links {
+	  padding: 10px;
+	  font-size: 18px;
+	}
+	.footer {
+	  position: absolute;
+	  bottom: 0;
+	  width: 100%;
+	  max-width: 800px;
+	  /* Set the fixed height of the footer here */
+	  height: 60px;
+	  line-height: 60px; /* Vertically center the text there */
+	  background-color: #f5f5f5;
+	}
+	.footerText {
+	  font-size: 14px;
+	}
 
-				.centerText {
-					text-align: center;
-					font-size: 3.5vw;
-				}
-				.links {
-					padding: 10px;
-					font-size: 4.4vw;
-				}
-				.footer {
-					position: absolute;
-					bottom: 0;
-					width: 100%;
-					/* Set the fixed height of the footer here */
-					height: 60px;
-					line-height: 60px; /* Vertically center the text there */
-					background-color: #f5f5f5;
-				}
-			 .logoIcn {
-				 width: 48px;
-				 height: 48px;
-			 }
-			</style>
-			</head>
+	.logoIcn {
+	  width: 48px;
+	  height: 48px;
+	}
 
-			<body>
-			<div class="centerText">
-				<h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png">NST Diagnostics</img></h2>
-			</div>
-			<div class="row">
-				<div class="col-md-4">.col-md-4</div>
-				<div class="col-md-4">.col-md-4</div>
-				<div class="col-md-4">.col-md-4</div>
-			  </div>
-			<div>
-				<a class="links" href="${logUrl}">View Log Data</a>
-				<br></br>
-				<a class="links" href="${managerUrl}">Manager Data</a>
-				<br></br>
-				<a class="links" href="${autoUrl}">Automation Data</a>
-				<br></br>
-				<a class="links" href="${deviceUrl}">Device Data</a>
-			</div>
+	.shortcutBtns {
+	  width: 140px;
+	}
+  </style>
+</head>
 
-			<footer class="footer">
-			  <div class="container">
-						<span class="">URL: <a href="${remDiagUrl}">${remDiagUrl}</a></span>
-			  </div>
-			</footer>
-			</body>
+<body>
+ <div class="container">
+  <div class="page-header">
+   <div class="centerText">
+    <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png">NST Diagnostics</img></h2>
+   </div>
+   <div class="panel panel-primary">
+    <div class="panel-heading">
+     <h1 class="panel-title">Install Details:</h1>
+    </div>
+    <div class="panel-body">
+     <p>Manager: ${textVersion()}</p>
+     <p>Install ID: ${atomicState?.installationId}</p>
+    </div>
+   </div>
+
+   <div class="panel panel-success">
+    <div class="panel-heading">
+     <h1 class="panel-title">Shortcuts</h1>
+    </div>
+    <div class="panel-body">
+     <p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
+     <p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
+     <p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
+     <p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
+    </div>
+   </div>
+  </div>
+
+  <footer class="footer">
+   <div class="well well-sm centerText">
+    <div class="footerText">Use This Url in your Browser:</div>
+    <div class="footerText"><a href="${remDiagUrl}">Link</a></div>
+
+   </div>
+   <div class="container">
+
+   </div>
+  </footer>
+</body>
 		"""
 /* """ */
 		render contentType: "text/html", data: html
