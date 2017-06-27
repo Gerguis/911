@@ -8174,13 +8174,11 @@ def renderDeviceData() {
 				<div>
 					<h1>Manager Settings Data</h1>
 					<div>
-						<p>${setDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
 						<br></br>
+						<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
 						<br></br>
-						<p>${stateDesc.toString().replaceAll("\n", "<br></br>")}</p>
-						<br></br>
-						<br></br>
-						<p>${metaDesc.toString().replaceAll("\n", "<br></br>")}</p>
+						<p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
 					</div>
 				</div>
 			</body>
