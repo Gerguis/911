@@ -7944,30 +7944,88 @@ def renderLogData() {
 
 def renderDiagUrl() {
 	try {
+		def remDiagUrl = getAppEndpointUrl("renderDiagUrl")
 		def logUrl = getAppEndpointUrl("renderLogData")
 		def managerUrl = getAppEndpointUrl("renderManagerData")
 		def autoUrl = getAppEndpointUrl("renderAutomationData")
 		def deviceUrl = getAppEndpointUrl("renderDeviceData")
 		def html = """
-			<head>
-				<style>
-					.center { text-align: center; font-size: 3.5vw;}
-					.links { padding: 10px; font-size: 4.4vw; }
-				</style>
+		<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+			<meta name="description" content="NST Diagnostics">
+			<meta name="author" content="Anthony S.">
+			<link rel="icon" href="../../favicon.ico">
+
+			<title>NST Diagnostics</title>
+			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+			<style>
+				html {
+					position: relative;
+					min-height: 100%;
+				}
+				body {
+					/* Margin bottom by footer height */
+					margin-bottom: 60px;
+				}
+
+				.container {
+					width: auto;
+					max-width: 680px;
+					padding: 0 15px;
+				}
+
+				.centerText {
+					text-align: center;
+					font-size: 3.5vw;
+				}
+				.links {
+					padding: 10px;
+					font-size: 4.4vw;
+				}
+				.footer {
+					position: absolute;
+					bottom: 0;
+					width: 100%;
+					/* Set the fixed height of the footer here */
+					height: 60px;
+					line-height: 60px; /* Vertically center the text there */
+					background-color: #f5f5f5;
+				}
+			 .logoIcn {
+				 width: 48px;
+				 height: 48px;
+			 }
+			</style>
 			</head>
+
 			<body>
-				<div class="center">
-					<h1>Remote Diagnostic Links</h1>
-					<div class="center">
-						<a class="links" href="${logUrl}">View Log Data</a>
-						<br></br>
-					  	<a class="links" href="${managerUrl}">All Manager Data</a>
-						<br></br>
-						<a class="links" href="${autoUrl}">All Automation Data</a>
-						<br></br>
-						<a class="links" href="${deviceUrl}">All Device Data</a>
-					</div>
-				</div>
+			<div class="centerText">
+				<h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png">NST Diagnostics</img></h2>
+			</div>
+			<div class="row">
+				<div class="col-md-4">.col-md-4</div>
+				<div class="col-md-4">.col-md-4</div>
+				<div class="col-md-4">.col-md-4</div>
+			  </div>
+			<div>
+				<a class="links" href="${logUrl}">View Log Data</a>
+				<br></br>
+				<a class="links" href="${managerUrl}">Manager Data</a>
+				<br></br>
+				<a class="links" href="${autoUrl}">Automation Data</a>
+				<br></br>
+				<a class="links" href="${deviceUrl}">Device Data</a>
+			</div>
+
+			<footer class="footer">
+			  <div class="container">
+						<span class="">URL: <a href="${remDiagUrl}">${remDiagUrl}</a></span>
+			  </div>
+			</footer>
 			</body>
 		"""
 		render contentType: "text/html", data: html

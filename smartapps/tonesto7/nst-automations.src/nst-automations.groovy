@@ -7456,7 +7456,7 @@ def getRemLogData() {
 		def tf = new SimpleDateFormat("h:mm:ss a")
 		tf.setTimeZone(getTimeZone())
 		if(logData?.size() > 0) {
-			logData?.each { logItem ->
+			logData?.sort { it?.dt }.reverse()?.each { logItem ->
 				def tCls = ""
 				switch(logItem?.type) {
 					case "info":
