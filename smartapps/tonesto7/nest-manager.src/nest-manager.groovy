@@ -3203,7 +3203,7 @@ def postCmd() {
 }
 
 def getApiData(type = null) {
-	LogTrace("getApiData($type)")
+	//LogTrace("getApiData($type)")
 	LogAction("getApiData($type)", "info", false)
 	def result = false
 	if(!type || !atomicState?.authToken) { return result }
@@ -5371,7 +5371,7 @@ def webResponse(resp, data) {
 		def t0 = atomicState?.appData
 		def t1 = t0?.token
 		newdata["token"] = t1
-		LogTrace("webResponse Resp: ${newdata}")
+		//LogTrace("webResponse Resp: ${newdata}")
 		LogTrace("webResponse appData: ${t0}")
 		if(newdata && t0 != newdata) {
 			LogAction("appData.json File HAS Changed", "info", true)
@@ -5599,7 +5599,7 @@ def isCodeUpdateAvailable(newVer, curVer, type) {
 			result = (latestVer == newVer) ? true : false
 		}
 	}
-	LogTrace("type: $type | newVer: $newVer | curVer: $curVer | newestVersion: ${latestVer} | result: $result")
+	LogTrace("isCodeUpdateAvailable: type: $type | newVer: $newVer | curVer: $curVer | newestVersion: ${latestVer} | result: $result")
 	return result
 }
 
