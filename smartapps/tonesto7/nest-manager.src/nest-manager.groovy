@@ -7517,7 +7517,7 @@ def managAppDataPage() {
 				paragraph title: "Settings Data", "${getMapDescStr(getSettings())}"
 			}
 			if(settings?.managAppPageShowState == true || settings?.managAppPageShowState == null) {
-				def data = getState()?.findAll { !(it?.key in atomicState?.diagManagAppStateFilters) }
+				def data = getState()?.sort()?.findAll { !(it?.key in atomicState?.diagManagAppStateFilters) }
 				paragraph title: "State Data", "${getMapDescStr(data)}"
 			}
 			if(settings?.managAppPageShowMeta == true || settings?.managAppPageShowMeta == null) {
@@ -7559,7 +7559,7 @@ def childAppDataPage() {
 					if(selApp == cApp?.getId()) {
 						section("${strCapitalize(cApp?.getLabel())}:") {
 							if(settings?.childAppPageShowState == true || settings?.childAppPageShowState == null) {
-								def data = cApp?.getState()?.findAll { !(it?.key in atomicState?.diagChildAppStateFilters) }
+								def data = cApp?.getState()?.sort()?.findAll { !(it?.key in atomicState?.diagChildAppStateFilters) }
 								paragraph title: "State Data", "${getMapDescStr(data)}"
 							}
 							if(settings?.childAppPageShowSet == true || settings?.childAppPageShowSet == null) {
@@ -7675,7 +7675,7 @@ def getMapDescStr(data) {
 	def cnt = 1
 	data?.sort()?.each { par ->
 		if(par?.value instanceof Map || par?.value instanceof List || par?.value instanceof ArrayList) {
-			str += "${cnt>1 ? "\n\n" : ""} • ${par?.key.toString()}:"
+			str += "${cnt>1 ? "\n" : ""} • ${par?.key.toString()}:"
 			if(par?.value instanceof Map) {
 				def map2 = par?.value
 				def cnt2 = 1
@@ -7741,9 +7741,9 @@ def getMapDescStr(data) {
 					cnt2 = cnt2+1
 				}
 			}
-		} //else {
-		// 	str += "${cnt>1 ? "\n\n" : "\n"} • ${par?.key.toString()}: (${par?.value})"
-		// }
+		} else {
+			str += "${cnt>1 ? "\n" : "\n"} • ${par?.key.toString()}: (${par?.value})"
+		}
 		cnt = cnt+1
 	}
 	//log.debug "str: $str"
@@ -8074,6 +8074,7 @@ def renderDiagUrl() {
 			</footer>
 			</body>
 		"""
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
 }
@@ -8081,7 +8082,10 @@ def renderDiagUrl() {
 def renderManagerData() {
 	try {
 		def setDesc = getMapDescStr(getSettings())
-		def stateDesc = getMapDescStr(getState()?.findAll())
+		def noShow = ["authToken", "accessToken"]
+		def t1 = getState()?.findAll { !(it?.key in noShow) }
+		def t0 = t1?.sort()?.findAll()
+		def stateDesc = getMapDescStr(t0)
 		def metaDesc = getMapDescStr(getMetadata())
 		def html = """
 			<head>
@@ -8144,6 +8148,7 @@ def renderAutomationData() {
 			"""
 		}
 		html += """</body>"""
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderAutomationData Exception:", ex }
 }
@@ -8151,7 +8156,10 @@ def renderAutomationData() {
 def renderDeviceData() {
 	try {
 		def setDesc = getMapDescStr(getSettings())
-		def stateDesc = getMapDescStr(getState()?.findAll())
+		def noShow = ["authToken", "accessToken"]
+		def t1 = getState()?.findAll { !(it?.key in noShow) }
+		def t0 = t1?.sort()?.findAll()
+		def stateDesc = getMapDescStr(t0)
 		def metaDesc = getMapDescStr(getMetadata())
 		def html = """
 			<head>
@@ -8176,7 +8184,7 @@ def renderDeviceData() {
 			</body>
 		"""
 		render contentType: "text/html", data: html
-	} catch (ex) { log.error "renderManagerData Exception:", ex }
+	} catch (ex) { log.error "renderDeviceData Exception:", ex }
 }
 
 def sendInstallData() {
