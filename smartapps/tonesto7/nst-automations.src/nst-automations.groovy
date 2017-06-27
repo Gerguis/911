@@ -240,7 +240,7 @@ def fixState() {
 */
 	} else {
 		if(!atomicState?.resetAllData && parent?.settings?.resetAllData) { // automation cleanup called from update() -> initAutoApp()
-			def data = getState()?.findAll { !(it?.key in [ "automationType", "disableAutomation", "oldremSenTstat", "leakWatRestoreMode", "conWatRestoreMode", "extTmpRestoreMode", "extTmpTstatOffRequested", "conWatTstatOffRequested", "leakWatTstatOffRequested", "resetAllData", "extTmpLastDesiredTemp", "restoreId", "restoredFromBackup", "restoreCompleted", "automationTypeFlag", "newAutomationFile", "installData" ]) }
+			def data = getState()?.findAll { !(it?.key in [ "automationType", "disableAutomation", "oldremSenTstat", "leakWatRestoreMode", "conWatRestoreMode", "extTmpRestoreMode", "extTmpTstatOffRequested", "conWatTstatOffRequested", "leakWatTstatOffRequested", "resetAllData", "extTmpLastDesiredTemp", "restoreId", "restoredFromBackup", "restoreCompleted", "automationTypeFlag", "newAutomationFile", "installData", "remDiagLogDataStore" ]) }
 //  "watchDogAlarmActive", "extTmpAlarmActive", "conWatAlarmActive", "leakWatAlarmActive",
 			data.each { item ->
 				state.remove(item?.key.toString())
@@ -7435,12 +7435,17 @@ def savetoRemDiagChild(List newdata) {
 	//LogTrace("savetoRemDiagChild($msg, $type, $logSrcType)")
 	if(atomicState?.automationType == "remDiag") {
 		def stateSz = getStateSizePerc()
-		if(stateSz >= 90) {
+		if(stateSz >= 85) {
 			// this is log.xxxx to avoid looping/recursion
 			log.warn "savetoRemDiagChild: log storage trimming state size is ${getStateSizePerc()}%"
 		}
 		if(newdata?.size() > 0) {
 			def data = atomicState?.remDiagLogDataStore ?: []
+			while(stateSz >= 80) {
+				data.remove(0)
+				atomicState?.remDiagLogDataStore = data
+				stateSz = getStateSizePerc()
+			}
 			newdata?.each { logItem ->
 				data << logItem
 				//log.debug "item: $logItem"
@@ -7448,7 +7453,7 @@ def savetoRemDiagChild(List newdata) {
 			}
 			atomicState?.remDiagLogDataStore = data
 			stateSz = getStateSizePerc()
-			while(stateSz >= 90) {
+			while(stateSz >= 85) {
 				data.remove(0)
 				atomicState?.remDiagLogDataStore = data
 				stateSz = getStateSizePerc()
