@@ -7441,7 +7441,7 @@ def savetoRemDiagChild(List newdata) {
 		}
 		if(newdata?.size() > 0) {
 			def data = atomicState?.remDiagLogDataStore ?: []
-			while(stateSz >= 80) {
+			while(data && stateSz >= 80) {
 				data.remove(0)
 				atomicState?.remDiagLogDataStore = data
 				stateSz = getStateSizePerc()
@@ -7453,7 +7453,7 @@ def savetoRemDiagChild(List newdata) {
 			}
 			atomicState?.remDiagLogDataStore = data
 			stateSz = getStateSizePerc()
-			while(stateSz >= 85) {
+			while(data && stateSz >= 85) {
 				data.remove(0)
 				atomicState?.remDiagLogDataStore = data
 				stateSz = getStateSizePerc()
