@@ -7431,7 +7431,7 @@ def devPageFooter(var, eTime) {
 
 def askAlexaImgUrl() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/AskAlexa512.png" }
 
-def savetoRemDiagChild(Map newdata) {
+def savetoRemDiagChild(List newdata) {
 	//LogTrace("savetoRemDiagChild($msg, $type, $logSrcType)")
 	if(atomicState?.automationType == "remDiag") {
 		def stateSz = getStateSizePerc()
