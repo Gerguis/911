@@ -7437,8 +7437,7 @@ def savetoRemDiagChild(List newdata) {
 		def stateSz = getStateSizePerc()
 		if(stateSz >= 90) {
 			// this is log.xxxx to avoid looping/recursion
-			log.warn "savetoRemDiagChild: log storage suspended state size is ${getStateSizePerc()}%"
-			return
+			log.warn "savetoRemDiagChild: log storage trimming state size is ${getStateSizePerc()}%"
 		}
 		if(newdata?.size() > 0) {
 			def data = atomicState?.remDiagLogDataStore ?: []
@@ -7449,6 +7448,11 @@ def savetoRemDiagChild(List newdata) {
 			}
 			atomicState?.remDiagLogDataStore = data
 			stateSz = getStateSizePerc()
+			while(stateSz >= 90) {
+				data.remove(0)
+				atomicState?.remDiagLogDataStore = data
+				stateSz = getStateSizePerc()
+			}
 			log.debug "(${data?.size()} | State: ${stateSz}%)"
 		} else { log.error "bad call to savetoRemDiagChild - no data" }
 	} else { Logger("bad call to savetoRemDiagChild - wrong automation") }
