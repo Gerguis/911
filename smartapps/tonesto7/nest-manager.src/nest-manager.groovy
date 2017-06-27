@@ -1594,7 +1594,7 @@ def remoteDiagPage () {
 			def tf = new SimpleDateFormat(formatVal)
 			if(getTimeZone()) { tf.setTimeZone(getTimeZone()) }
 			paragraph title: "How will this work?", "Once enabled this SmartApp will create a child app to store your logs in this diagnostic app and you will share the url with the developer.  Turn off to remove the diag app and all data."
-			paragraph "This will automatically turn off 2 hours"
+			paragraph "This will automatically turn off 48 hours"
 			input (name: "enRemDiagLogging", type: "bool", title: "Enable Remote Diag?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("diagnostic_icon.png"))
 		}
 		remDiagProcChange(diagAllowed, settings?.enRemDiagLogging)
@@ -1623,20 +1623,32 @@ def getRemDiagApp() {
 }
 
 void remDiagProcChange(diagAllowed, setOn) {
+	def doInit = false
 	if(diagAllowed && setOn) {
 		def remDiagApp = getRemDiagApp()
 		if(!atomicState?.enRemDiagLogging && atomicState?.remDiagLogActivatedDt == null) {
 			LogAction("Remote Diagnostic Logs activated", "info", true)
 			atomicState?.enRemDiagLogging = true
 			atomicState?.remDiagLogActivatedDt = getDtNow()
-			initRemDiagApp()
+			doInit = true
 		}
 	} else {
 		if(atomicState?.remDiagLogActivatedDt != null && (!diagAllowed || !setOn)) {
 			LogAction("Remote Diagnostic Logs deactivated", "info", true)
 			atomicState?.enRemDiagLogging = false
 			atomicState?.remDiagLogActivatedDt = null	// require toggle off then on again to force back on after timeout
+			doInit = true
 		}
+	}
+	if(doInit) {
+		initRemDiagApp()
+		def cApps = getChildApps()?.findAll { !(it?.getAutomationType() == "remDiag") }
+		if(cApps) {
+			cApps?.sort()?.each { chld ->
+				chld?.update()
+			}
+		}
+		atomicState.forceChildUpd = true
 	}
 }
 
@@ -2322,7 +2334,7 @@ def uninstManagerApp() {
 				atomicState?.installationId = null
 			}
 			//If any client related data exists on firebase it will be removed
-			clearRemDiagData(true)
+			//clearRemDiagData(true)
 			clearAllAutomationBackupData()
 			//Revokes Smartthings endpoint token
 			revokeAccessToken()
@@ -6687,19 +6699,53 @@ def Logger(msg, type, logSrc=null) {
 				break
 		}
 		//log.debug "Logger remDiagTest: $msg | $type | $logSrc"
-		def remDiagApp = getRemDiagApp()
-		if(atomicState?.enRemDiagLogging && remDiagApp) {
-			remDiagApp?.saveLogtoRemDiagStore(themsg, type, logSrc)
-		}
+		saveLogtoRemDiagStore(themsg, type, logSrc)
 	}
 	else { log.error "${labelstr}Logger Error - type: ${type} | msg: ${msg} | logSrc: ${logSrc}" }
 }
 
 def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
-	LogTrace("saveLogtoRemDiagStore($msg, $type, $logSrcType)")
-	def remDiagApp = getRemDiagApp()
-	if(atomicState?.appData?.database?.allowRemoteDiag && atomicState?.enRemDiagLogging && remDiagApp) {
-		remDiagApp?.saveLogtoRemDiagStore(msg, type, logSrcType)
+	//log.trace "saveLogtoRemDiagStore($msg, $type, $logSrcType)"
+	if(getStateSizePerc() >= 90) {
+		log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
+		return
+	}
+	def data = atomicState?.remDiagLogDataStore ?: []
+	def item = ["dt":getDtNow().toString(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
+	data << item
+	atomicState?.remDiagLogDataStore = data
+
+	if(atomicState?.remDiagLogDataStore?.size() > 20 || getLastRemDiagSentSec() > 120 || getStateSizePerc() >= 75) {
+		//sendRemDiagData()
+		def remDiagApp = getRemDiagApp()
+		if(atomicState?.appData?.database?.allowRemoteDiag && atomicState?.enRemDiagLogging && remDiagApp) {
+			remDiagApp?.savetoRemDiagChild(data)
+		}
+		atomicState?.remDiagLogDataStore = []
+		atomicState?.remDiagDataSentDt = getDtNow()
+	}
+
+	if(atomicState?.enRemDiagLogging) {
+		def turnOff = false
+		def reasonStr = ""
+		if(getRemDiagActSec() > (3600 * 48)) {
+			turnOff = true
+			reasonStr += "was active for last 48 hours "
+		}
+		if(!atomicState?.appData?.database?.allowRemoteDiag) {
+			turnOff = true
+			reasonStr += "appData does not allow"
+		}
+		if(turnOff) {
+			settingUpdate("enRemDiagLogging", "false","bool")
+			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
+			def diagAllowed = atomicState?.appData?.database?.allowRemoteDiag == true ? true : false
+			remDiagProcChange(diagAllowed, settings?.enRemDiagLogging)
+			def kdata = getState()?.findAll { (it?.key in ["enRemDiagLogging", "remDiagLogActivatedDt", "remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt" ]) }
+			data.each { kitem ->
+				state.remove(kitem?.key.toString())
+			}
+		}
 	}
 }
 
