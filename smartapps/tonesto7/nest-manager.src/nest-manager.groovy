@@ -1625,7 +1625,6 @@ def getRemDiagApp() {
 void remDiagProcChange(diagAllowed, setOn) {
 	def doInit = false
 	if(diagAllowed && setOn) {
-		def remDiagApp = getRemDiagApp()
 		if(!atomicState?.enRemDiagLogging && atomicState?.remDiagLogActivatedDt == null) {
 			LogAction("Remote Diagnostic Logs activated", "info", true)
 			atomicState?.enRemDiagLogging = true
@@ -2378,8 +2377,10 @@ def initRemDiagApp() {
 	LogTrace("initRemDiagApp")
 	def remDiagApp = getChildApps()?.findAll { it?.getAutomationType() == "remDiag" }
 	def keepApp = atomicState?.enRemDiagLogging == true ? true : false
-	if(!keepApp) {
+	if(!keepApp && enRemDiagLogging) {
 		settingUpdate("enRemDiagLogging", "false","bool")
+		def diagAllowed = atomicState?.appData?.database?.allowRemoteDiag == true ? true : false
+		remDiagProcChange(diagAllowed, settings?.enRemDiagLogging)
 	}
 	if(keepApp && remDiagApp?.size() < 1) {
 		LogAction("Installing Remote Diag App", "info", true)
@@ -6919,7 +6920,7 @@ def getCameraChildName()	{ return getChildName("Nest Camera") }
 
 def getAutoAppChildName()	{ return getChildName(autoAppName()) }
 def getWatDogAppChildName()	{ return getChildName("Nest Location ${location.name} Watchdog") }
-def getRemDiagAppChildName(){ return getChildName("NST Diagnostics") }
+def getRemDiagAppChildName()	{ return getChildName("NST Diagnostics") }
 
 def getChildName(str)		{ return "${str}${appDevName()}" }
 
