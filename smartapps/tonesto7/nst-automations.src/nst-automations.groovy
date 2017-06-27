@@ -581,8 +581,7 @@ def initAutoApp() {
 	def restoreComplete = settings["restoreCompleted"] == true ? true : false
 	if(settings["watchDogFlag"]) {
 		atomicState?.automationType = "watchDog"
-	}
-	if(settings["remDiagFlag"]) {
+	} else if(settings["remDiagFlag"]) {
 		// if(!atomicState?.accessToken) { getAccessToken() }
 		atomicState?.automationType = "remDiag"
 		// atomicState?.endpointUrl = getAppEndpointUrl(null)
@@ -7432,21 +7431,27 @@ def devPageFooter(var, eTime) {
 
 def askAlexaImgUrl() { return "https://raw.githubusercontent.com/MichaelStruck/SmartThingsPublic/master/smartapps/michaelstruck/ask-alexa.src/AskAlexa512.png" }
 
-def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
-	LogTrace("saveLogtoRemDiagStore($msg, $type, $logSrcType)")
+def savetoRemDiagChild(Map newdata) {
+	//LogTrace("savetoRemDiagChild($msg, $type, $logSrcType)")
 	if(atomicState?.automationType == "remDiag") {
 		def stateSz = getStateSizePerc()
 		if(stateSz >= 90) {
 			// this is log.xxxx to avoid looping/recursion
-			log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
+			log.warn "savetoRemDiagChild: log storage suspended state size is ${getStateSizePerc()}%"
 			return
 		}
-		def data = atomicState?.remDiagLogDataStore ?: []
-		def item = ["dt":getDtNow(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
-		data << item
-		log.debug "(${data?.size()} | State: ${stateSz}%) | item: $item"
-		atomicState?.remDiagLogDataStore = data
-	}
+		if(newdata?.size() > 0) {
+			def data = atomicState?.remDiagLogDataStore ?: []
+			newdata?.each { logItem ->
+				data << logItem
+				//log.debug "item: $logItem"
+				//def item = ["dt":getDtNow(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
+			}
+			atomicState?.remDiagLogDataStore = data
+			stateSz = getStateSizePerc()
+			log.debug "(${data?.size()} | State: ${stateSz}%)"
+		} else { log.error "bad call to savetoRemDiagChild - no data" }
+	} else { Logger("bad call to savetoRemDiagChild - wrong automation") }
 }
 
 def getRemLogData() {
