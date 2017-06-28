@@ -1,0 +1,36 @@
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    /* Margin bottom by footer height */
+    margin-bottom: 20px;
+}
+
+.container {
+    width: 97%;
+    padding: 0 15px;
+}
+
+.centerText {
+    text-align: center;
+}
+
+.logoIcn {
+    width: 48px;
+    height: 48px;
+}
+
+.clearfix:before, .clearfix:after {
+    content: " ";
+    display: table;
+}
+
+.clearfix:after {
+    clear: both;
+}
+
+.clearfix {
+    *zoom: 1;
+}

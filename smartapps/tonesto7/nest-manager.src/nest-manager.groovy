@@ -37,7 +37,7 @@ definition(
 include 'asynchttp_v1'
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "6-27-2017" }
+def appVerDate() { "6-28-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -108,13 +108,15 @@ mappings {
 		path("/oauth/initialize") 	{action: [GET: "oauthInitUrl"]}
 		path("/oauth/callback") 	{action: [GET: "callback"]}
 		//Renders Json Data
+
+		path("/renderDiagUrl")		{action: [GET: "renderDiagUrl"]}
 		if(atomicState?.enRemDiagLogging == true) {
-			path("/renderDiagUrl")		{action: [GET: "renderDiagUrl"]}
 			path("/renderLogData")		{action: [GET: "renderLogData"]}
-			path("/renderManagerData")	{action: [GET: "renderManagerData"]}
-			path("/renderAutomationData")	{action: [GET: "renderAutomationData"]}
-			path("/renderDeviceData")	{action: [GET: "renderDeviceData"]}
 		}
+		path("/renderManagerData")	{action: [GET: "renderManagerData"]}
+		path("/renderAutomationData")	{action: [GET: "renderAutomationData"]}
+		path("/renderDeviceData")	{action: [GET: "renderDeviceData"]}
+
 		path("/renderInstallId")		{action: [GET: "renderInstallId"]}
 		path("/renderInstallData")	{action: [GET: "renderInstallData"]}
 		path("/receiveEventData") 	{action: [POST: "receiveEventData"]}
@@ -1645,7 +1647,7 @@ void remDiagProcChange(diagAllowed, setOn, initCalled = false) {
 			state.remove(kitem?.key.toString())
 		}
 		if(!initCalled) {
-			initRemDiagApp() 
+			initRemDiagApp()
 			def cApps = getChildApps()?.findAll { !(it?.getAutomationType() == "remDiag") }
 			if(cApps) {
 				cApps?.sort()?.each { chld ->
@@ -8003,135 +8005,97 @@ def renderDiagUrl() {
 		def managerUrl = getAppEndpointUrl("renderManagerData")
 		def autoUrl = getAppEndpointUrl("renderAutomationData")
 		def deviceUrl = getAppEndpointUrl("renderDeviceData")
+		def sPerc = getStateSizePerc() ?: 0
 		def html = """
 		<head>
- <meta charset="utf-8">
- <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
- <meta name="description" content="NST Diagnostics">
- <meta name="author" content="Anthony S.">
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+			<meta name="description" content="NST Diagnostics">
+			<meta name="author" content="Anthony S.">
+			<title>NST Diagnostics</title>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
- <title>NST Diagnostics</title>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
- <link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+			<link rel="stylesheet" href="https://cdn.rawgit.com/toubou91/percircle/master/dist/css/percircle.css">
+			<script src="https://cdn.rawgit.com/toubou91/percircle/master/dist/js/percircle.js"></script>
+			<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaghomepage.min.css">
+			<style>
 
- <style>
-	html {
-	  position: relative;
-	  min-height: 100%;
-	}
-	body {
-	  /* Margin bottom by footer height */
-	  margin-bottom: 60px;
-	}
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<div class="page-header centerText" style="margin: 10px;">
+			   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Diagnostics</img></h2>
+			   	</div>
+			   	<!--First Panel Section -->
+			   	<div class="panel panel-primary">
+					<!--First Panel Section Heading-->
+			   		<div class="panel-heading">
+			    		<h1 class="panel-title">Install Details:</h1>
+			   		</div>
+			   		<!--First Panel Section Body -->
+					<div class="panel-body">
+						<!--First Panel Section Body Row 1-->
+			    		<div class="row" style="min-height: 100px;">
+			     			<!--First Panel Section Body Row 1 - Col1 -->
+							<div class="col-xs-6">
+						   		<p><b>Manager Version:</b> ${appVersion()}</p>
+						   		<p><b>Install Id:</b> ${atomicState?.installationId}</p>
+							</div>
+							<!--First Panel Section Body Row 1 - Col2 -->
+		     				<div class="col-xs-6">
+								<div style="float: right;">
+									<div class="stateUseTitleText">State Usage</div>
+		      						<div id="stateUseCirc" data-percent="42" data-text="<p class='stateUseCircText'>42%</p>" class="small blue2 center"></div>
+		     					</div>
+		    				</div>
+		   				</div>
 
-	.container {
-	  width: auto;
-	  max-width: 800px;
-	  padding: 0 15px;
-	}
+			 			<hr/>
+						<!--First Panel Section Body Row 2 -->
+				 		<div class="row" style="min-height: 100px;">
+							<!--First Panel Section Body Row 2 - Col 1 -->
+							<div class="col-xs-12">
+								<div class="centerText">
+						 			<p>More Data Coming Soon...</p>
+					 			</div>
+		   					</div>
+		  				</div>
+					</div>
+				</div>
 
-	.centerText {
-	  text-align: center;
-	  font-size: 3.5vw;
-	}
-	.links {
-	  padding: 10px;
-	  font-size: 18px;
-	}
-	.footer {
-	  position: absolute;
-	  bottom: 0;
-	  width: 100%;
-	  max-width: 800px;
-	  /* Set the fixed height of the footer here */
-	  height: 60px;
-	  line-height: 60px; /* Vertically center the text there */
-	  background-color: #f5f5f5;
-	}
-	.footerText {
-	  font-size: 14px;
-	}
+				<!--Second Panel Section -->
+		  		<div class="panel panel-default">
+		   			<div class="panel-heading">
+		    			<h1 class="panel-title">Shortcuts</h1>
+		   			</div>
+		   			<div class="panel-body">
+			     		<p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
+				     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
+				     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
+				     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
+			    	</div>
+			   	</div>
 
-	.logoIcn {
-	  width: 48px;
-	  height: 48px;
-	}
+				<footer class="footer">
+					<div class="container">
+	   					<div class="well well-sm footerText">
+							<span>External Access URL: <a href="${remDiagUrl}">Link</a></span>
+			    		</div>
+					</div>
+			  	</footer>
 
-	.shortcutBtns {
-	  width: 140px;
-	}
-	.stateUseFooter {
-	  text-align: center;
-	  font-weight: bold;
-	}
-	.progress{width:100px;height:100px;line-height:150px;background:0;margin:0 auto;box-shadow:none;position:relative}.progress:after{content:"";width:100%;height:100%;border-radius:50%;border:12px solid #fff;position:absolute;top:0;left:0}.progress>span{width:50%;height:100%;overflow:hidden;position:absolute;top:0;z-index:1}.progress .progress-left{left:0}.progress .progress-bar{width:100%;height:100%;background:0;border-width:12px;border-style:solid;position:absolute;top:0}.progress .progress-left .progress-bar{left:100%;border-top-right-radius:80px;border-bottom-right-radius:80px;border-left:0;-webkit-transform-origin:center left;transform-origin:center left}.progress .progress-right{right:0}.progress .progress-right .progress-bar{left:-100%;border-top-left-radius:80px;border-bottom-left-radius:80px;border-right:0;-webkit-transform-origin:center right;transform-origin:center right;animation:loading-1 1.8s linear forwards}.progress .progress-value{width:90%;height:90%;border-radius:50%;background:#44484b;font-size:18px;color:#fff;line-height:95px;text-align:center;position:absolute;top:5%;left:5%}.progress.blue .progress-bar{border-color:#049dff}.progress.blue .progress-left .progress-bar{animation:loading-2 1.5s linear forwards 1.8s}.progress.yellow .progress-bar{border-color:#fdba04}.progress.yellow .progress-left .progress-bar{animation:loading-3 1s linear forwards 1.8s}.progress.pink .progress-bar{border-color:#ed687c}.progress.pink .progress-left .progress-bar{animation:loading-4 .4s linear forwards 1.8s}.progress.green .progress-bar{border-color:#1abc9c}.progress.green .progress-left .progress-bar{animation:loading-5 1.2s linear forwards 1.8s}@keyframes loading-1{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(180deg);transform:rotate(180deg)}}@keyframes loading-2{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(144deg);transform:rotate(144deg)}}@keyframes loading-3{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(90deg);transform:rotate(90deg)}}@keyframes loading-4{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(36deg);transform:rotate(36deg)}}@keyframes loading-5{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(126deg);transform:rotate(126deg)}}@media only screen and (max-width:990px){.progress{margin-bottom:20px}}
-  </style>
-</head>
-
-<body>
- <div class="container">
-  <div class="page-header">
-   <div class="centerText">
-    <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Diagnostics</img></h2>
-   </div>
-   <div class="panel panel-primary">
-    <div class="panel-heading">
-     <h1 class="panel-title">Install Details:</h1>
-    </div>
-    <div class="panel-body">
-		<!-- Columns start at 50% wide on mobile and bump up to 33.3% wide on desktop -->
-		<div class="row">
-		  <div class="col-xs-6 col-md-4">
-		   <p><b>Manager</b> ${textVersion()}</p>
-		   <p><b>Install ID:</b> ${atomicState?.installationId}</p>
-		  </div>
-		  <div class="col-xs-6 col-md-4">
-
-		  </div>
-		  <div class="col-xs-6 col-md-4">
-	  		<div class="progress blue">
-		       <span class="progress-left">
-				 <span class="progress-bar"></span>
-		       </span>
-		       <span class="progress-right">
-				 <span class="progress-bar"></span>
-		       </span>
-		       <div class="progress-value">${getStateSizePerc()}%</div>
-		    </div>
-		    <p class="stateUseFooter">State Usage</p>
-		  </div>
-		</div>
-    </div>
-   </div>
-
-   <div class="panel panel-default">
-    <div class="panel-heading">
-     <h1 class="panel-title">Shortcuts</h1>
-    </div>
-    <div class="panel-body">
-     <p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
-     <p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
-     <p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
-     <p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
-    </div>
-   </div>
-  </div>
-
-  <footer class="footer">
-   <div class="well well-sm centerText">
-    <div class="footerText">Use This Url in your Browser:</div>
-    <div class="footerText"><a href="${remDiagUrl}">Link</a></div>
-
-   </div>
-   <div class="container">
-
-   </div>
-  </footer>
-</body>
-		"""
+			  	<script type="text/javascript">
+					\$(function() {
+				    	\$("#stateUseCirc").percircle();
+					});
+			  	</script>
+		  	</div>
+		</body>
+	"""
 /* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
@@ -8156,32 +8120,12 @@ def renderManagerData() {
 				<meta name="author" content="Anthony S.">
 
 				<title>NST Diagnostics - Manager Data</title>
-				 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-				<link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
+				 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagmandatapage.min.css">
 				<style>
-					html {
-					  position: relative;
-					  min-height: 100%;
-					}
-					body {
-					  margin-bottom: 60px;
-					}
-					.container {
-					  width: 97%;
-					  padding: 0 15px;
-					}
-					.centerText {
-					  text-align: center;
-					  font-size: 3.5vw;
-					}
-					.logoIcn {
-					  width: 48px;
-					  height: 48px;
-					}
 				</style>
 			</head>
 			<body>
@@ -8240,35 +8184,13 @@ def renderAutomationData() {
 				<meta name="author" content="Anthony S.">
 
 				<title>NST Diagnostics - Automation Data</title>
-				 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-				<link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagautodatapage.min.css">
 				<style>
-					html {
-					  position: relative;
-					  min-height: 100%;
-					}
-					body {
-					  /* Margin bottom by footer height */
-					  margin-bottom: 60px;
-					}
 
-					.container {
-					  width: 97%;
-					  padding: 0 15px;
-					}
-
-					.centerText {
-					  text-align: center;
-					  font-size: 3.5vw;
-					}
-					.logoIcn {
-					  width: 48px;
-					  height: 48px;
-					}
 				</style>
 			</head>
 			<body>
@@ -8344,35 +8266,13 @@ def renderDeviceData() {
 				<meta name="author" content="Anthony S.">
 
 				<title>NST Diagnostics - Automation Data</title>
-				 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-				<link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagdevdatapage.min.css">
 				<style>
-					html {
-					  position: relative;
-					  min-height: 100%;
-					}
-					body {
-					  /* Margin bottom by footer height */
-					  margin-bottom: 60px;
-					}
 
-					.container {
-					  width: 97%;
-					  padding: 0 15px;
-					}
-
-					.centerText {
-					  text-align: center;
-					  font-size: 3.5vw;
-					}
-					.logoIcn {
-					  width: 48px;
-					  height: 48px;
-					}
 				</style>
 			</head>
 			<body>

@@ -7474,7 +7474,9 @@ def getRemLogData() {
 		def resultStr = ""
 		def tf = new SimpleDateFormat("h:mm:ss a")
 		tf.setTimeZone(getTimeZone())
-		if(logData?.size() > 0) {
+		def logSz = logData?.size() ?: 0
+		if(logSz > 0) {
+			def cnt = 1
 			logData?.sort { it?.dt }.reverse()?.each { logItem ->
 				def tCls = ""
 				switch(logItem?.type) {
@@ -7498,8 +7500,9 @@ def getRemLogData() {
 						break
 				}
 				resultStr += """
-					<br></br><span>${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}: <span class="$tCls">${logItem?.type}</span> | ${logItem?.src.toString().toUpperCase()} | ${logItem?.msg}</span>
+					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logDtCls">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="underline">${logItem?.src.toString().toUpperCase()}</span> <span class="$tCls">${logItem?.type}</span> ${logItem?.msg}</span>
 				"""
+				cnt = cnt+1
 			}
 			return """
 				<head>
@@ -7507,72 +7510,57 @@ def getRemLogData() {
 					<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 					<meta name="description" content="NST Diagnostics - Logs">
 					<meta name="author" content="Anthony S.">
-					<link rel="icon" href="../../favicon.ico">
-
 					<title>NST Diagnostics - Logs</title>
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 					<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
+					<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
+					<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 					<style>
-					.logs { text-align: left; padding: 0, 0; font-size: 14px; }
-					.dtHlt { background-color: #rgb(187, 180, 184); }
-					.label { display: inline; padding: .2em .6em .3em; font-size: 75%; font-weight: bold; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25em; }
-					html {
-					  position: relative;
-					  min-height: 100%;
-					}
-					body {
-					  /* Margin bottom by footer height */
-					  margin-bottom: 60px;
-					}
-
-					.container {
-					  width: auto;
-					  max-width: 98%;
-					  padding: 0 5px;
-					}
-
 					.centerText {
-					  text-align: center;
-					  font-size: 3.5vw;
+						text-align: center;
 					}
-					.links {
-					  padding: 10px;
-					  font-size: 18px;
+
+					.logDtCls {
+						font-weight: bold;
 					}
-					.logoIcn {
-					  width: 48px;
-					  height: 48px;
+
+					.panelHeadTxt {
+						font-size: 25px;
 					}
-					.shortcutBtns {
-					  width: 140px;
+
+					.underline {
+						border-radius: 0.34em;
+						border-style: solid;
+						border-color: gray;
 					}
 					</style>
 				</head>
 				<body>
 					<div class="container">
-					 <div class="page-header">
-					  <div class="centerText">
-					   <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
-					   <h4>This Includes Automations, Device, Manager Logs</h4>
-					  </div>
-					  <div class="panel panel-primary">
-					  <div class="panel-heading">
-					   <div class="row" style="padding: 5px 20px;">
-					   	 <h1 class="panel-title pull-left">Log Stream:</h1>
-						 <button type="button" id="logRfsh" class="btn btn-default btn-sm pull-right" onClick="document.location.reload(true)">
-							 <span class="glyphicon glyphicon-refresh"></span> Refresh
-						 </button>
-					   </div>
-
-			   		  </div>
-					   <div class="panel-body">
-						   <div class="logs">
-							   <p>${resultStr}</p>
-						   </div>
-					   </div>
-					  </div>
+						<div class="page-header centerText" style="margin: 10px;">
+					   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
+					   		<h5>This Includes Automations, Device, Manager Logs</h5>
+						</div>
+					  	<div class="panel panel-primary">
+					  		<div class="panel-heading">
+					   			<div class="row" style="padding: 5px 20px;">
+					   	 			<h2 class="panel-title centerText panelHeadTxt pull-left">Log Stream: (${logSz} Items)</h2>
+						 			<button type="button" id="logRfsh" class="btn btn-default btn-sm pull-right" onClick="document.location.reload(true)">
+							 			<span class="glyphicon glyphicon-refresh"></span> Refresh
+						 			</button>
+					   			</div>
+			   		  		</div>
+					   		<div id="logBody" class="panel-body" style="background-color: #DEDEDE;">
+						   		<div class="logs">
+							   		<p>${resultStr}</p>
+						   		</div>
+					   		</div>
+					  	</div>
+					</div>
+					<script>
+						//\$('body').flowtype();
+					</script>
 				</body>
 			"""
 /* "" */

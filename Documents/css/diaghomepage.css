@@ -1,38 +1,76 @@
-.logs { text-align: left; padding: 0, 0; font-size: 1.4vw; }
-.dtHlt { background-color: #rgb(187, 180, 184); }
-.label { display: inline; padding: .2em .6em .3em; font-size: 75%; font-weight: bold; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25em; }
-.label-info { background-color: #5bc0de; }
-.label-trace { background-color: #777777; }
-.label-warning { background-color: #f0ad4e; }
-.label-debug { background-color: #337ab7; }
-.label-danger { background-color: #d9534f; }
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
+
 body {
-  /* Margin bottom by footer height */
-  margin-bottom: 60px;
+    /* Margin bottom by footer height */
+    margin-bottom: 20px;
 }
 
 .container {
-  width: auto;
-  max-width: 98%;
-  padding: 0 5px;
+    width: auto;
+    max-width: 800px;
+    padding: 0 15px;
 }
 
 .centerText {
-  text-align: center;
-  font-size: 3.5vw;
+    text-align: center;
 }
+
 .links {
-  padding: 10px;
-  font-size: 18px;
+    padding: 10px;
+    font-size: 18px;
 }
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    max-width: 800px;
+    height: 20px;
+    line-height: 20px;
+    padding-bottom: 50px;
+}
+
+.footerText {
+    text-align: center;
+    font-size: 14px;
+}
+
 .logoIcn {
-  width: 48px;
-  height: 48px;
+    width: 48px;
+    height: 48px;
 }
+
 .shortcutBtns {
-  width: 140px;
+    width: 140px;
+}
+
+.stateUseCircText {
+    text-align: center;
+    color: gray;
+    font-size: 18px;
+}
+
+.stateUseTitleText {
+    text-align: center;
+    color: black;
+    font-size: 18px;
+}
+
+.percircle.blue2 .bar, .percircle.blue2 .fill {
+    border-color: #049dff;
+}
+
+.percircle.blue2:hover>span {
+    color: #049dff;
+}
+
+.percircle.blue2.dark .bar, .percircle.blue2.dark .fill {
+    border-color: #049dff;
+}
+
+.percircle.blue2.dark:hover>span {
+    color: #049dff;
 }
