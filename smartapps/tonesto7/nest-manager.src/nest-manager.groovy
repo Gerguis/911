@@ -1622,7 +1622,7 @@ def getRemDiagApp() {
 	return remDiagApp
 }
 
-void remDiagProcChange(diagAllowed, setOn) {
+void remDiagProcChange(diagAllowed, setOn, initCalled = false) {
 	def doInit = false
 	if(diagAllowed && setOn) {
 		if(!atomicState?.enRemDiagLogging && atomicState?.remDiagLogActivatedDt == null) {
@@ -1640,11 +1640,17 @@ void remDiagProcChange(diagAllowed, setOn) {
 		}
 	}
 	if(doInit) {
-		initRemDiagApp()
-		def cApps = getChildApps()?.findAll { !(it?.getAutomationType() == "remDiag") }
-		if(cApps) {
-			cApps?.sort()?.each { chld ->
-				chld?.update()
+		def kdata = getState()?.findAll { (it?.key in ["remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt" ]) }
+		data.each { kitem ->
+			state.remove(kitem?.key.toString())
+		}
+		if(!initCalled) {
+			initRemDiagApp() 
+			def cApps = getChildApps()?.findAll { !(it?.getAutomationType() == "remDiag") }
+			if(cApps) {
+				cApps?.sort()?.each { chld ->
+					chld?.update()
+				}
 			}
 		}
 		atomicState.forceChildUpd = true
@@ -2380,7 +2386,7 @@ def initRemDiagApp() {
 	if(!keepApp && enRemDiagLogging) {
 		settingUpdate("enRemDiagLogging", "false","bool")
 		def diagAllowed = atomicState?.appData?.database?.allowRemoteDiag == true ? true : false
-		remDiagProcChange(diagAllowed, settings?.enRemDiagLogging)
+		remDiagProcChange(diagAllowed, settings?.enRemDiagLogging, true)
 	}
 	if(keepApp && remDiagApp?.size() < 1) {
 		LogAction("Installing Remote Diag App", "info", true)
@@ -6747,10 +6753,6 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
 			def diagAllowed = atomicState?.appData?.database?.allowRemoteDiag == true ? true : false
 			remDiagProcChange(diagAllowed, settings?.enRemDiagLogging)
-			def kdata = getState()?.findAll { (it?.key in ["enRemDiagLogging", "remDiagLogActivatedDt", "remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt" ]) }
-			data.each { kitem ->
-				state.remove(kitem?.key.toString())
-			}
 		}
 	}
 }
