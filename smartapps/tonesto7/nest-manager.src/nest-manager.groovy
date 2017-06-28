@@ -8148,22 +8148,80 @@ def renderManagerData() {
 		def metaDesc = getMapDescStr(getMetadata())
 		def html = """
 			<head>
+				<meta charset="utf-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+				<meta name="description" content="NST Diagnostics">
+				<meta name="author" content="Anthony S.">
+
+				<title>NST Diagnostics - Manager Data</title>
+				 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+				<link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
 				<style>
-					.center { text-align: center; font-size: 3.5vw;}
-					.links { padding: 10px; font-size: 4.4vw; }
+					html {
+					  position: relative;
+					  min-height: 100%;
+					}
+					body {
+					  margin-bottom: 60px;
+					}
+					.container {
+					  width: 97%;
+					  padding: 0 15px;
+					}
+					.centerText {
+					  text-align: center;
+					  font-size: 3.5vw;
+					}
+					.logoIcn {
+					  width: 48px;
+					  height: 48px;
+					}
 				</style>
 			</head>
 			<body>
-				<div>
-					<h1>Manager Settings Data</h1>
-					<div>
-						<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
-						<br></br>
-						<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
-						<br></br>
-						<p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
-					</div>
-				</div>
+			 <div class="container">
+			  <div class="page-header">
+			   <div class="centerText">
+			    <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h2>
+			   </div>
+			  </div>
+			  <div class="panel panel-primary">
+			   <div class="panel-heading">
+			    <h1 class="panel-title">Setting Data:</h1>
+			   </div>
+			   <div class="panel-body">
+			    <div>
+			     <p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
+			    </div>
+			   </div>
+			  </div>
+
+			  <div class="panel panel-primary">
+			   <div class="panel-heading">
+			    <h1 class="panel-title">State Data:</h1>
+			   </div>
+			   <div class="panel-body">
+			    <div>
+			     <p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
+			    </div>
+			   </div>
+			  </div>
+
+			  <div class="panel panel-primary">
+			   <div class="panel-heading">
+			    <h1 class="panel-title">Meta Data:</h1>
+			   </div>
+			   <div class="panel-body">
+			    <div>
+			     <p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
+			    </div>
+			   </div>
+			   <div>
+			   </div>
 			</body>
 		"""
 		render contentType: "text/html", data: html
@@ -8174,35 +8232,101 @@ def renderAutomationData() {
 	try {
 		def html = """
 			<head>
+				<meta charset="utf-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+				<meta name="description" content="NST Diagnostics">
+				<meta name="author" content="Anthony S.">
+
+				<title>NST Diagnostics - Automation Data</title>
+				 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+				<link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
 				<style>
-					.center { text-align: center; font-size: 3.5vw;}
-					.links { padding: 10px; font-size: 2.1vw; }
+					html {
+					  position: relative;
+					  min-height: 100%;
+					}
+					body {
+					  /* Margin bottom by footer height */
+					  margin-bottom: 60px;
+					}
+
+					.container {
+					  width: 97%;
+					  padding: 0 15px;
+					}
+
+					.centerText {
+					  text-align: center;
+					  font-size: 3.5vw;
+					}
+					.logoIcn {
+					  width: 48px;
+					  height: 48px;
+					}
 				</style>
 			</head>
 			<body>
-
+				<div class="container">
+				  <div class="page-header">
+				    <div class="centerText">
+					  <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Device Data</img></h2>
+				    </div>
+				  </div>
 		"""
 		getAllChildApps()?.each { cApp ->
 			def setDesc = getMapDescStr(cApp?.getSettings())
 			def stateDesc = getMapDescStr(cApp?.getState()?.findAll { !(it?.key in ["remDiagLogDataStore"]) })
 			def metaDesc = getMapDescStr(cApp?.getMetadata())
 			html += """
+				  <div class="page-header">
+				   <div class="centerText">
+					<h2>${cApp?.getLabel()}</h2>
+				   </div>
+				  </div>
+				  <div class="panel panel-primary">
+				   <div class="panel-heading">
+					<h1 class="panel-title">Setting Data:</h1>
+				   </div>
+				   <div class="panel-body">
 					<div>
-						<h1>${cApp?.getLabel()} Data</h1>
-						<div>
-							<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
-							<br></br>
-							<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
-							<br></br>
-							<p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
-						</div>
+					 <p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
 					</div>
-					</br>
-					</br>
-					</br>
+				   </div>
+				  </div>
+
+				  <div class="panel panel-primary">
+				   <div class="panel-heading">
+					<h1 class="panel-title">State Data:</h1>
+				   </div>
+				   <div class="panel-body">
+					<div>
+					 <p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
+					</div>
+				   </div>
+				  </div>
+
+				  <div class="panel panel-primary">
+				   <div class="panel-heading">
+					<h1 class="panel-title">Meta Data:</h1>
+				   </div>
+				   <div class="panel-body">
+					<div>
+					 <p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
+					</div>
+				   </div>
+				   <div>
+				 </div>
+			   </div>
 			"""
 		}
-		html += """</body>"""
+		html += """
+			   </div>
+			</body>
+		"""
 /* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderAutomationData Exception:", ex }
@@ -8212,13 +8336,50 @@ def renderDeviceData() {
 	try {
 		def html = """
 			<head>
+				<meta charset="utf-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+				<meta name="description" content="NST Diagnostics">
+				<meta name="author" content="Anthony S.">
+
+				<title>NST Diagnostics - Automation Data</title>
+				 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+				<link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
 				<style>
-					.center { text-align: center; font-size: 3.5vw;}
-					.links { padding: 10px; font-size: 2.1vw; }
+					html {
+					  position: relative;
+					  min-height: 100%;
+					}
+					body {
+					  /* Margin bottom by footer height */
+					  margin-bottom: 60px;
+					}
+
+					.container {
+					  width: 97%;
+					  padding: 0 15px;
+					}
+
+					.centerText {
+					  text-align: center;
+					  font-size: 3.5vw;
+					}
+					.logoIcn {
+					  width: 48px;
+					  height: 48px;
+					}
 				</style>
 			</head>
 			<body>
-
+				<div class="container">
+				  <div class="page-header">
+					<div class="centerText">
+					  <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Device Data</img></h2>
+					</div>
+				  </div>
 		"""
 		def devices = app.getChildDevices(true)
 		devices?.each { dev ->
@@ -8249,28 +8410,73 @@ def renderDeviceData() {
 			def capDesc = getMapDescStr(t0)
 
 			html += """
-					<div>
-						<h1>${dev?.getLabel()} Data</h1>
-						<div>
-							<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
-							<br></br>
-							<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
-							<br></br>
-							<p>${attrDesc.toString().replaceAll("\n", "<br>")}</p>
-							<br></br>
-							<p>${commDesc.toString().replaceAll("\n", "<br>")}</p>
-							<br></br>
-							<p>${capDesc.toString().replaceAll("\n", "<br>")}</p>
-							<br></br>
-						</div>
-					</div>
-					</br>
-					</br>
-					</br>
+				<div class="page-header">
+				 <div class="centerText">
+				  <h2>${dev?.getLabel()}</h2>
+				 </div>
+				</div>
+
+				<div class="panel panel-primary">
+				 <div class="panel-heading">
+				  <h1 class="panel-title">Setting Data:</h1>
+				 </div>
+				 <div class="panel-body">
+				  <div>
+				   <p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
+				  </div>
+				 </div>
+				</div>
+
+				<div class="panel panel-primary">
+				 <div class="panel-heading">
+				  <h1 class="panel-title">State Data:</h1>
+				 </div>
+				 <div class="panel-body">
+				  <div>
+				   <p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
+				  </div>
+				 </div>
+				</div>
+
+				<div class="panel panel-primary">
+				 <div class="panel-heading">
+				  <h1 class="panel-title">Attribute Data:</h1>
+				 </div>
+				 <div class="panel-body">
+				  <div>
+				   <p>${attrDesc.toString().replaceAll("\n", "<br>")}</p>
+				  </div>
+				 </div>
+				</div>
+
+
+			   	<div class="panel panel-primary">
+					<div class="panel-heading">
+					<h1 class="panel-title">Command Data:</h1>
+				  </div>
+				  <div class="panel-body">
+					 <div>
+					  <p>${commDesc.toString().replaceAll("\n", "<br>")}</p>
+					 </div>
+				  </div>
+				</div>
+
+			  <div class="panel panel-primary">
+			   <div class="panel-heading">
+				<h1 class="panel-title">Capability Data:</h1>
+			   </div>
+			   <div class="panel-body">
+				<div>
+				 <p>${capDesc.toString().replaceAll("\n", "<br>")}</p>
+				</div>
+			   </div>
+			  </div>
 			"""
 		}
-		html += """</body>"""
-/* """ */
+		html += """
+			   </div>
+			</body>
+		"""
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDeviceData Exception:", ex }
 }
