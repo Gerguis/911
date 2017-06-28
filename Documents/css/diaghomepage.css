@@ -1,0 +1,53 @@
+html {
+	position: relative;
+	min-height: 100%;
+}
+body {
+	/* Margin bottom by footer height */
+	margin-bottom: 60px;
+}
+
+.container {
+	width: auto;
+	max-width: 800px;
+	padding: 0 15px;
+}
+
+.centerText {
+	text-align: center;
+	font-size: 3.5vw;
+}
+.links {
+	padding: 10px;
+	font-size: 18px;
+}
+.footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	max-width: 800px;
+	/* Set the fixed height of the footer here */
+	height: 20px;
+	line-height: 20px; /* Vertically center the text there */
+	padding: 0;
+}
+.footerText {
+	font-size: 14px;
+}
+
+.logoIcn {
+	width: 48px;
+	height: 48px;
+}
+
+.shortcutBtns {
+	width: 140px;
+}
+.stateUseObj {
+	width: 120px;
+	height: 120px;
+}
+.stateUseText {
+	font-weight: bold;
+	font-size: 13px;
+}
