@@ -1641,7 +1641,7 @@ void remDiagProcChange(diagAllowed, setOn, initCalled = false) {
 	}
 	if(doInit) {
 		def kdata = getState()?.findAll { (it?.key in ["remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt" ]) }
-		data.each { kitem ->
+		kdata.each { kitem ->
 			state.remove(kitem?.key.toString())
 		}
 		if(!initCalled) {
