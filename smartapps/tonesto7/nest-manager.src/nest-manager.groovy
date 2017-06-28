@@ -8184,35 +8184,67 @@ def renderAutomationData() {
 
 def renderDeviceData() {
 	try {
-		def setDesc = getMapDescStr(getSettings())
-		def noShow = ["authToken", "accessToken"]
-		def stData = getState()?.sort()?.findAll { !(it.key in noShow) }
-		def stateData = [:]
-		stData?.sort().each { item ->
-			stateData[item?.key] = item?.value
-		}
-		def stateDesc = getMapDescStr(stateData)
-		def metaDesc = getMapDescStr(getMetadata())
 		def html = """
 			<head>
 				<style>
 					.center { text-align: center; font-size: 3.5vw;}
-					.links { padding: 10px; font-size: 4.4vw; }
+					.links { padding: 10px; font-size: 2.1vw; }
 				</style>
 			</head>
 			<body>
-				<div>
-					<h1>Manager Settings Data</h1>
-					<div>
-						<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
-						<br></br>
-						<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
-						<br></br>
-						<p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
-					</div>
-				</div>
-			</body>
+
 		"""
+		def devices = app.getChildDevices(true)
+		devices?.each { dev ->
+			def setDesc = getMapDescStr(dev?.getSettings())
+
+			def stData = dev?.getState()
+			def stateData = [:]
+			stData?.sort().each { item ->
+				stateData[item?.key] = item?.value
+			}
+			def stateDesc = getMapDescStr(stateData)
+
+			def attrDesc = ""; def cnt = 1
+			def devData = dev?.supportedAttributes.collect { it as String }
+			devData?.sort().each {
+				attrDesc += "${cnt>1 ? "\n\n" : "\n"} • ${"$it" as String}: (${dev.currentValue("$it")})"
+				cnt = cnt+1
+			}
+
+			def commDesc = ""; cnt = 1
+			dev?.supportedCommands?.sort()?.each { cmd ->
+				commDesc += "${cnt>1 ? "\n\n" : "\n"} • ${cmd.name}(${!cmd?.arguments ? "" : cmd?.arguments.toString().toLowerCase().replaceAll("\\[|\\]", "")})"
+				cnt = cnt+1
+			}
+
+			def data = dev?.capabilities?.sort()?.collect {it as String}
+			def t0 = [ "capabilities":data ]
+			def capDesc = getMapDescStr(t0)
+
+			html += """
+					<div>
+						<h1>${dev?.getLabel()} Data</h1>
+						<div>
+							<p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
+							<br></br>
+							<p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
+							<br></br>
+							<p>${attrDesc.toString().replaceAll("\n", "<br>")}</p>
+							<br></br>
+							<p>${commDesc.toString().replaceAll("\n", "<br>")}</p>
+							<br></br>
+							<p>${capDesc.toString().replaceAll("\n", "<br>")}</p>
+							<br></br>
+						</div>
+					</div>
+					</br>
+					</br>
+					</br>
+			"""
+		}
+		html += """</body>"""
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDeviceData Exception:", ex }
 }
