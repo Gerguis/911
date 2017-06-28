@@ -7488,13 +7488,13 @@ def getRemLogData() {
 						tCls = "label label-danger"
 						break
 					case "trace":
-						tCls = "label label-trace"
+						tCls = "label label-default"
 						break
 					case "debug":
-						tCls = "label label-debug"
+						tCls = "label label-primary"
 						break
 					default:
-						tCls = "label label-debug"
+						tCls = "label label-primary"
 						break
 				}
 				resultStr += """
@@ -7513,17 +7513,11 @@ def getRemLogData() {
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 					<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-					<link rel="stylesheet" href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
 
 					<style>
-					.logs { text-align: left; padding: 0, 0; font-size: 1.4vw; }
+					.logs { text-align: left; padding: 0, 0; font-size: 14px; }
 					.dtHlt { background-color: #rgb(187, 180, 184); }
 					.label { display: inline; padding: .2em .6em .3em; font-size: 75%; font-weight: bold; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25em; }
-					.label-info { background-color: #5bc0de; }
-					.label-trace { background-color: #777777; }
-					.label-warning { background-color: #f0ad4e; }
-					.label-debug { background-color: #337ab7; }
-					.label-danger { background-color: #d9534f; }
 					html {
 					  position: relative;
 					  min-height: 100%;
@@ -7560,13 +7554,19 @@ def getRemLogData() {
 					<div class="container">
 					 <div class="page-header">
 					  <div class="centerText">
-					   <h1><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/log.png">NST Manager Logs</img></h1>
-					   <h3>This Includes Automations, Device, Manager Logs</h3>
+					   <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
+					   <h4>This Includes Automations, Device, Manager Logs</h4>
 					  </div>
 					  <div class="panel panel-primary">
-					   <div class="panel-heading">
-						<h1 class="panel-title">Log Stream:</h1>
+					  <div class="panel-heading">
+					   <div class="row" style="padding: 5px 20px;">
+					   	 <h1 class="panel-title pull-left">Log Stream:</h1>
+						 <button type="button" id="logRfsh" class="btn btn-default btn-sm pull-right" onClick="document.location.reload(true)">
+							 <span class="glyphicon glyphicon-refresh"></span> Refresh
+						 </button>
 					   </div>
+
+			   		  </div>
 					   <div class="panel-body">
 						   <div class="logs">
 							   <p>${resultStr}</p>

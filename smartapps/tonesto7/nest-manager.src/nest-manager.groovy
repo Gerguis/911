@@ -8007,13 +8007,14 @@ def renderDiagUrl() {
  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
  <meta name="description" content="NST Diagnostics">
  <meta name="author" content="Anthony S.">
- <link rel="icon" href="../../favicon.ico">
 
  <title>NST Diagnostics</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+ <link href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/circle.css">
  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
- <link rel="stylesheet" href="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Documents/css/diaghomepage.min.css">
+
  <style>
 	html {
 	  position: relative;
@@ -8060,6 +8061,11 @@ def renderDiagUrl() {
 	.shortcutBtns {
 	  width: 140px;
 	}
+	.stateUseFooter {
+	  text-align: center;
+	  font-weight: bold;
+	}
+	.progress{width:100px;height:100px;line-height:150px;background:0;margin:0 auto;box-shadow:none;position:relative}.progress:after{content:"";width:100%;height:100%;border-radius:50%;border:12px solid #fff;position:absolute;top:0;left:0}.progress>span{width:50%;height:100%;overflow:hidden;position:absolute;top:0;z-index:1}.progress .progress-left{left:0}.progress .progress-bar{width:100%;height:100%;background:0;border-width:12px;border-style:solid;position:absolute;top:0}.progress .progress-left .progress-bar{left:100%;border-top-right-radius:80px;border-bottom-right-radius:80px;border-left:0;-webkit-transform-origin:center left;transform-origin:center left}.progress .progress-right{right:0}.progress .progress-right .progress-bar{left:-100%;border-top-left-radius:80px;border-bottom-left-radius:80px;border-right:0;-webkit-transform-origin:center right;transform-origin:center right;animation:loading-1 1.8s linear forwards}.progress .progress-value{width:90%;height:90%;border-radius:50%;background:#44484b;font-size:18px;color:#fff;line-height:95px;text-align:center;position:absolute;top:5%;left:5%}.progress.blue .progress-bar{border-color:#049dff}.progress.blue .progress-left .progress-bar{animation:loading-2 1.5s linear forwards 1.8s}.progress.yellow .progress-bar{border-color:#fdba04}.progress.yellow .progress-left .progress-bar{animation:loading-3 1s linear forwards 1.8s}.progress.pink .progress-bar{border-color:#ed687c}.progress.pink .progress-left .progress-bar{animation:loading-4 .4s linear forwards 1.8s}.progress.green .progress-bar{border-color:#1abc9c}.progress.green .progress-left .progress-bar{animation:loading-5 1.2s linear forwards 1.8s}@keyframes loading-1{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(180deg);transform:rotate(180deg)}}@keyframes loading-2{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(144deg);transform:rotate(144deg)}}@keyframes loading-3{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(90deg);transform:rotate(90deg)}}@keyframes loading-4{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(36deg);transform:rotate(36deg)}}@keyframes loading-5{0%{-webkit-transform:rotate(0deg);transform:rotate(0deg)}100%{-webkit-transform:rotate(126deg);transform:rotate(126deg)}}@media only screen and (max-width:990px){.progress{margin-bottom:20px}}
   </style>
 </head>
 
@@ -8067,19 +8073,39 @@ def renderDiagUrl() {
  <div class="container">
   <div class="page-header">
    <div class="centerText">
-    <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png">NST Diagnostics</img></h2>
+    <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Diagnostics</img></h2>
    </div>
    <div class="panel panel-primary">
     <div class="panel-heading">
      <h1 class="panel-title">Install Details:</h1>
     </div>
     <div class="panel-body">
-     <p>Manager: ${textVersion()}</p>
-     <p>Install ID: ${atomicState?.installationId}</p>
+		<!-- Columns start at 50% wide on mobile and bump up to 33.3% wide on desktop -->
+		<div class="row">
+		  <div class="col-xs-6 col-md-4">
+		   <p><b>Manager</b> ${textVersion()}</p>
+		   <p><b>Install ID:</b> ${atomicState?.installationId}</p>
+		  </div>
+		  <div class="col-xs-6 col-md-4">
+
+		  </div>
+		  <div class="col-xs-6 col-md-4">
+	  		<div class="progress blue">
+		       <span class="progress-left">
+				 <span class="progress-bar"></span>
+		       </span>
+		       <span class="progress-right">
+				 <span class="progress-bar"></span>
+		       </span>
+		       <div class="progress-value">${getStateSizePerc()}%</div>
+		    </div>
+		    <p class="stateUseFooter">State Usage</p>
+		  </div>
+		</div>
     </div>
    </div>
 
-   <div class="panel panel-success">
+   <div class="panel panel-default">
     <div class="panel-heading">
      <h1 class="panel-title">Shortcuts</h1>
     </div>
