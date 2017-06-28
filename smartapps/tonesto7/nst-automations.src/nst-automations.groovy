@@ -7441,10 +7441,12 @@ def savetoRemDiagChild(List newdata) {
 		}
 		if(newdata?.size() > 0) {
 			def data = atomicState?.remDiagLogDataStore ?: []
-			while(data && stateSz >= 80) {
+			def cnt = 0
+			while(data && stateSz >= 80 && cnt < 50) {
 				data.remove(0)
 				atomicState?.remDiagLogDataStore = data
 				stateSz = getStateSizePerc()
+				cnt += 1
 			}
 			newdata?.each { logItem ->
 				data << logItem
@@ -7453,10 +7455,11 @@ def savetoRemDiagChild(List newdata) {
 			}
 			atomicState?.remDiagLogDataStore = data
 			stateSz = getStateSizePerc()
-			while(data && stateSz >= 85) {
+			while(data && stateSz >= 85 && cnt < 50) {
 				data.remove(0)
 				atomicState?.remDiagLogDataStore = data
 				stateSz = getStateSizePerc()
+				cnt += 1
 			}
 			log.debug "(${data?.size()} | State: ${stateSz}%)"
 		} else { log.error "bad call to savetoRemDiagChild - no data" }
