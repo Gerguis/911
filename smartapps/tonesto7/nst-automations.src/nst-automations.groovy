@@ -2986,7 +2986,7 @@ def getDesiredTemp() {
 	return desiredTemp
 }
 
-def extTmpTempOk() {
+def extTmpTempOk(disp=false, last=false) {
 	//LogTrace("extTmpTempOk")
 	def pName = extTmpPrefix()
 	try {
@@ -3078,6 +3078,7 @@ def extTmpTempOk() {
 
 		def tempDiff
 		def desiredTemp
+		def insideThresh
 
 		if(!modeAuto && retval) {
 			desiredTemp = getDesiredTemp()
@@ -3090,7 +3091,7 @@ def extTmpTempOk() {
 			} else {
 				tempDiff = Math.abs(extTemp - desiredTemp)
 				str = "enough different (${tempDiff})"
-				def insideThresh = getExtTmpInsideTempDiffVal()
+				insideThresh = getExtTmpInsideTempDiffVal()
 				LogAction("extTmpTempOk: Outside Temp: ${extTemp} | Desired Temp: ${desiredTemp} | Inside Temp Threshold: ${insideThresh} | Outside Temp Threshold: ${diffThresh} | Actual Difference: ${tempDiff} | Outside Dew point: ${curDp} | Dew point Limit: ${dpLimit}", "debug", false)
 
 				if(diffThresh && tempDiff < diffThresh) {
@@ -3113,13 +3114,14 @@ def extTmpTempOk() {
 				LogAction("extTmpTempOk: extTempHigh: ${extTempHigh} | extTempLow: ${extTempLow}", "debug", false)
 			}
 		}
+		def showRes = disp ? (retval != last ? true : false) : false
 		if(!dpOk) {
-			LogAction("extTmpTempOk: ${retval} Dewpoint: (${curDp}°${getTemperatureScale()}) is ${dpOk ? "ok" : "TOO HIGH"}", "info", false)
+			LogAction("extTmpTempOk: ${retval} Dewpoint: (${curDp}°${getTemperatureScale()}) is ${dpOk ? "ok" : "TOO HIGH"}", "info", showRes)
 		} else {
 			if(!modeAuto) {
-				LogAction("extTmpTempOk: ${retval} Desired Inside Temp: (${desiredTemp}°${getTemperatureScale()}) is ${tempOk ? "" : "Not"} ${str} $diffThresh° of Outside Temp: (${extTemp}°${getTemperatureScale()}) Inside Temp: (${intTemp}) Inside Threshold: ${insideThresh}", "info", false)
+				LogAction("extTmpTempOk: ${retval} Desired Inside Temp: (${desiredTemp}°${getTemperatureScale()}) is ${tempOk ? "" : "Not"} ${str} $diffThresh° of Outside Temp: (${extTemp}°${getTemperatureScale()}) or Inside Temp: (${intTemp}) is ${tempOk ? "" : "Not"} within Inside Threshold: ${insideThresh} of desired (${desiredTemp})", "info", showRes)
 			} else {
-				LogAction("extTmpTempOk: ${retval} Exterior Temperature (${extTemp}°${getTemperatureScale()}) is ${tempOk ? "" : "Not"} ${str} using $diffThresh° offset |  Inside Temp: (${intTemp})", "info", false)
+				LogAction("extTmpTempOk: ${retval} Exterior Temperature (${extTemp}°${getTemperatureScale()}) is ${tempOk ? "" : "Not"} ${str} using $diffThresh° offset |  Inside Temp: (${intTemp})", "info", showRes)
 
 			}
 		}
@@ -3196,7 +3198,7 @@ def extTmpTempCheck(cTimeOut = false) {
 			def safetyOk = getSafetyTempsOk(extTmpTstat)
 			def schedOk = extTmpScheduleOk()
 			def okToRestore = (modeEco && atomicState?.extTmpTstatOffRequested && atomicState?.extTmpRestoreMode) ? true : false
-			def tempWithinThreshold = extTmpTempOk()
+			def tempWithinThreshold = extTmpTempOk(true, okToRestore)
 
 			if(!tempWithinThreshold || timeOut || !safetyOk || !schedOk) {
 				if(allowAlarm) { alarmEvtSchedCleanup(extTmpPrefix()) }
@@ -3352,7 +3354,7 @@ def extTmpDpOrTempEvt(type) {
 		if(settings?.extTmpUseWeather) { getExtConditions() }
 
 		def lastTempWithinThreshold = atomicState?.extTmpLastWithinThreshold
-		def tempWithinThreshold = extTmpTempOk()
+		def tempWithinThreshold = extTmpTempOk(false,false)
 		atomicState?.extTmpLastWithinThreshold = tempWithinThreshold
 
 		if(lastTempWithinThreshold == null || tempWithinThreshold != lastTempWithinThreshold) {
