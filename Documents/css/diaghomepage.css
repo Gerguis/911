@@ -1,6 +1,7 @@
 html {
     position: relative;
     min-height: 100%;
+    min-width: 375px;
 }
 
 body {
@@ -50,13 +51,13 @@ body {
 .stateUseCircText {
     text-align: center;
     color: gray;
-    font-size: 18px;
+    font-size: 13px;
 }
 
 .stateUseTitleText {
     text-align: center;
     color: black;
-    font-size: 18px;
+    font-size: 14px;
 }
 
 .percircle.blue2 .bar, .percircle.blue2 .fill {
@@ -73,4 +74,39 @@ body {
 
 .percircle.blue2.dark:hover>span {
     color: #049dff;
+}
+
+.refresh-btn {
+    color: white;
+    outline: none;
+    font-size: 20px;
+}
+
+.panel-border {
+    padding: 0 15px;
+    border-radius: 1em;
+    border-style: solid;
+    border-color: lightgray;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.install-content {
+    padding: 7px 0 0 0;
+}
+
+@media (min-width: 600px) {
+    .pnl-head-title {
+        font-size: 4.1vw;
+        padding: 7px 0;
+    }
+}
+
+@media (min-width: 600px) {
+    .pnl-head-title {
+        font-size: 20px;
+        padding: 7px 0;
+        "
+
+    }
 }
