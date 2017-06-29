@@ -37,7 +37,7 @@ definition(
 include 'asynchttp_v1'
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "6-28-2017" }
+def appVerDate() { "6-29-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -109,13 +109,13 @@ mappings {
 		path("/oauth/callback") 	{action: [GET: "callback"]}
 		//Renders Json Data
 
-		path("/renderDiagUrl")		{action: [GET: "renderDiagUrl"]}
+		path("/diagHome")		{action: [GET: "renderDiagHome"]}
 		if(atomicState?.enRemDiagLogging == true) {
-			path("/renderLogData")		{action: [GET: "renderLogData"]}
+			path("/getLogData")	{action: [GET: "renderLogData"]}
 		}
-		path("/renderManagerData")	{action: [GET: "renderManagerData"]}
-		path("/renderAutomationData")	{action: [GET: "renderAutomationData"]}
-		path("/renderDeviceData")	{action: [GET: "renderDeviceData"]}
+		path("/getManagerData")	{action: [GET: "renderManagerData"]}
+		path("/getAutoData")	{action: [GET: "renderAutomationData"]}
+		path("/getDeviceData")	{action: [GET: "renderDeviceData"]}
 
 		path("/renderInstallId")		{action: [GET: "renderInstallId"]}
 		path("/renderInstallData")	{action: [GET: "renderInstallData"]}
@@ -1603,7 +1603,7 @@ def remoteDiagPage () {
 
 		section() {
 			if(atomicState?.enRemDiagLogging) {
-				href url: getAppEndpointUrl("renderDiagUrl"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
+				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
 				def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
 				paragraph str, required: true, state: "complete"
 			}
@@ -7998,14 +7998,17 @@ def renderLogData() {
 	} catch (ex) { log.error "renderLogData Exception:", ex }
 }
 
-def renderDiagUrl() {
+def getDiagHomeUrl() { getAppEndpointUrl("diagHome") }
+
+def renderDiagHome() {
 	try {
-		def remDiagUrl = getAppEndpointUrl("renderDiagUrl")
-		def logUrl = getAppEndpointUrl("renderLogData")
-		def managerUrl = getAppEndpointUrl("renderManagerData")
-		def autoUrl = getAppEndpointUrl("renderAutomationData")
-		def deviceUrl = getAppEndpointUrl("renderDeviceData")
+		def remDiagUrl = getAppEndpointUrl("diagHome")
+		def logUrl = getAppEndpointUrl("getLogData")
+		def managerUrl = getAppEndpointUrl("getManagerData")
+		def autoUrl = getAppEndpointUrl("getAutoData")
+		def deviceUrl = getAppEndpointUrl("getDeviceData")
 		def sPerc = getStateSizePerc() ?: 0
+		def instData = atomicState?.installData
 		def html = """
 		<head>
 			<meta charset="utf-8">
@@ -8014,7 +8017,8 @@ def renderDiagUrl() {
 			<meta name="author" content="Anthony S.">
 			<title>NST Diagnostics</title>
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-
+			<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+			<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
@@ -8022,7 +8026,37 @@ def renderDiagUrl() {
 			<script src="https://cdn.rawgit.com/toubou91/percircle/master/dist/js/percircle.js"></script>
 			<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaghomepage.min.css">
 			<style>
+				html {
+				   position: relative;
+				   min-height: 100%;
+				   min-width: 375px;
+				}
+				.refresh-btn {
+				   color: white;
+				   outline: none;
+				   font-size: 20px;
+				}
+				.stateUseCircText {
+				   color: gray;
+				   font-size: 13px;
+				}
 
+				.stateUseTitleText {
+				   text-align: center;
+				   color: black;
+				   font-size: 14px;
+				}
+				.panel-border {
+				   padding: 0 15px;
+				   border-radius: 1em;
+				   border-style: solid;
+				   border-color: lightgray;
+				   border-style: solid;
+				   border-width: 1px;
+				}
+				.install-content {
+					padding: 7px 0 0 0;
+				}
 			</style>
 		</head>
 		<body>
@@ -8033,37 +8067,67 @@ def renderDiagUrl() {
 			   	<!--First Panel Section -->
 			   	<div class="panel panel-primary">
 					<!--First Panel Section Heading-->
-			   		<div class="panel-heading">
-			    		<h1 class="panel-title">Install Details:</h1>
-			   		</div>
-			   		<!--First Panel Section Body -->
-					<div class="panel-body">
-						<!--First Panel Section Body Row 1-->
-			    		<div class="row" style="min-height: 100px;">
-			     			<!--First Panel Section Body Row 1 - Col1 -->
+					<div class="panel-heading">
+						<div class="row">
 							<div class="col-xs-6">
-						   		<p><b>Manager Version:</b> ${appVersion()}</p>
-						   		<p><b>Install Id:</b> ${atomicState?.installationId}</p>
+								<h1 style="padding: 7px 0; font-size: 20px;" class="panel-title centerText pull-left">Install Details</h1>
 							</div>
-							<!--First Panel Section Body Row 1 - Col2 -->
-		     				<div class="col-xs-6">
-								<div style="float: right;">
-									<div class="stateUseTitleText">State Usage</div>
-		      						<div id="stateUseCirc" data-percent="42" data-text="<p class='stateUseCircText'>42%</p>" class="small blue2 center"></div>
-		     					</div>
-		    				</div>
-		   				</div>
+						 	<div class="col-xs-6">
+						 		<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn"></span></button>
+							</div>
+						</div>
+					</div>
 
-			 			<hr/>
-						<!--First Panel Section Body Row 2 -->
-				 		<div class="row" style="min-height: 100px;">
-							<!--First Panel Section Body Row 2 - Col 1 -->
-							<div class="col-xs-12">
-								<div class="centerText">
-						 			<p>More Data Coming Soon...</p>
-					 			</div>
-		   					</div>
-		  				</div>
+					<!--First Panel Section Body -->
+					<div class="panel-body">
+						<div class="container-fluid">
+							<!--First Panel Section Body Row 1-->
+							<div class="row" style="min-height: 100px;">
+
+								<!--First Panel Section Body Row 1 - Col1 -->
+								<div class=" col-xs-12 col-sm-8">
+									<div id="instContDiv" style="padding: 0 10px;">
+										<div class="row panel-border centerText">
+											<div class="col-xs-12 col-sm-6 install-content">
+												<span><b>Version:</b></br><small>${appVersion()}</small></span>
+											</div>
+											<div class="col-xs-12 col-sm-6 install-content">
+												<span><b>Install ID:</b></br><small>${atomicState?.installationId}</small></span>
+											</div>
+									        <div class="col-xs-12 col-sm-6 install-content">
+									        	<span><b>Install Date:</b></br><small>${instData?.dt}</small></span>
+									        </div>
+									        <div class="col-xs-12 col-sm-6 install-content">
+									        	<span><b>Last Updated:</b></br><small>${instData?.updatedDt}</small></span>
+									        </div>
+									        <div class="col-xs-12 col-sm-6 install-content">
+									        	<span><b>Init. Version:</b></br><small>${instData?.initVer}</small></span>
+									        </div>
+									        <div class="col-xs-12 col-sm-6 install-content">
+									        	<span><b>Fresh Install:</b></br><small>${instData?.freshInstall}</small></span>
+									        </div>
+					        			</div>
+					       			</div>
+					      		</div>
+					      		<!--First Panel Section Body Row 1 - Col2 -->
+					      		<div class="col-xs-12 col-sm-4">
+					       			<div style="pull-right">
+										<div class="stateUseTitleText">State Usage</div>
+			      						<div id="stateUseCirc" data-percent="${sPerc}" data-text="<p class='stateUseCircText'>${sPerc}%</p>" class="small blue2 center"></div>
+									</div>
+								</div>
+							</div>
+							<hr/>
+							<!--First Panel Section Body Row 2 -->
+							<div class="row" style="min-height: 100px;">
+								<!--First Panel Section Body Row 2 - Col 1 -->
+								<div class="col-xs-12">
+									<div class="centerText">
+										<p>More Data Coming Soon...</p>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -8089,8 +8153,23 @@ def renderDiagUrl() {
 			  	</footer>
 
 			  	<script type="text/javascript">
-					\$(function() {
-				    	\$("#stateUseCirc").percircle();
+					\$(document).ready(function(){
+						\$(function() {
+							\$("#stateUseCirc").percircle();
+						});
+
+						\$("#rfrshBtn").click(function(){
+							window.location.reload(true);
+						});
+
+						\$("#rfrshBtn").hover(function(e){
+							\$(this).toggleClass('fa-spin');
+							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
+						});
+					});
+					\$("body").flowtype({
+					    minFont: 8,
+					    maxFont: 16
 					});
 			  	</script>
 		  	</div>
