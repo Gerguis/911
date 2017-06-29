@@ -7500,7 +7500,7 @@ def getRemLogData() {
 						break
 				}
 				resultStr += """
-					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logDtCls">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="$tCls">${logItem?.type}</span> | <span class="logSrcFmt" style="font-style: italic;">${logItem?.src}</span>: ${logItem?.msg}</span>
+					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logDtCls">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="$tCls">${logItem?.type}</span> | <span class="logSrcFmt" style="font-style: italic;">${logItem?.src}</span> ${logItem?.msg}</span>
 				"""
 				cnt = cnt+1
 			}
@@ -7511,13 +7511,15 @@ def getRemLogData() {
 					<meta name="description" content="NST Diagnostics - Logs">
 					<meta name="author" content="Anthony S.">
 					<title>NST Diagnostics - Logs</title>
+
+					<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 					<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 					<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
 					<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 					<style>
-						
+
 					</style>
 				</head>
 				<body>
@@ -7534,7 +7536,7 @@ def getRemLogData() {
 						       <div style="padding: 0 15px;">
 						        <h2 class="panel-title centerText panelHeadTxt pull-left">Log Stream</h2>
 						        <br></br>
-						        <small class="pull-left">${logSz} Items</small>
+						        <small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
 						       </div>
 						      </div>
 						     </div>
