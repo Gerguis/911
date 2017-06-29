@@ -30,6 +30,16 @@ body {
     margin-bottom: 20px;
 }
 
+.logSrcFmt {
+    text-decoration: none;
+    border-radius: 0.5em;
+    border-style: solid;
+    border-color: gray;
+    border-style: inset;
+    border-width: thin;
+    padding: 2px;
+}
+
 .container {
     width: auto;
     max-width: 98%;
@@ -46,10 +56,6 @@ body {
 
 .panelHeadTxt {
     font-size: 25px;
-}
-
-.underline {
-    text-decoration: underline;
 }
 
 .links {
