@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.4" }
-def appVerDate() { "6-26-2017" }
+def appVerDate() { "6-28-2017" }
 
 preferences {
 	//startPage
@@ -7500,7 +7500,7 @@ def getRemLogData() {
 						break
 				}
 				resultStr += """
-					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logDtCls">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="underline">${logItem?.src.toString().toUpperCase()}</span> <span class="$tCls">${logItem?.type}</span> ${logItem?.msg}</span>
+					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logDtCls">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="$tCls">${logItem?.type}</span> | <span class="logSrcFmt" style="font-style: italic;">${logItem?.src}</span>: ${logItem?.msg}</span>
 				"""
 				cnt = cnt+1
 			}
@@ -7517,23 +7517,7 @@ def getRemLogData() {
 					<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
 					<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 					<style>
-					.centerText {
-						text-align: center;
-					}
-
-					.logDtCls {
-						font-weight: bold;
-					}
-
-					.panelHeadTxt {
-						font-size: 25px;
-					}
-
-					.underline {
-						border-radius: 0.34em;
-						border-style: solid;
-						border-color: gray;
-					}
+						
 					</style>
 				</head>
 				<body>
@@ -7542,15 +7526,27 @@ def getRemLogData() {
 					   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
 					   		<h5>This Includes Automations, Device, Manager Logs</h5>
 						</div>
-					  	<div class="panel panel-primary">
-					  		<div class="panel-heading">
-					   			<div class="row" style="padding: 5px 20px;">
-					   	 			<h2 class="panel-title centerText panelHeadTxt pull-left">Log Stream: (${logSz} Items)</h2>
-						 			<button type="button" id="logRfsh" class="btn btn-default btn-sm pull-right" onClick="document.location.reload(true)">
-							 			<span class="glyphicon glyphicon-refresh"></span> Refresh
-						 			</button>
-					   			</div>
-			   		  		</div>
+						<div class="panel panel-primary">
+						   <div class="panel-heading">
+						    <div class="row">
+						     <div class="col-xs-6">
+						      <div class="row">
+						       <div style="padding: 0 15px;">
+						        <h2 class="panel-title centerText panelHeadTxt pull-left">Log Stream</h2>
+						        <br></br>
+						        <small class="pull-left">${logSz} Items</small>
+						       </div>
+						      </div>
+						     </div>
+						     <div class="col-xs-6">
+								<div class="row" style="padding: 15px 15px;">
+						      		<button type="button" id="logRfsh" class="btn btn-default btn-sm pull-right" onClick="document.location.reload(true)">
+										<span class="glyphicon glyphicon-refresh"></span> Refresh
+									</button>
+								</div>
+						     </div>
+						    </div>
+						   </div>
 					   		<div id="logBody" class="panel-body" style="background-color: #DEDEDE;">
 						   		<div class="logs">
 							   		<p>${resultStr}</p>
