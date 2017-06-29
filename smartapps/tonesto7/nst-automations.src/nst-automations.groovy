@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.4" }
-def appVerDate() { "6-28-2017" }
+def appVerDate() { "6-29-2017" }
 
 preferences {
 	//startPage
@@ -7468,6 +7468,8 @@ def savetoRemDiagChild(List newdata) {
 	} else { Logger("bad call to savetoRemDiagChild - wrong automation") }
 }
 
+def getDiagHomeUrl() { parent?.getAppEndpointUrl("diagHome") }
+
 def getRemLogData() {
 	try {
 		def logData = atomicState?.remDiagLogDataStore
@@ -7508,46 +7510,71 @@ def getRemLogData() {
 				<head>
 					<meta charset="utf-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-					<meta name="description" content="NST Diagnostics - Logs">
+					<meta name="description" content="NST - Logs">
 					<meta name="author" content="Anthony S.">
-					<title>NST Diagnostics - Logs</title>
+					<title>NST - Logs</title>
 
 					<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+					<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+					<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 					<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 					<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
-					<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
-					<style>
 
+					<style>
+						.logs {
+						   text-align: left;
+						   padding: 0, 0;
+						  }
+							.refresh-btn {
+										   color: white;
+										   outline: none;
+										   font-size: 20px;
+										}
+						  .logSrcFmt {
+						   text-decoration: none;
+						   border-radius: 1em;
+						   border-style: solid;
+						   border-color: gray;
+						   border-style: solid;
+						   border-width: 2px;
+						   padding: 2px;
+							 font-style: italic;
+						  }
+
+						 @media (min-width: 600px) {
+							 .pnl-head-title {
+								 font-size: 24px;
+								 padding: 5px 0;
+							 }
+						 }
+						 @media (min-width: 600px) {
+							 .pnl-head-title {
+								 font-size: 20px;
+								 padding: 7px 0;"
+							 }
+						 }
 					</style>
 				</head>
 				<body>
 					<div class="container">
+						<!--Page Header Section -->
 						<div class="page-header centerText" style="margin: 10px;">
 					   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
 					   		<h5>This Includes Automations, Device, Manager Logs</h5>
 						</div>
+						<!--First Panel Section -->
 						<div class="panel panel-primary">
 						   <div class="panel-heading">
-						    <div class="row">
-						     <div class="col-xs-6">
-						      <div class="row">
-						       <div style="padding: 0 15px;">
-						        <h2 class="panel-title centerText panelHeadTxt pull-left">Log Stream</h2>
-						        <br></br>
-						        <small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
-						       </div>
-						      </div>
-						     </div>
-						     <div class="col-xs-6">
-								<div class="row" style="padding: 15px 15px;">
-						      		<button type="button" id="logRfsh" class="btn btn-default btn-sm pull-right" onClick="document.location.reload(true)">
-										<span class="glyphicon glyphicon-refresh"></span> Refresh
-									</button>
+						   	  <div class="row">
+								<div class="col-xs-6">
+									<span><h1 class="panel-title pnl-head-title centerText pull-left">Log Stream</h1></br><small class="pull-left" style="text-decoration: underline;">${logSz} Items</small></span>
 								</div>
-						     </div>
-						    </div>
+								<div class="col-xs-6">
+									<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn"></span></button>
+								</div>
+							</div>
 						   </div>
 					   		<div id="logBody" class="panel-body" style="background-color: #DEDEDE;">
 						   		<div class="logs">

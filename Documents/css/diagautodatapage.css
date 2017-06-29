@@ -34,3 +34,9 @@ body {
 .clearfix {
     *zoom: 1;
 }
+
+.refresh-btn {
+    color: white;
+    outline: none;
+    font-size: 20px;
+}
