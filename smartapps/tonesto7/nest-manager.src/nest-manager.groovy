@@ -8031,36 +8031,14 @@ def renderDiagHome() {
 			<script src="https://cdn.rawgit.com/toubou91/percircle/master/dist/js/percircle.js"></script>
 			<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaghomepage.min.css">
 			<style>
-				html {
-				   position: relative;
-				   min-height: 100%;
-				   min-width: 375px;
-				}
-				.refresh-btn {
-				   color: white;
-				   outline: none;
-				   font-size: 20px;
-				}
-				.stateUseCircText {
-				   color: gray;
-				   font-size: 13px;
-				}
-
-				.stateUseTitleText {
-				   text-align: center;
-				   color: black;
-				   font-size: 14px;
-				}
-				.panel-border {
-				   padding: 0 15px;
-				   border-radius: 1em;
-				   border-style: solid;
-				   border-color: lightgray;
-				   border-style: solid;
-				   border-width: 1px;
-				}
-				.install-content {
-					padding: 7px 0 0 0;
+				.footer {
+				    position: relative;
+				    bottom: 0;
+				    width: 100%;
+				    max-width: 800px;
+				    height: 20px;
+				    line-height: 20px;
+				    padding-bottom: 50px;
 				}
 			</style>
 		</head>
@@ -8115,7 +8093,7 @@ def renderDiagHome() {
 					       			</div>
 					      		</div>
 					      		<!--First Panel Section Body Row 1 - Col2 -->
-					      		<div class="col-xs-12 col-sm-4">
+					      		<div class="col-xs-12 col-sm-4"  style="padding: 25px;">
 					       			<div style="pull-right">
 										<div class="stateUseTitleText">State Usage</div>
 			      						<div id="stateUseCirc" data-percent="${sPerc}" data-text="<p class='stateUseCircText'>${sPerc}%</p>" class="small blue2 center"></div>
