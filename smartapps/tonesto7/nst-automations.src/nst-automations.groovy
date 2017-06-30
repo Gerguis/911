@@ -7483,26 +7483,44 @@ def getRemLogData() {
 				def tCls = ""
 				switch(logItem?.type) {
 					case "info":
-						tCls = "label label-info"
+						tCls = "label-info"
 						break
 					case "warn":
-						tCls = "label label-warning"
+						tCls = "label-warning"
 						break
 					case "error":
-						tCls = "label label-danger"
+						tCls = "label-danger"
 						break
 					case "trace":
-						tCls = "label label-default"
+						tCls = "label-default"
 						break
 					case "debug":
-						tCls = "label label-primary"
+						tCls = "label-primary"
 						break
 					default:
-						tCls = "label label-primary"
+						tCls = "label-primary"
 						break
 				}
+				def srcCls = "defsrc-bg"
+				log.debug "log src: ${logItem?.src}"
+				if(logItem?.src.toString().startsWith("Camera")) {
+					srcCls = "camsrc-bg"
+				} else if(logItem?.src.toString().startsWith("Protect")) {
+					srcCls = "protsrc-bg"
+				} else if(logItem?.src.toString().startsWith("Thermostat")) {
+					srcCls = "tstatsrc-bg"
+				} else if(logItem?.src.toString().startsWith("weather")) {
+					srcCls = "weatsrc-bg"
+				} else if(logItem?.src.toString().startsWith("Presence")) {
+					srcCls = "pressrc-bg"
+				} else if(logItem?.src.toString().startsWith("Automation")) {
+					srcCls = "autosrc-bg"
+				} else if(logItem?.src.toString().startsWith("NestManager")) {
+					srcCls = "mansrc-bg"
+				}
+
 				resultStr += """
-					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logDtCls">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="$tCls">${logItem?.type}</span> | <span class="logSrcFmt" style="font-style: italic;">${logItem?.src}</span> ${logItem?.msg}</span>
+					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logEvtDt">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="label $tCls">${logItem?.type}</span> | <span class="logSrcFmt ${srcCls}" style="font-style: italic;">${logItem?.src}</span>: ${logItem?.msg}</span>
 				"""
 				cnt = cnt+1
 			}
@@ -7523,37 +7541,45 @@ def getRemLogData() {
 					<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
 
 					<style>
-						.logs {
-						   text-align: left;
-						   padding: 0, 0;
-						  }
-							.refresh-btn {
-										   color: white;
-										   outline: none;
-										   font-size: 20px;
-										}
-						  .logSrcFmt {
-						   text-decoration: none;
-						   border-radius: 1em;
-						   border-style: solid;
-						   border-color: gray;
-						   border-style: solid;
-						   border-width: 2px;
-						   padding: 2px;
-							 font-style: italic;
-						  }
-
-						 @media (min-width: 600px) {
-							 .pnl-head-title {
-								 font-size: 24px;
-								 padding: 5px 0;
-							 }
+						.logSrcFmt {
+							border-radius: 0.3em;
+							border-color: gray;
+							border-style: solid;
+							border-width: 1px;
+							padding: 2px;
+							font-style: italic;
+						}
+						 .defsrc-bg {
+							 color: gray;
+							 background-color: lightgray;
 						 }
-						 @media (min-width: 600px) {
-							 .pnl-head-title {
-								 font-size: 20px;
-								 padding: 7px 0;"
-							 }
+						 .mansrc-bg {
+							 color: gray;
+							 background-color: lightgray;
+						 }
+						 .autosrc-bg {
+							 color: gray;
+							 background-color: lightgray;
+						 }
+						 .camsrc-bg {
+							 color: gray;
+							 background-color: lightgray;
+						 }
+						 .protsrc-bg {
+							 color: gray;
+							 background-color: lightgray;
+						 }
+						 .pressrc-bg {
+							 color: gray;
+							 background-color: lightgray;
+						 }
+						 .weatsrc-bg {
+							 color: gray;
+							 background-color: lightgray;
+						 }
+						 .tstatsrc-bg {
+							 color: gray;
+							 background-color: lightgray;
 						 }
 					</style>
 				</head>
@@ -7576,15 +7602,28 @@ def getRemLogData() {
 								</div>
 							</div>
 						   </div>
-					   		<div id="logBody" class="panel-body" style="background-color: #DEDEDE;">
-						   		<div class="logs">
-							   		<p>${resultStr}</p>
-						   		</div>
+						   <div class="panel-body" style="background-color: #DEDEDE;">
+								<div id="logBody" class="logs">
+									<div>${resultStr}</div>
+								</div>
 					   		</div>
 					  	</div>
 					</div>
 					<script>
-						//\$('body').flowtype();
+						\$(document).ready(function(){
+							\$("#rfrshBtn").click(function(){
+								window.location.reload(true);
+							});
+
+							\$("#rfrshBtn").hover(function(e){
+								\$(this).toggleClass('fa-spin');
+								\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
+							});
+						});
+						\$("#logBody").flowtype({
+							minFont: 8,
+							maxFont: 14
+						});
 					</script>
 				</body>
 			"""

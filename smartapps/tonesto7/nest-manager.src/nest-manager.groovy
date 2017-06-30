@@ -6663,14 +6663,14 @@ def clientSecret() {
 def LogTrace(msg, logSrc=null) {
 	def trOn = (appDebug && advAppDebug && !enRemDiagLogging && !atomicState?.enRemDiagLogging) ? true : false
 	if(trOn) {
-		def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "NestManager") : logSrc
+		def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "Manager") : logSrc
 		Logger(msg, "trace", theLogSrc)
 	}
 }
 
 def LogAction(msg, type="debug", showAlways=false, logSrc=null) {
 	def isDbg = parent ? (showDebug  ? true : false) : (appDebug ? true : false)
-	def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "NestManager") : logSrc
+	def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "Manager") : logSrc
 	if(showAlways) { Logger(msg, type, theLogSrc) }
 	else if(isDbg && !showAlways) { Logger(msg, type, theLogSrc) }
 }
