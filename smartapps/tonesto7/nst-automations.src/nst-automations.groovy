@@ -7502,7 +7502,6 @@ def getRemLogData() {
 						break
 				}
 				def srcCls = "defsrc-bg"
-				log.debug "log src: ${logItem?.src}"
 				if(logItem?.src.toString().startsWith("Camera")) {
 					srcCls = "camsrc-bg"
 				} else if(logItem?.src.toString().startsWith("Protect")) {
