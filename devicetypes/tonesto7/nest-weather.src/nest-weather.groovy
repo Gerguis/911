@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 
 preferences {  }
 
-def devVer() { return "5.1.2" }
+def devVer() { return "5.1.3" }
 
 metadata {
 	definition (name: "${textDevName()}", namespace: "tonesto7", author: "Anthony S.") {
@@ -234,7 +234,7 @@ def keepAwakeEvent() {
 }
 
 void repairHealthStatus(data) {
-	log.trace "repairHealthStatus($data)"
+	LogTrace("repairHealthStatus($data)")
 	if(data?.flag) {
 		sendEvent(name: "DeviceWatch-DeviceStatus", value: "online", displayed: false, isStateChange: true)
 		state?.healthInRepair = false
@@ -1014,7 +1014,7 @@ void Logger(msg, logType = "debug") {
 			break
 	}
 	if(state?.enRemDiagLogging) {
-		parent.saveLogtoRemDiagStore(smsg, logType, "Weather DTH")
+		parent.saveLogtoRemDiagStore(smsg, logType, "Weather")
 	}
 }
 
