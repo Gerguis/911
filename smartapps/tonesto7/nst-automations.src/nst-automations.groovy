@@ -7882,7 +7882,7 @@ def LogTrace(msg, logSrc=null) {
 	def trOn = (showDebug && advAppDebug) ? true : false
 	if(trOn) {
 		def theId = lastN(getId().toString(),5)
-		def theLogSrc = (logSrc == null) ? (parent ? "Automation${theId}" : "NestManager") : logSrc
+		def theLogSrc = (logSrc == null) ? (parent ? "Automation-${theId}" : "NestManager") : logSrc
 		Logger(msg, "trace", theLogSrc)
 	}
 }
@@ -7890,7 +7890,7 @@ def LogTrace(msg, logSrc=null) {
 def LogAction(msg, type="debug", showAlways=false, logSrc=null) {
 	def isDbg = parent ? (showDebug ? true : false) : (appDebug ? true : false)
 	def theId = lastN(app.getId().toString(),5)
-	def theLogSrc = (logSrc == null) ? (parent ? "Automation${theId}" : "NestManager") : logSrc
+	def theLogSrc = (logSrc == null) ? (parent ? "Automation-${theId}" : "NestManager") : logSrc
 	if(showAlways) { Logger(msg, type, theLogSrc) }
 	else if(isDbg && !showAlways) { Logger(msg, type, theLogSrc) }
 }
