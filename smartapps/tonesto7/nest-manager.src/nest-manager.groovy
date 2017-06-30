@@ -75,9 +75,6 @@ preferences {
 	page(name: "diagPage")
 	page(name: "appParamsDataPage")
 	page(name: "devNamePage")
-	page(name: "childAppDataPage")
-	page(name: "childDevDataPage")
-	page(name: "managAppDataPage")
 	page(name: "alarmTestPage")
 	page(name: "simulateTestEventPage")
 	page(name: "devNameResetPage")
@@ -581,6 +578,9 @@ def infoPage () {
 		}
 		if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.weatherDevice)) {
 			section("View App and Device Data, and Perform Device Tests:") {
+				if(atomicState?.enRemDiagLogging) {
+					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
+				}
 				href "nestInfoPage", title: "API | Diagnostics | Testing", description: "", image: getAppImg("api_diag_icon.png")
 			}
 		}
@@ -993,6 +993,7 @@ void processAutoSchedChgs() {
 		}
 	}
 }
+
 def automationStatisticsPage() {
 	def execTime = now()
 	dynamicPage(name: "automationStatisticsPage", title: "Installed Automations Stats\n(Auto-Refreshes every 20 sec.)", refreshInterval: 20, uninstall: false) {
@@ -7247,133 +7248,9 @@ def nestInfoPage () {
 				}
 			}
 		}
-		section("View All API Data Received from Nest:") {
-			if(atomicState?.structures) {
-				href "structInfoPage", title: "Nest Location(s) Info", description: "Tap to view", image: getAppImg("nest_structure_icon.png")
-			}
-			if(atomicState?.thermostats) {
-				href "tstatInfoPage", title: "Nest Thermostat(s) Info", description: "Tap to view", image: getAppImg("nest_like.png")
-			}
-			if(atomicState?.protects) {
-				href "protInfoPage", title: "Nest Protect(s) Info", description: "Tap to view", image: getAppImg("protect_icon.png")
-			}
-			if(atomicState?.cameras) {
-				href "camInfoPage", title: "Nest Camera(s) Info", description: "Tap to view", image: getAppImg("camera_icon.png")
-			}
-			if(!atomicState?.structures && !atomicState?.thermostats && !atomicState?.protects && !atomicState?.cameras) {
-				paragraph "There is nothing to show here", image: getAppImg("instruct_icon.png")
-			}
-		}
 		section("Diagnostics") {
 			href "diagPage", title: "View Diagnostic Info", description: null, image: getAppImg("diag_icon.png")
 			href "remoteDiagPage", title: "Send Logs to Developer", description: "", image: getAppImg("diagnostic_icon.png")
-		}
-	}
-}
-
-def structInfoPage () {
-	dynamicPage(name: "structInfoPage", refreshInterval: 30, install: false) {
-		def noShow = [ "wheres", "cameras", "thermostats", "smoke_co_alarms", "structure_id" ]
-		section("") {
-			paragraph "Locations", state: "complete", image: getAppImg("nest_structure_icon.png")
-		}
-		atomicState?.structData?.each { struc ->
-			if(struc?.key == atomicState?.structures) {
-				def str = ""
-				def cnt = 0
-				section("Location Name: ${struc?.value?.name}") {
-					def data = struc?.value.findAll { !(it.key in noShow) }
-					data?.sort().each { item ->
-						cnt = cnt+1
-						str += "${(cnt <= 1) ? "" : "\n\n"}• ${item?.key?.toString()}: (${item?.value})"
-					}
-					paragraph "${str}"
-				}
-			}
-		}
-	}
-}
-
-def tstatInfoPage () {
-	dynamicPage(name: "tstatInfoPage", refreshInterval: 30, install: false) {
-		def noShow = [ "where_id", "device_id", "structure_id" ]
-		section("") {
-			paragraph "Thermostats", state: "complete", image: getAppImg("nest_like.png")
-		}
-		atomicState?.thermostats?.sort().each { tstat ->
-			def str = ""
-			def cnt = 0
-			section("Thermostat Name: ${atomicState?.deviceData?.thermostats[tstat?.key]?.name}") {    // was ${tstat?.value}
-				def data = atomicState?.deviceData?.thermostats[tstat?.key].findAll { !(it.key in noShow) }
-				data?.sort().each { item ->
-					cnt = cnt+1
-					str += "${(cnt <= 1) ? "" : "\n\n"}• ${item?.key?.toString()}: (${item?.value})"
-				}
-				paragraph "${str}"
-			}
-		}
-	}
-}
-
-def protInfoPage () {
-	dynamicPage(name: "protInfoPage", refreshInterval: 30, install: false) {
-		def noShow = [ "where_id", "device_id", "structure_id" ]
-		section("") {
-			paragraph "Protects", state: "complete", image: getAppImg("protect_icon.png")
-		}
-		atomicState?.protects.sort().each { prot ->
-			def str = ""
-			def cnt = 0
-			section("Protect Name: ${atomicState?.deviceData?.smoke_co_alarms[prot?.key]?.name}") {   // was ${prot?.value}
-				def data = atomicState?.deviceData?.smoke_co_alarms[prot?.key].findAll { !(it.key in noShow) }
-				data?.sort().each { item ->
-					cnt = cnt+1
-					str += "${(cnt <= 1) ? "" : "\n\n"}• ${item?.key?.toString()}: (${item?.value})"
-				}
-				paragraph "${str}"
-			}
-		}
-	}
-}
-
-def camInfoPage () {
-	dynamicPage(name: "camInfoPage", refreshInterval: 30, install: false) {
-		def noShow = [ "where_id", "device_id", "structure_id" ]
-		section("") {
-			paragraph "Cameras", state: "complete", image: getAppImg("camera_icon.png")
-		}
-		atomicState?.cameras.sort().each { cam ->
-			def str = ""
-			def evtStr = ""
-			def cnt = 0
-			def cnt2 = 0
-			section("Camera Name: ${atomicState?.deviceData?.cameras[cam?.key]?.name}") {	// was ${cam?.value}
-				def data = atomicState?.deviceData?.cameras[cam?.key].findAll { !(it.key in noShow) }
-				data?.sort().each { item ->
-					if(item?.key != "last_event") {
-						if(item?.key in ["app_url", "web_url"]) {
-							href url: item?.value, style:"external", required: false, title: item?.key.toString().replaceAll("\\_", " ").capitalize(), description:"Tap to view in Browser", state: "complete"
-						} else {
-							cnt = cnt+1
-							str += "${(cnt <= 1) ? "" : "\n\n"}• ${item?.key?.toString()}: (${item?.value})"
-						}
-					} else {
-						item?.value?.sort().each { item2 ->
-							if(item2?.key in ["app_url", "web_url", "image_url", "animated_image_url"]) {
-								href url: item2?.value, style:"external", required: false, title: "LastEvent: ${item2?.key.toString().replaceAll("\\_", " ").capitalize()}", description:"Tap to view in Browser", state: "complete"
-							}
-							else {
-								cnt2 = cnt2+1
-								evtStr += "${(cnt2 <= 1) ? "" : "\n\n"}  • (LastEvent) ${item2?.key?.toString()}: (${item2?.value})"
-							}
-						}
-					}
-				}
-				paragraph "${str}"
-				if(evtStr != "") {
-					paragraph "Last Event Data:\n\n${evtStr}"
-				}
-			}
 		}
 	}
 }
@@ -7491,9 +7368,9 @@ def diagPage () {
 					image: getAppImg("progress_bar.png")
 		}
 		section("View App & Device Data") {
-			href "managAppDataPage", title:"Manager App Data", description:"Tap to view", image: getAppImg("nest_manager.png")
-			href "childAppDataPage", title:"Automation App Data", description:"Tap to view", image: getAppImg("automation_icon.png")
-			href "childDevDataPage", title:"Device Data", description:"Tap to view", image: getAppImg("thermostat_icon.png")
+			if(atomicState?.enRemDiagLogging) {
+				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
+			}
 			href "appParamsDataPage", title:"AppData File", description:"Tap to view", image: getAppImg("view_icon.png")
 		}
 		if(settings?.optInAppAnalytics || settings?.optInSendExceptions) {
@@ -7519,159 +7396,6 @@ def diagPage () {
 			paragraph "API Token Client Version: ${atomicState?.metaData?.client_version ?: "Not Found"}"
 			paragraph "Install Id:\n${atomicState?.installationId ?: "Not Found"}"
 			paragraph "Token Number: ${atomicState?.appData?.token?.tokenNum ?: "Not Found"}"
-		}
-	}
-}
-
-def managAppDataPage() {
-	def rVal = (settings?.managAppPageRfsh) ? (settings?.managAppDataRfshVal ? settings?.managAppDataRfshVal.toInteger() : 30) : null
-	dynamicPage(name: "managAppDataPage", refreshInterval:rVal, install: false) {
-		if(!atomicState?.diagManagAppStateFilters) { atomicState?.diagManagAppStateFilters = ["diagManagAppStateFilters"] }
-		section("${app.label}:") {
-			if(settings?.managAppPageShowSet == true || settings?.managAppPageShowSet == null) {
-				paragraph title: "Settings Data", "${getMapDescStr(getSettings())}"
-			}
-			if(settings?.managAppPageShowState == true || settings?.managAppPageShowState == null) {
-				def data = getState()?.sort()?.findAll { !(it?.key in atomicState?.diagManagAppStateFilters) }
-				paragraph title: "State Data", "${getMapDescStr(data)}"
-			}
-			if(settings?.managAppPageShowMeta == true || settings?.managAppPageShowMeta == null) {
-				paragraph title: "MetaData", "${getMapDescStr(getMetadata())}"
-			}
-		}
-		section("Data Filters:") {
-			paragraph "Show the following items in the results:"
-			input "managAppPageShowState", "bool", title: "State Data?", defaultValue: false, submitOnChange: true
-			if(settings?.managAppPageShowState) {
-				input(name: "managAppDataStateFilter", title: "Select Items to Ignore", type: "enum", required: false, multiple: true, submitOnChange: true, metadata: [values:getChildStateKeys()])
-				atomicState?.diagManagAppStateFilters = settings?.managAppDataStateFilter ?: []
-			}
-			input "managAppPageShowSet", "bool", title: "Settings Data?", defaultValue: false, submitOnChange: true
-			input "managAppPageShowMeta", "bool", title: "MetaData?", defaultValue: false, submitOnChange: true
-		}
-		section("Page Options:") {
-			input "managAppPageRfsh", "bool", title: "Enable Auto-Refresh?", defaultValue: false, submitOnChange: true
-			if(settings?.managAppPageRfsh) {
-				input "managAppDataRfshVal", "number", title: "Refresh Every xx seconds?", defaultValue: 30, submitOnChange: true
-			}
-			paragraph "Changing this may require you to leave the page and come back"
-		}
-	}
-}
-
-def childAppDataPage() {
-	def rVal = (settings?.childAppPageRfsh && settings?.childAppDataPageDev) ? (settings?.childAppDataRfshVal ? settings?.childAppDataRfshVal.toInteger() : 30) : null
-	dynamicPage(name: "childAppDataPage", refreshInterval:rVal, install:false) {
-		if(!atomicState?.diagChildAppStateFilters) { atomicState?.diagChildAppStateFilters = ["diagChildAppStateFilters"] }
-		def apps = getAllChildApps()
-		section("Child App Selection:") {
-			input(name: "childAppDataPageApp", title: "Select Child App(s) to View", type: "enum", required: false, multiple: true, submitOnChange: true, metadata: [values:buildChildAppInputMap()])
-			if(!settings?.childAppDataPageApp) { paragraph "Please select a child app to view!", required: true, state: null }
-		}
-		if(settings?.childAppDataPageApp) {
-			apps?.each { cApp ->
-				settings?.childAppDataPageApp?.each { selApp ->
-					if(selApp == cApp?.getId()) {
-						section("${strCapitalize(cApp?.getLabel())}:") {
-							if(settings?.childAppPageShowState == true || settings?.childAppPageShowState == null) {
-								def data = cApp?.getState()?.sort()?.findAll { !(it?.key in atomicState?.diagChildAppStateFilters) }
-								paragraph title: "State Data", "${getMapDescStr(data)}"
-							}
-							if(settings?.childAppPageShowSet == true || settings?.childAppPageShowSet == null) {
-								paragraph title: "Settings Data", "${getMapDescStr(cApp?.getSettings())}"
-							}
-							if(settings?.childAppPageShowMeta == true || settings?.childAppPageShowMeta == null) {
-								paragraph title: "MetaData", "${getMapDescStr(cApp?.getMetadata())}"
-							}
-						}
-					}
-				}
-			}
-		}
-		if(settings?.childAppDataPageApp) {
-			section("Data Filters:") {
-				paragraph "Show the following items in the device results:"
-				input "childAppPageShowState", "bool", title: "State Data?", defaultValue: false, submitOnChange: true
-				if(settings?.childAppPageShowState) {
-					input(name: "childAppDataStateFilter", title: "Select Items to Ignore", type: "enum", required: false, multiple: true, submitOnChange: true, metadata: [values:getChildStateKeys("childapp")])
-					atomicState?.diagChildAppStateFilters = settings?.childAppDataStateFilter ?: []
-				}
-				input "childAppPageShowSet", "bool", title: "Settings Data?", defaultValue: false, submitOnChange: true
-				input "childAppPageShowMeta", "bool", title: "MetaData?", defaultValue: false, submitOnChange: true
-			}
-		}
-		section("Page Options:") {
-			input "childAppPageRfsh", "bool", title: "Enable Auto-Refresh?", defaultValue: false, submitOnChange: true
-			if(settings?.childAppPageRfsh) {
-				input "childAppDataRfshVal", "number", title: "Refresh Every xx seconds?", defaultValue: 30, submitOnChange: true
-			}
-			paragraph "Changing this may require you to leave the page and come back"
-		}
-	}
-}
-
-def childDevDataPage() {
-	def rVal = (settings?.childDevPageRfsh && settings?.childDevDataPageDev) ? (settings?.childDevDataRfshVal ? settings?.childDevDataRfshVal.toInteger() : 180) : null
-	dynamicPage(name: "childDevDataPage", refreshInterval:rVal, install: false) {
-		if(!atomicState?.diagDevStateFilters) { atomicState?.diagDevStateFilters = ["diagDevStateFilters"] }
-		def devices = app.getChildDevices(true)
-		section("Device Selection:") {
-			input(name: "childDevDataPageDev", title: "Select Device(s) to View", type: "enum", required: false, multiple: true, submitOnChange: true, metadata: [values:buildDevInputMap()])
-			if(!settings?.childDevDataPageDev) { paragraph "Please select a device to view!", required: true, state: null }
-		}
-		if(settings?.childDevDataPageDev) {
-			devices?.each { dev ->
-				settings?.childDevDataPageDev?.each { selDev ->
-					if(selDev == dev?.deviceNetworkId) {
-						section("${strCapitalize(dev?.displayName)}:") {
-							if(settings?.childDevPageShowState == true || settings?.childDevPageShowState == null) {
-								paragraph title: "State Data", "${getMapDescStr(dev?.getState())}"
-							}
-							if(settings?.childDevPageShowAttr == true || settings?.childDevPageShowAttr == null) {
-								def str = ""; def cnt = 1
-								def devData = dev?.supportedAttributes.collect { it as String }
-								devData?.sort().each {
-									str += "${cnt>1 ? "\n\n" : "\n"} • ${"$it" as String}: (${dev.currentValue("$it")})"
-									cnt = cnt+1
-								}
-								paragraph title: "Supported Attributes\n", "${str}"
-							}
-							if(settings?.childDevPageShowCmds == true || settings?.childDevPageShowCmds == null) {
-								def str = ""; def cnt = 1
-								dev?.supportedCommands?.sort()?.each { cmd ->
-									str += "${cnt>1 ? "\n\n" : "\n"} • ${cmd.name}(${!cmd?.arguments ? "" : cmd?.arguments.toString().toLowerCase().replaceAll("\\[|\\]", "")})"
-									cnt = cnt+1
-								}
-								paragraph title: "Supported Commands", "${str}"
-							}
-							if(settings?.childDevPageShowCapab == true || settings?.childDevPageShowCapab == null) {
-								def data = dev?.capabilities?.sort()?.collect {it as String}
-								paragraph title: "Device Capabilities", "${getMapDescStr(data)}"
-							}
-						}
-					}
-				}
-			}
-		}
-		if(settings?.childDevDataPageDev) {
-			section("Data Filters:") {
-				paragraph "Show the following items in the device results:"
-				input "childDevPageShowState", "bool", title: "State Data?", defaultValue: true, submitOnChange: true
-				if(settings?.childDevPageShowState) {
-					input(name: "childDevDataStateFilter", title: "Select Items to Ignore", type: "enum", required: false, multiple: true, submitOnChange: true, metadata: [values:getChildStateKeys("device")])
-					atomicState?.diagDevStateFilters = settings?.childDevDataStateFilter ?: []
-				}
-				input "childDevPageShowAttr", "bool", title: "Attributes?", defaultValue: false, submitOnChange: true
-				input "childDevPageShowCmds", "bool", title: "Commands?", defaultValue: false, submitOnChange: true
-				input "childDevPageShowCapab", "bool", title: "Capabilities?", defaultValue: false, submitOnChange: true
-			}
-		}
-		section("Page Options:") {
-			input "childDevPageRfsh", "bool", title: "Enable Auto-Refresh?", defaultValue: false, submitOnChange: true
-			if(settings?.childDevPageRfsh) {
-				input "childDevDataRfshVal", "number", title: "Refresh Every xx seconds?", defaultValue: 180, submitOnChange: true
-			}
-			paragraph "Changing this may require you to leave the page and come back"
 		}
 	}
 }
@@ -8031,14 +7755,14 @@ def renderDiagHome() {
 			<script src="https://cdn.rawgit.com/toubou91/percircle/master/dist/js/percircle.js"></script>
 			<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaghomepage.min.css">
 			<style>
-				.footer {
-				    position: relative;
-				    bottom: 0;
-				    width: 100%;
-				    max-width: 800px;
-				    height: 20px;
-				    line-height: 20px;
-				    padding-bottom: 50px;
+				.home-btn {
+					width: 80px;
+					height: 40px;
+					border-radius: 0.6em;
+					background-color: white;
+					border-color: gray;
+					border-style: solid;
+					border-width: 1px;
 				}
 			</style>
 		</head>
@@ -8166,7 +7890,7 @@ def renderDiagHome() {
 def renderManagerData() {
 	try {
 		def setDesc = getMapDescStr(getSettings())
-		def noShow = ["authToken", "accessToken"]
+		def noShow = ["authToken", "accessToken", "cssData"]
 		def stData = getState()?.sort()?.findAll { !(it.key in noShow) }
 		def stateData = [:]
 		stData?.sort().each { item ->
@@ -8182,20 +7906,40 @@ def renderManagerData() {
 				<meta name="author" content="Anthony S.">
 
 				<title>NST Diagnostics - Manager Data</title>
-				 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+   				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+   				<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagmandatapage.min.css">
 				<style>
+					.home-btn {
+						width: 80px;
+						height: 40px;
+						border-radius: 0.6em;
+						background-color: white;
+						border-color: gray;
+						border-style: solid;
+						border-width: 1px;
+					}
 				</style>
 			</head>
 			<body>
 			 <div class="container">
-			  <div class="page-header">
-			   <div class="centerText">
-			    <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h2>
-			   </div>
+			 	<div class="page-header centerText" style="margin: 10px;">
+			   	  <div class="row">
+				   <div class="col-xs-2" style="padding: 25px 0 0 0;">
+					   <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+				   </div>
+				   <div class="col-xs-8">
+					   <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h2>
+				   </div>
+				   <div class="col-xs-2" style="padding: 20px 30px 0 0;">
+					   <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+				   </div>
+			    </div>
 			  </div>
 			  <div class="panel panel-primary">
 			   <div class="panel-heading">
@@ -8230,6 +7974,26 @@ def renderManagerData() {
 			   </div>
 			   <div>
 			   </div>
+			   <script>
+					\$(document).ready(function(){
+						\$("#rfrshBtn").click(function(){
+							window.location.reload(true);
+						});
+
+						\$("#rfrshBtn").hover(function(e){
+							\$(this).toggleClass('fa-spin');
+							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
+						});
+
+						\$("#goHomeBtn").click(function(){
+							window.history.back();
+						});
+					});
+					\$("body").flowtype({
+						minFont: 8,
+						maxFont: 14
+					});
+				</script>
 			</body>
 		"""
 /*  */
@@ -8248,24 +8012,43 @@ def renderAutomationData() {
 
 				<title>NST Diagnostics - Automation Data</title>
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+   				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+   				<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagautodatapage.min.css">
 				<style>
+					.home-btn {
+						width: 80px;
+						height: 40px;
+						border-radius: 0.6em;
+						background-color: white;
+						border-color: gray;
+						border-style: solid;
+						border-width: 1px;
+					}
 				</style>
 			</head>
 			<body>
 				<div class="container">
-				  <div class="page-header">
-				    <div class="centerText">
-					  <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Device Data</img></h2>
-				    </div>
+				   <div class="page-header centerText" style="margin: 10px;">
+					  <div class="row">
+						  <div class="col-xs-2" style="padding: 15px 0 0 0;">
+							  <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+						  </div>
+						  <div class="col-xs-8">
+							  <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Automation Data</img></h2>
+						  </div>
+						  <div class="col-xs-2" style="padding: 10px 30px 0 0;">
+							  <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+						  </div>
+					  </div>
 				  </div>
 		"""
 		getAllChildApps()?.each { cApp ->
 			def setDesc = getMapDescStr(cApp?.getSettings())
-			def stateDesc = getMapDescStr(cApp?.getState()?.findAll { !(it?.key in ["remDiagLogDataStore"]) })
+			def stateDesc = getMapDescStr(cApp?.getState()?.findAll { !(it?.key in ["remDiagLogDataStore", "cssData"]) })
 			def metaDesc = getMapDescStr(cApp?.getMetadata())
 			html += """
 				  <div class="page-header">
@@ -8311,6 +8094,26 @@ def renderAutomationData() {
 		}
 		html += """
 			   </div>
+			   <script>
+					\$(document).ready(function(){
+						\$("#rfrshBtn").click(function(){
+							window.location.reload(true);
+						});
+
+						\$("#rfrshBtn").hover(function(e){
+							\$(this).toggleClass('fa-spin');
+							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
+						});
+
+						\$("#goHomeBtn").click(function(){
+							window.history.back();
+						});
+					});
+					\$("body").flowtype({
+						minFont: 8,
+						maxFont: 14
+					});
+				</script>
 			</body>
 		"""
 /* """ */
@@ -8329,21 +8132,39 @@ def renderDeviceData() {
 
 				<title>NST Diagnostics - Automation Data</title>
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+   				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+   				<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagdevdatapage.min.css">
 				<style>
-
+					.home-btn {
+						width: 80px;
+						height: 40px;
+						border-radius: 0.6em;
+						background-color: white;
+						border-color: gray;
+						border-style: solid;
+						border-width: 1px;
+					}
 				</style>
 			</head>
 			<body>
 				<div class="container">
-				  <div class="page-header">
-					<div class="centerText">
-					  <h2><img class="logoIcn" align="center" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Device Data</img></h2>
-					</div>
-				  </div>
+				<div class="page-header centerText" style="margin: 10px;">
+				<div class="row">
+				 <div class="col-xs-2" style="padding: 15px 0 0 0;">
+					 <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+				 </div>
+				 <div class="col-xs-8">
+					 <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Device Data</img></h2>
+				 </div>
+				 <div class="col-xs-2" style="padding: 10px 30px 0 0;">
+					 <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+				 </div>
+			  </div>
+			</div>
 		"""
 /*  */
 		def devices = app.getChildDevices(true)
@@ -8398,7 +8219,7 @@ def renderDeviceData() {
 				 </div>
 				 <div class="panel-body">
 				  <div>
-				   <p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
+				   <p style="word-wrap: normal">${stateDesc.toString().replaceAll("\n", "<br>")}</p>
 				  </div>
 				 </div>
 				</div>
@@ -8441,6 +8262,26 @@ def renderDeviceData() {
 		}
 		html += """
 			   </div>
+			   <script>
+					\$(document).ready(function(){
+						\$("#rfrshBtn").click(function(){
+							window.location.reload(true);
+						});
+
+						\$("#rfrshBtn").hover(function(e){
+							\$(this).toggleClass('fa-spin');
+							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
+						});
+
+						\$("#goHomeBtn").click(function(){
+							window.history.back();
+						});
+					});
+					\$("body").flowtype({
+						minFont: 8,
+						maxFont: 14
+					});
+				</script>
 			</body>
 		"""
 		render contentType: "text/html", data: html

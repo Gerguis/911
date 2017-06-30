@@ -7540,54 +7540,31 @@ def getRemLogData() {
 					<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
 
 					<style>
-						.logSrcFmt {
-							border-radius: 0.3em;
+						 .home-btn {
+							width: 80px;
+							height: 40px;
+							border-radius: 0.6em;
+							background-color: white;
 							border-color: gray;
 							border-style: solid;
 							border-width: 1px;
-							padding: 2px;
-							font-style: italic;
 						}
-						 .defsrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
-						 .mansrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
-						 .autosrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
-						 .camsrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
-						 .protsrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
-						 .pressrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
-						 .weatsrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
-						 .tstatsrc-bg {
-							 color: gray;
-							 background-color: lightgray;
-						 }
 					</style>
 				</head>
 				<body>
 					<div class="container">
 						<!--Page Header Section -->
 						<div class="page-header centerText" style="margin: 10px;">
-					   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
-					   		<h5>This Includes Automations, Device, Manager Logs</h5>
+							<div class="row">
+								<div class="col-xs-2" style="padding: 30px 0 0 0;">
+									<button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+								</div>
+								<div class="col-xs-8">
+						   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
+					   			<h5>This Includes Automations, Device, Manager Logs</h5>
+								</div>
+								<div class="col-xs-2"></div>
+							</div>
 						</div>
 						<!--First Panel Section -->
 						<div class="panel panel-primary">
@@ -7617,6 +7594,9 @@ def getRemLogData() {
 							\$("#rfrshBtn").hover(function(e){
 								\$(this).toggleClass('fa-spin');
 								\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
+							});
+							\$("#goHomeBtn").click(function(){
+								window.history.back();
 							});
 						});
 						\$("#logBody").flowtype({

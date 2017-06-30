@@ -721,7 +721,7 @@ void Logger(msg, logType = "debug") {
 	}
 	def theId = lastN(device.getId().toString(),5)
 	if(state?.enRemDiagLogging) {
-		parent.saveLogtoRemDiagStore(smsg, logType, "Protect${theId}")
+		parent.saveLogtoRemDiagStore(smsg, logType, "Protect-${theId}")
 	}
 }
 
