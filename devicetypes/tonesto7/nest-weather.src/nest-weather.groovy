@@ -234,7 +234,7 @@ def keepAwakeEvent() {
 }
 
 void repairHealthStatus(data) {
-	LogTrace("repairHealthStatus($data)")
+	Logger("repairHealthStatus($data)")
 	if(data?.flag) {
 		sendEvent(name: "DeviceWatch-DeviceStatus", value: "online", displayed: false, isStateChange: true)
 		state?.healthInRepair = false
