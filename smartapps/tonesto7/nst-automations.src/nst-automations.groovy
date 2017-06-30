@@ -7857,17 +7857,22 @@ def toQueryString(Map m) {
 /************************************************************************************************
 |									LOGGING AND Diagnostic										|
 *************************************************************************************************/
+def lastN(String input, n) {
+	return n > input?.size() ? null : n ? input[-n..-1] : ''
+}
 def LogTrace(msg, logSrc=null) {
 	def trOn = (showDebug && advAppDebug) ? true : false
 	if(trOn) {
-		def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "NestManager") : logSrc
+		def theId = lastN(getId().toString(),5)
+		def theLogSrc = (logSrc == null) ? (parent ? "Automation${theId}" : "NestManager") : logSrc
 		Logger(msg, "trace", theLogSrc)
 	}
 }
 
 def LogAction(msg, type="debug", showAlways=false, logSrc=null) {
 	def isDbg = parent ? (showDebug ? true : false) : (appDebug ? true : false)
-	def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "NestManager") : logSrc
+	def theId = lastN(app.getId().toString(),5)
+	def theLogSrc = (logSrc == null) ? (parent ? "Automation${theId}" : "NestManager") : logSrc
 	if(showAlways) { Logger(msg, type, theLogSrc) }
 	else if(isDbg && !showAlways) { Logger(msg, type, theLogSrc) }
 }
