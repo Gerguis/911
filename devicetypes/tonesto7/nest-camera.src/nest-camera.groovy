@@ -13,7 +13,7 @@ import groovy.time.TimeCategory
 
 preferences { }
 
-def devVer() { return "5.1.2" }
+def devVer() { return "5.1.3" }
 
 metadata {
 	definition (name: "${textDevName()}", author: "Anthony S.", namespace: "tonesto7") {
@@ -211,7 +211,7 @@ def keepAwakeEvent() {
 }
 
 void repairHealthStatus(data) {
-	log.trace "repairHealthStatus($data)"
+	LogTrace("repairHealthStatus($data)")
 	if(data?.flag) {
 		sendEvent(name: "DeviceWatch-DeviceStatus", value: "online", displayed: false, isStateChange: true)
 		state?.healthInRepair = false
@@ -875,6 +875,9 @@ private takePicture(url) {
 /************************************************************************************************
 |							EXCEPTION HANDLING & LOGGING FUNCTIONS								|
 *************************************************************************************************/
+def lastN(String input, n) {
+  return n > input?.size() ? null : n ? input[-n..-1] : ''
+}
 
 void Logger(msg, logType = "debug") {
 	def smsg = state?.showLogNamePrefix ? "${device.displayName}: ${msg}" : "${msg}"
@@ -898,8 +901,9 @@ void Logger(msg, logType = "debug") {
 			log.debug "${smsg}"
 			break
 	}
+	def theId = lastN(device.getId().toString(),5)
 	if(state?.enRemDiagLogging) {
-		parent.saveLogtoRemDiagStore(smsg, logType, "Camera DTH")
+		parent.saveLogtoRemDiagStore(smsg, logType, "Camera${theId}")
 	}
 }
 
