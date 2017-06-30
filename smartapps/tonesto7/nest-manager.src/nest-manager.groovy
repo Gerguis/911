@@ -109,15 +109,15 @@ mappings {
 		path("/oauth/callback") 	{action: [GET: "callback"]}
 		//Renders Json Data
 
-		path("/diagHome")		{action: [GET: "renderDiagHome"]}
-		if(atomicState?.enRemDiagLogging == true) {
+		if(atomicState?.enRemDiagLogging == true || getDevOpt() ) {
+			path("/diagHome")	{action: [GET: "renderDiagHome"]}
 			path("/getLogData")	{action: [GET: "renderLogData"]}
+			path("/getManagerData")	{action: [GET: "renderManagerData"]}
+			path("/getAutoData")	{action: [GET: "renderAutomationData"]}
+			path("/getDeviceData")	{action: [GET: "renderDeviceData"]}
 		}
-		path("/getManagerData")	{action: [GET: "renderManagerData"]}
-		path("/getAutoData")	{action: [GET: "renderAutomationData"]}
-		path("/getDeviceData")	{action: [GET: "renderDeviceData"]}
 
-		path("/renderInstallId")		{action: [GET: "renderInstallId"]}
+		path("/renderInstallId")	{action: [GET: "renderInstallId"]}
 		path("/renderInstallData")	{action: [GET: "renderInstallData"]}
 		path("/receiveEventData") 	{action: [POST: "receiveEventData"]}
 		path("/streamStatus")		{action: [POST: "receiveStreamStatus"]}
@@ -8254,6 +8254,7 @@ def renderManagerData() {
 			   </div>
 			</body>
 		"""
+/*  */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderManagerData Exception:", ex }
 }
@@ -8366,6 +8367,7 @@ def renderDeviceData() {
 					</div>
 				  </div>
 		"""
+/*  */
 		def devices = app.getChildDevices(true)
 		devices?.each { dev ->
 			def setDesc = getMapDescStr(dev?.getSettings())
@@ -8457,6 +8459,7 @@ def renderDeviceData() {
 			   </div>
 			  </div>
 			"""
+/* """ */
 		}
 		html += """
 			   </div>
