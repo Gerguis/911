@@ -615,7 +615,7 @@ def prefsPage() {
 		}
 		section("App and Device Logging:") {
 			def t1 = getAppDebugDesc()
-			href "debugPrefPage", title: "Logging", description: (t1 ? "${t1 ?: ""}\n\nTap to modify" : "Tap to configure"), state: ((isAppDebug() || isChildDebug()) ? "complete" : null),
+			href "debugPrefPage", title: "Logging", description: (t1 ? "${t1 ?: ""}\n\nTap to modify" : "Tap to configure"), state: (t1) ? "complete" : null,
 					image: getAppImg("log.png")
 		}
 		section ("Misc. Options:") {
@@ -1570,7 +1570,8 @@ def debugPrefPage() {
 			input (name: "childDebug", type: "bool", title: "Show Device Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
 		}
 		section("Remote Diagnostics:") {
-			href "remoteDiagPage", title: "View Diagnostic Info?", description: "", image: getAppImg("diagnostic_icon.png")
+			def t1 = getRemDiagDesc()
+			href "remoteDiagPage", title: "View Diagnostic Info?", description: (t1 ? "${t1 ?: ""}\n\nTap to modify" : "Tap to configure"), state: (t1) ? "complete" : null, image: getAppImg("diagnostic_icon.png")
 		}
 		section ("Reset Application Data") {
 			input (name: "resetAllData", type: "bool", title: "Reset Application Data?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
@@ -1882,7 +1883,14 @@ def getDevicesDesc(startNewLine=true) {
 def getAppDebugDesc() {
 	def str = ""
 	str += isAppDebug() ? "App Debug: (${debugStatus()})${advAppDebug ? "(Trace)" : ""}" : ""
-	str += isChildDebug() ? "${isAppDebug() ? "\n" : ""}Device Debug: (${deviceDebugStatus()})" : ""
+	str += isChildDebug() ? "${str ? "\n" : ""}Device Debug: (${deviceDebugStatus()})" : ""
+	str += getRemDiagDesc() ? "${str ? "\n" : ""}${getRemDiagDesc()}" : ""
+	return (str != "") ? "${str}" : null
+}
+
+def getRemDiagDesc() {
+	def str = ""
+	str += settings?.enRemDiagLogging ? "Remote Logging: (${settings.enRemDiagLogging})" : ""
 	return (str != "") ? "${str}" : null
 }
 
@@ -6744,7 +6752,7 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 				log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
 			} else {
 				def data = atomicState?.remDiagLogDataStore ?: []
-				def item = ["dt":getDtNow().toString(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
+				def item = ["dt":new Date().getTime(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
 				data << item
 				atomicState?.remDiagLogDataStore = data
 			}
@@ -7882,7 +7890,7 @@ def renderDiagHome() {
 		  	</div>
 		</body>
 	"""
-/* """ */
+/* "" */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
 }
@@ -7996,7 +8004,7 @@ def renderManagerData() {
 				</script>
 			</body>
 		"""
-/*  */
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderManagerData Exception:", ex }
 }
@@ -8046,6 +8054,7 @@ def renderAutomationData() {
 					  </div>
 				  </div>
 		"""
+/* "" */
 		getAllChildApps()?.each { cApp ->
 			def setDesc = getMapDescStr(cApp?.getSettings())
 			def stateDesc = getMapDescStr(cApp?.getState()?.findAll { !(it?.key in ["remDiagLogDataStore", "cssData"]) })
