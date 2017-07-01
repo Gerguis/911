@@ -7519,7 +7519,7 @@ def getRemLogData() {
 				}
 
 				resultStr += """
-					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logEvtDt">${tf?.format(Date.parse("E MMM dd HH:mm:ss z yyyy", logItem?.dt.toString()))}</span>: <span class="label $tCls">${logItem?.type}</span> | <span class="logSrcFmt ${srcCls}" style="font-style: italic;">${logItem?.src}</span>: ${logItem?.msg}</span>
+					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logEvtDt">${tf?.format(logItem?.dt)}</span>: <span class="label $tCls">${logItem?.type}</span> | <span class="logSrcFmt ${srcCls}" style="font-style: italic;">${logItem?.src}</span>: ${logItem?.msg}</span>
 				"""
 				cnt = cnt+1
 			}
