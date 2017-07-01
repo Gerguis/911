@@ -4762,13 +4762,28 @@ def setTstatTempCheck() {
 
 				def newHvacMode = (!useMotion ? hvacSettings?.hvacm : (hvacSettings?.mhvacm ?: hvacSettings?.hvacm))
 				if(newHvacMode && (newHvacMode.toString() != curMode)) {
-					if(setTstatMode(schMotTstat, newHvacMode, pName)) {
-						storeLastAction("Set ${tstat} Mode to ${strCapitalize(newHvacMode)}", getDtNow(), pName, tstat)
-						LogAction("setTstatTempCheck: Setting ${tstat} Thermostat Mode to (${strCapitalize(newHvacMode)})", "info", true)
-					} else { LogAction("setTstatTempCheck: Error Setting ${tstat} Thermostat Mode to (${strCapitalize(newHvacMode)})", "warn", true) }
-					if(tstatMir) {
-						if(setMultipleTstatMode(tstatMir, newHvacMode, pName)) {
+
+					if(newHvacMode == "rtnFromEco") {
+						if(curMode == "eco") {
+							def t0 = tstat?.currentpreviousthermostatMode?.toString()
+							if(t0) {
+								newHvacMode = t0
+							}
+						} else {
+							newHvacMode = curMode
+						}
+						LogAction("setTstatTempCheck: New Mode is rtnFromEco; Setting Thermostat Mode to (${strCapitalize(newHvacMode)})", "info", true)
+					}
+
+					if(newHvacMode && (newHvacMode.toString() != curMode)) {
+						if(setTstatMode(schMotTstat, newHvacMode, pName)) {
+							storeLastAction("Set ${tstat} Mode to ${strCapitalize(newHvacMode)}", getDtNow(), pName, tstat)
+							LogAction("setTstatTempCheck: Setting ${tstat} Thermostat Mode to (${strCapitalize(newHvacMode)})", "info", true)
+						} else { LogAction("setTstatTempCheck: Error Setting ${tstat} Thermostat Mode to (${strCapitalize(newHvacMode)})", "warn", true) }
+						if(tstatMir) {
+							if(setMultipleTstatMode(tstatMir, newHvacMode, pName)) {
 							LogAction("Mirroring (${newHvacMode}) to ${tstatMir}", "info", true)
+							}
 						}
 					}
 				}
@@ -5744,7 +5759,7 @@ def editSchedule(schedData) {
 				input "${sLbl}CoolTemp", "decimal", title: "Cool Set Point (${tempScaleStr})", description: "Range within ${tempRangeValues()}", required: true, range: tempRangeValues(),
 						submitOnChange: true, image: getAppImg("cool_icon.png")
 			}
-			input "${sLbl}HvacMode", "enum", title: "Set Hvac Mode:", required: false, description: "No change set", metadata: [values:tModeHvacEnum(canHeat,canCool)], multiple: false, image: getAppImg("hvac_mode_icon.png")
+			input "${sLbl}HvacMode", "enum", title: "Set Hvac Mode:", required: false, description: "No change set", metadata: [values:tModeHvacEnum(canHeat,canCool, true)], multiple: false, image: getAppImg("hvac_mode_icon.png")
 		}
 		if(settings?.schMotRemoteSensor && !("remSen" in hideStr)) {
 			section("(${schedData?.secData?.schName ?: "Schedule ${cnt}"}) Remote Sensor Options:                                           ", hideable: true, hidden: (settings["${sLbl}remSensor"] == null)) {
@@ -5768,7 +5783,7 @@ def editSchedule(schedData) {
 				if(canCool) {
 					input "${sLbl}MCoolTemp", "decimal", title: "Cool Setpoint with Motion (${tempScaleStr})", description: "Range within ${tempRangeValues()}", required: true, range: tempRangeValues(), image: getAppImg("cool_icon.png")
 				}
-				input "${sLbl}MHvacMode", "enum", title: "Set Hvac Mode with Motion:", required: false, description: "No change set", metadata: [values:tModeHvacEnum(canHeat,canCool)], multiple: false, image: getAppImg("hvac_mode_icon.png")
+				input "${sLbl}MHvacMode", "enum", title: "Set Hvac Mode with Motion:", required: false, description: "No change set", metadata: [values:tModeHvacEnum(canHeat,canCool,true)], multiple: false, image: getAppImg("hvac_mode_icon.png")
 				//input "${sLbl}MRestrictionMode", "mode", title: "Ignore in these modes", description: "Any location mode", required: false, multiple: true, image: getAppImg("mode_icon.png")
 				input "${sLbl}MPresHome", "capability.presenceSensor", title: "Only act when these people are home", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_pres_icon.png")
 				input "${sLbl}MPresAway", "capability.presenceSensor", title: "Only act when these people are away", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_away_icon.png")
@@ -7359,13 +7374,16 @@ def fanModeTrigEnum() {
 	return vals
 }
 
-def tModeHvacEnum(canHeat, canCool) {
+def tModeHvacEnum(canHeat, canCool, canRtn=null) {
 	def vals = ["auto":"Auto", "cool":"Cool", "heat":"Heat", "eco":"Eco"]
 	if(!canHeat) {
 		vals = ["cool":"Cool", "eco":"Eco"]
 	}
 	if(!canCool) {
 		vals = ["heat":"Heat", "eco":"Eco"]
+	}
+	if(canRtn) {
+		vals << ["rtnFromEco":"Return from ECO if in ECO"]
 	}
 	return vals
 }
