@@ -37,7 +37,7 @@ definition(
 include 'asynchttp_v1'
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "6-30-2017" }
+def appVerDate() { "7-2-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -64,7 +64,6 @@ preferences {
 	page(name: "changeLogPage")
 	page(name: "prefsPage")
 	page(name: "infoPage")
-	page(name: "nestInfoPage")
 	page(name: "structInfoPage")
 	page(name: "tstatInfoPage")
 	page(name: "protInfoPage")
@@ -72,7 +71,6 @@ preferences {
 	page(name: "pollPrefPage")
 	page(name: "debugPrefPage")
 	page(name: "notifPrefPage")
-	page(name: "diagPage")
 	page(name: "appParamsDataPage")
 	page(name: "devNamePage")
 	page(name: "alarmTestPage")
@@ -104,18 +102,22 @@ mappings {
 		//used during Oauth Authentication
 		path("/oauth/initialize") 	{action: [GET: "oauthInitUrl"]}
 		path("/oauth/callback") 	{action: [GET: "callback"]}
-		//Renders Json Data
 
-		if(atomicState?.enRemDiagLogging == true || getDevOpt() ) {
+		//Web Diagnostics Pages
+		if(settings?.enDiagWebPage == true || getDevOpt() ) {
 			path("/diagHome")	{action: [GET: "renderDiagHome"]}
 			path("/getLogData")	{action: [GET: "renderLogData"]}
+			path("/getLogMap")	{action: [GET: "getLogMap"]}
 			path("/getManagerData")	{action: [GET: "renderManagerData"]}
 			path("/getAutoData")	{action: [GET: "renderAutomationData"]}
 			path("/getDeviceData")	{action: [GET: "renderDeviceData"]}
+			path("/getInstData")	{action: [GET: "renderInstData"]}
+			path("/getAppData")		{action: [GET: "renderAppData"]}
 		}
+		// path("/execCmd/:command")	{action: [GET: "execCmd"]}
+		// path("/setData/:value")		{action: [GET: "getSetData", POST: "updateSetData", DELETE: "delSetData"]}
+		// path("/stateData/:value")	{action: [GET: "getStateData", POST: "updateStateData", DELETE: "delStateData"]}
 
-		path("/renderInstallId")	{action: [GET: "renderInstallId"]}
-		path("/renderInstallData")	{action: [GET: "renderInstallData"]}
 		path("/receiveEventData") 	{action: [POST: "receiveEventData"]}
 		path("/streamStatus")		{action: [POST: "receiveStreamStatus"]}
 	}
@@ -558,32 +560,40 @@ def infoPage () {
 		section("Help and Feedback:") {
 			href url: getHelpPageUrl(), style:"embedded", required:false, title:"View the Projects Wiki",
 				description:"Tap to open in browser", state: "complete", image: getAppImg("info.png")
-			href url: getIssuePageUrl(), style:"embedded", required:false, title:"View | Report Issues",
+			href url: getIssuePageUrl(), style:"embedded", required:false, title:"Report | View Issues",
 				description:"Tap to open in browser", state: "complete", image: getAppImg("issue_icon.png")
 			href "feedbackPage", title: "Send Developer Feedback", description: "", image: getAppImg("feedback_icon.png")
-			href "remoteDiagPage", title: "Collect Logs for Diagnosis", description: "", image: getAppImg("diagnostic_icon.png")
+
 		}
+
+		section("View App Info, Diagnostic Data:") {
+			paragraph "Current State Usage:\n${getStateSizePerc()}% (${getStateSize()} bytes)", required: true, state: (getStateSizePerc() <= 70 ? "complete" : null),
+					image: getAppImg("progress_bar.png")
+			href "changeLogPage", title: "View App Revision History", description: "Tap to view", image: getAppImg("change_log_icon.png")
+
+			if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras || atomicState?.weatherDevice)) {
+				input "enDiagWebPage", "bool", title: "Enable Diagnostic Web Page?", description: "", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("diagnostic_icon.png")
+				if(settings?.enDiagWebPage) {
+					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: "complete"
+					href "remoteDiagPage", title: "Collect Logs for Diagnosis", description: "", image: getAppImg("log.png")
+				}
+			}
+		}
+
+		if(atomicState?.protects) {
+			section("Perform Nest Protect Device Tests:") {
+				def dt = atomicState?.isAlarmCoTestActiveDt
+				href "alarmTestPage", title: "Test Nest Protect Automations\nBy Simulating Alarm Events", description: "${dt ? "Last Tested:\n$dt\n\n" : ""}Tap to Begin...", image: getAppImg("test_icon.png")
+			}
+		}
+
 		section("Credits:") {
 			paragraph title: "Creator:", "Anthony S. (@tonesto7)", state: "complete"
 			paragraph title: "Co-Author:", "Eric S. (@E_Sch)", state: "complete"
 			paragraph title: "Collaborator:", "Ben W. (@desertblade)", state: "complete"
 		}
-		section("App Info:") {
-			href "changeLogPage", title: "View App Revision History", description: "Tap to view", image: getAppImg("change_log_icon.png")
-			paragraph "Current State Usage:\n${getStateSizePerc()}% (${getStateSize()} bytes)", required: true, state: (getStateSizePerc() <= 70 ? "complete" : null),
-					image: getAppImg("progress_bar.png")
-			if(atomicState?.installationId) {
-				paragraph "InstallationID:\n${atomicState?.installationId}"
-			}
-		}
-		if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.weatherDevice)) {
-			section("View App and Device Data, and Perform Device Tests:") {
-				if(atomicState?.enRemDiagLogging) {
-					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
-				}
-				href "nestInfoPage", title: "API | Diagnostics | Testing", description: "", image: getAppImg("api_diag_icon.png")
-			}
-		}
+
+
 		section("Licensing Info:") {
 			paragraph "${textCopyright()}\n${textLicense()}"
 		}
@@ -1602,7 +1612,6 @@ def remoteDiagPage () {
 
 		section() {
 			if(atomicState?.enRemDiagLogging) {
-				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
 				def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
 				paragraph str, required: true, state: "complete"
 			}
@@ -7246,23 +7255,6 @@ def b64Action(String str, dec=false) {
 /******************************************************************************
 *					 	DIAGNOSTIC & NEST API INFO PAGES		  	  		  *
 *******************************************************************************/
-def nestInfoPage () {
-	dynamicPage(name: "nestInfoPage", install: false) {
-		if(atomicState?.protects) {
-			section("Nest Protect Alarm Simulation:") {
-				if(atomicState?.protects) {
-					def dt = atomicState?.isAlarmCoTestActiveDt
-					href "alarmTestPage", title: "Test Protect Automations\nBy Simulating Alarm Events", description: "${dt ? "Last Tested:\n$dt\n\n" : ""}Tap to Begin...", image: getAppImg("test_icon.png")
-				}
-			}
-		}
-		section("Diagnostics") {
-			href "diagPage", title: "View Diagnostic Info", description: null, image: getAppImg("diag_icon.png")
-			href "remoteDiagPage", title: "Send Logs to Developer", description: "", image: getAppImg("diagnostic_icon.png")
-		}
-	}
-}
-
 def alarmTestPage () {
 	dynamicPage(name: "alarmTestPage", install: false, uninstall: false) {
 		if(atomicState?.protects) {
@@ -7366,57 +7358,6 @@ def simulateTestEventPage(params) {
 	}
 }
 
-def diagPage () {
-	dynamicPage(name: "diagPage", install: false) {
-		section("") {
-			paragraph "This page allows viewing diagnostic data for apps/devices to assist in troubleshooting", image: getAppImg("diag_icon.png")
-		}
-		section("State Size Info:") {
-			paragraph "Current State Usage:\n${getStateSizePerc()}% (${getStateSize()} bytes)", required: true, state: (getStateSizePerc() <= 70 ? "complete" : null),
-					image: getAppImg("progress_bar.png")
-		}
-		section("View App & Device Data") {
-			if(atomicState?.enRemDiagLogging) {
-				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: null
-			}
-			href "appParamsDataPage", title:"AppData File", description:"Tap to view", image: getAppImg("view_icon.png")
-		}
-		if(settings?.optInAppAnalytics || settings?.optInSendExceptions) {
-			section("Analytics Data") {
-				if(settings?.optInAppAnalytics) {
-					href url: getAppEndpointUrl("renderInstallData"), style:"embedded", required: false, title:"View Shared Install Data", description:"Tap to view Data", image: getAppImg("app_analytics_icon.png")
-				}
-				href url: getAppEndpointUrl("renderInstallId"), style:"embedded", required: false, title:"View Installation ID", description:"Tap to view", image: getAppImg("view_icon.png")
-			}
-		}
-		section("Recent Nest Command Details:") {
-			def cmdDesc = ""
-			cmdDesc += " • DateTime: "
-			cmdDesc += atomicState?.lastCmdSentDt ? "\n └ (${atomicState?.lastCmdSentDt})" : "(Nothing found)"
-			cmdDesc += "\n • Cmd Sent: "
-			cmdDesc += atomicState?.lastCmdSent ? "\n └ (${atomicState?.lastCmdSent})" : "(Nothing found)"
-			cmdDesc += "\n • Cmd Result: (${atomicState?.lastCmdSentStatus ?: "Nothing found"})"
-
-			cmdDesc += "\n\n • Totals Commands Sent: (${!atomicState?.apiCommandCnt ? 0 : atomicState?.apiCommandCnt})"
-			paragraph "${cmdDesc}"
-		}
-		section("Other Data:") {
-			paragraph "API Token Client Version: ${atomicState?.metaData?.client_version ?: "Not Found"}"
-			paragraph "Install Id:\n${atomicState?.installationId ?: "Not Found"}"
-			paragraph "Token Number: ${atomicState?.appData?.token?.tokenNum ?: "Not Found"}"
-		}
-	}
-}
-
-def appParamsDataPage() {
-	dynamicPage(name: "appParamsDataPage", refreshInterval: 0, install: false) {
-		section() {
-			def data = atomicState?.appData
-			paragraph title: "AppData Contents", "${getMapDescStr(data)}"
-		}
-	}
-}
-
 def getMapDescStr(data) {
 	def str = ""
 	def cnt = 1
@@ -7430,12 +7371,12 @@ def getMapDescStr(data) {
 					if(par2?.value instanceof Map) { //This handles second level maps
 						def map3 = par2?.value
 						def cnt3 = 1
-						str += "\n   ${cnt2 < map2?.size() ? "├" : "└"} ${par2?.key.toString()}:"
+						str += "\n     ${cnt2 < map2?.size() ? "├" : "└"} ${par2?.key.toString()}:"
 						map3?.sort()?.each { par3 ->
 							if(par3?.value instanceof Map) { //This handles third level maps
 								def map4 = par3?.value
 								def cnt4 = 1
-								str += "\n   ${cnt2 < map2?.size() ? "│" : "    "}${cnt3 < map3?.size() ? "├" : "└"} ${par3?.key.toString()}:"
+								str += "\n     ${cnt2 < map2?.size() ? "│" : "    "}${cnt3 < map3?.size() ? "├" : "└"} ${par3?.key.toString()}:"
 								map4?.sort()?.each { par4 ->
 									if(par4?.value instanceof Map) { //This handles fourth level maps
 										def map5 = par4?.value
@@ -7646,7 +7587,7 @@ def getDeviceMetricCnts() {
 /******************************************************************************
 *					Firebase Analytics Functions		  	  *
 *******************************************************************************/
-def createInstallDataJson() {
+def createInstallDataJson(returnMap=null) {
 	try {
 		generateInstallId()
 		def autoDesc = getInstAutoTypesDesc()			// This is a hack to get installedAutomations data updated without waiting for user to hit done
@@ -7698,9 +7639,12 @@ def createInstallDataJson() {
 				"automations":automations, "timeZone":tz, "apiCmdCnt":apiCmdCnt, "apiRestStrEvtCnt":apiRestStrEvtCnt, "stateUsage":"${getStateSizePerc()}%", "datetime":getDtNow()?.toString(), "optOut":true
 			]
 		}
-		def resultJson = new groovy.json.JsonOutput().toJson(data)
-		return resultJson
-
+		if(returnMap == true) {
+			return data
+		} else {
+			def resultJson = new groovy.json.JsonOutput().toJson(data)
+			return resultJson
+		}
 	} catch (ex) {
 		log.error "createInstallDataJson: Exception:", ex
 		sendExceptionData(ex, "createInstallDataJson")
@@ -7713,13 +7657,6 @@ def renderInstallData() {
 		def resultString = new groovy.json.JsonOutput().prettyPrint(resultJson)
 		render contentType: "application/json", data: resultString
 	} catch (ex) { log.error "renderInstallData Exception:", ex }
-}
-
-def renderInstallId() {
-	try {
-		def resultJson = new groovy.json.JsonOutput().toJson(atomicState?.installationId)
-		render contentType: "application/json", data: resultJson
-	} catch (ex) { log.error "renderInstallId Exception:", ex }
 }
 
 def renderLogData() {
@@ -7737,6 +7674,49 @@ def renderLogData() {
 
 def getDiagHomeUrl() { getAppEndpointUrl("diagHome") }
 
+// path("/getLogMap")	{action: [GET: "getLogMap"]}
+// path("/execCmd/:command")	{action: [GET: "execCmd"]}
+// path("/setData/:value")		{action: [GET: "getSetData", POST: "updateSetData", DELETE: "delSetData"]}
+// path("/stateData/:value")	{action: [GET: "getStateData", POST: "updateStateData", DELETE: "delStateData"]}
+
+def getLogMap() {
+	try {
+		def remDiagApp = getRemDiagApp()
+		def resultJson = new groovy.json.JsonOutput().toJson(remDiagApp?.getStateVal("remDiagLogDataStore"))
+		render contentType: "application/json", data: resultJson
+	} catch (ex) { log.error "getLogMap Exception:", ex }
+}
+
+def getSetData() {
+	def res = null
+	def par = params?.value
+	log.debug "getSetData param: $par"
+ 	res = par ? getSettingVal("$par") : getSettings()
+	def resultJson = new groovy.json.JsonOutput().toJson(res)
+	render contentType: "application/json", data: resultJson
+}
+
+def getStateData() {
+	def res = null
+	def par = params.value
+	log.debug "getStateData param: $par"
+ // 	res = par ? getStateVal("$par") : getState()
+	def resultJson = new groovy.json.JsonOutput().toJson(res)
+	render contentType: "application/json", data: resultJson
+}
+
+def lastCmdDesc() {
+	def cmdDesc = ""
+	cmdDesc += " • DateTime: "
+	cmdDesc += atomicState?.lastCmdSentDt ? "\n └ (${atomicState?.lastCmdSentDt})" : "(Nothing found)"
+	cmdDesc += "\n • Cmd Sent: "
+	cmdDesc += atomicState?.lastCmdSent ? "\n └ (${atomicState?.lastCmdSent})" : "(Nothing found)"
+	cmdDesc += "\n • Cmd Result: (${atomicState?.lastCmdSentStatus ?: "Nothing found"})"
+
+	cmdDesc += "\n\n • Totals Commands Sent: (${!atomicState?.apiCommandCnt ? 0 : atomicState?.apiCommandCnt})"
+	return cmdDesc
+}
+
 def renderDiagHome() {
 	try {
 		def remDiagUrl = getAppEndpointUrl("diagHome")
@@ -7744,8 +7724,11 @@ def renderDiagHome() {
 		def managerUrl = getAppEndpointUrl("getManagerData")
 		def autoUrl = getAppEndpointUrl("getAutoData")
 		def deviceUrl = getAppEndpointUrl("getDeviceData")
+		def appDataUrl = getAppEndpointUrl("getAppData")
+		def instDataUrl = getAppEndpointUrl("getInstData")
 		def sPerc = getStateSizePerc() ?: 0
 		def instData = atomicState?.installData
+		def cmdDesc = lastCmdDesc().toString().replaceAll("\n", "<br>")
 		def html = """
 		<head>
 			<meta charset="utf-8">
@@ -7809,6 +7792,12 @@ def renderDiagHome() {
 											<div class="col-xs-12 col-sm-6 install-content">
 												<span><b>Install ID:</b></br><small>${atomicState?.installationId}</small></span>
 											</div>
+											<div class="col-xs-12 col-sm-6 install-content">
+									        	<span><b>Token Num:</b></br><small>${atomicState?.appData?.token?.tokenNum}</small></span>
+									        </div>
+											<div class="col-xs-12 col-sm-6 install-content">
+									        	<span><b>API Token Ver:</b></br><small>${atomicState?.metaData?.client_version}</small></span>
+									        </div>
 									        <div class="col-xs-12 col-sm-6 install-content">
 									        	<span><b>Install Date:</b></br><small>${instData?.dt}</small></span>
 									        </div>
@@ -7825,7 +7814,7 @@ def renderDiagHome() {
 					       			</div>
 					      		</div>
 					      		<!--First Panel Section Body Row 1 - Col2 -->
-					      		<div class="col-xs-12 col-sm-4"  style="padding: 25px;">
+					      		<div class="col-xs-12 col-sm-4" style="padding: 25px;">
 					       			<div style="pull-right">
 										<div class="stateUseTitleText">State Usage</div>
 			      						<div id="stateUseCirc" data-percent="${sPerc}" data-text="<p class='stateUseCircText'>${sPerc}%</p>" class="small blue2 center"></div>
@@ -7835,13 +7824,15 @@ def renderDiagHome() {
 							<hr/>
 							<!--First Panel Section Body Row 2 -->
 							<div class="row" style="min-height: 100px;">
-								<!--First Panel Section Body Row 2 - Col 1 -->
-								<div class="col-xs-12">
-									<div class="centerText">
-										<p>More Data Coming Soon...</p>
+						      	<!--First Panel Section Body Row 2 - Col 1 -->
+							  	<div id="instContDiv" style="padding: 0 10px;">
+						        	<div class="row panel-border">
+										<div style="font-weight: bold;" class="centerText">Last Command Info
+											<p style="text-align: left; font-weight: normal;">• DateTime: <br> └ (Sun Jul 02 21:53:06 EDT 2017)<br>• Cmd Sent: <br> └ (devices/thermostats: (target_temperature_f: 78))<br> • Cmd Result: (ok)<br><br> • Totals Commands Sent: (4872)</p>
+										</div>
 									</div>
-								</div>
-							</div>
+						    	</div>
+						    </div>
 						</div>
 					</div>
 				</div>
@@ -7852,10 +7843,16 @@ def renderDiagHome() {
 		    			<h1 class="panel-title">Shortcuts</h1>
 		   			</div>
 		   			<div class="panel-body">
-			     		<p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
-				     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
-				     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
-				     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
+						<div class="col-xs-6 centerText">
+				     		<p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
+					     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
+					     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
+						</div>
+						<div class="col-xs-6 centerText">
+					     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
+							<p><a class="btn btn-primary btn-md shortcutBtns" href="${instDataUrl}" role="button">Install Data</a></p>
+							<p><a class="btn btn-primary btn-md shortcutBtns" href="${appDataUrl}" role="button">AppData File</a></p>
+						</div>
 			    	</div>
 			   	</div>
 
@@ -8295,6 +8292,99 @@ def renderDeviceData() {
 		"""
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDeviceData Exception:", ex }
+}
+
+def renderAppData() {
+	renderHtmlMapDesc("AppFile Data", "AppFile Data", getMapDescStr(atomicState?.appData))
+}
+
+def renderInstData() {
+	renderHtmlMapDesc("Install Data", "Installation Data", getMapDescStr(createInstallDataJson(true)))
+}
+
+def renderHtmlMapDesc(title, heading, datamap) {
+	try {
+		def html = """
+			<head>
+				<meta charset="utf-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+				<meta name="description" content="NST Diagnostics">
+				<meta name="author" content="Anthony S.">
+
+				<title>NST Diagnostics - ${title}</title>
+
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+				<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagmandatapage.min.css">
+				<style>
+					.home-btn {
+						width: 80px;
+						height: 40px;
+						border-radius: 0.6em;
+						background-color: white;
+						border-color: gray;
+						border-style: solid;
+						border-width: 1px;
+					}
+				</style>
+			</head>
+			<body>
+			 <div class="container">
+				<div class="page-header centerText" style="margin: 10px;">
+				  <div class="row">
+				   <div class="col-xs-2" style="padding: 25px 0 0 0;">
+					   <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+				   </div>
+				   <div class="col-xs-8">
+					   <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> ${heading}</img></h2>
+				   </div>
+				   <div class="col-xs-2" style="padding: 20px 30px 0 0;">
+					   <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+				   </div>
+				</div>
+			  </div>
+			  <div class="panel panel-primary">
+			   <div class="panel-heading">
+				<h1 class="panel-title">${heading}:</h1>
+			   </div>
+			   <div class="panel-body">
+				<div>
+				 <p>${datamap.toString().replaceAll("\n", "<br>")}</p>
+				</div>
+			   </div>
+			  </div>
+
+
+			   </div>
+			   <script>
+					\$(document).ready(function(){
+						\$("#rfrshBtn").click(function(){
+							window.location.reload(true);
+						});
+
+						\$("#rfrshBtn").hover(function(e){
+							\$(this).toggleClass('fa-spin');
+							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
+						});
+
+						\$("#goHomeBtn").click(function(){
+							window.history.back();
+						});
+					});
+					\$("body").flowtype({
+						minFont: 8,
+						maxFont: 14
+					});
+				</script>
+			</body>
+		"""
+	/* """ */
+		render contentType: "text/html", data: html
+	} catch (ex) { log.error "getAppDataFile Exception:", ex }
 }
 
 def sendInstallData() {

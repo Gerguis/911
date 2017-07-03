@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.4" }
-def appVerDate() { "6-29-2017" }
+def appVerDate() { "7-3-2017" }
 
 preferences {
 	//startPage
@@ -7541,92 +7541,95 @@ def getRemLogData() {
 				"""
 				cnt = cnt+1
 			}
-			return """
-				<head>
-					<meta charset="utf-8">
-					<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-					<meta name="description" content="NST - Logs">
-					<meta name="author" content="Anthony S.">
-					<title>NST - Logs</title>
+		} else {
+			resultStr = "There is no Logs available or maybe log collection is not enabled."
+		}
 
-					<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-					<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
-					<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
-					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-					<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-					<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-					<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
+		return """
+			<head>
+				<meta charset="utf-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+				<meta name="description" content="NST - Logs">
+				<meta name="author" content="Anthony S.">
+				<title>NST - Logs</title>
 
-					<style>
-						 .home-btn {
-							width: 80px;
-							height: 40px;
-							border-radius: 0.6em;
-							background-color: white;
-							border-color: gray;
-							border-style: solid;
-							border-width: 1px;
-						}
-					</style>
-				</head>
-				<body>
-					<div class="container">
-						<!--Page Header Section -->
-						<div class="page-header centerText" style="margin: 10px;">
-							<div class="row">
-								<div class="col-xs-2" style="padding: 30px 0 0 0;">
-									<button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
-								</div>
-								<div class="col-xs-8">
-						   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
-					   			<h5>This Includes Automations, Device, Manager Logs</h5>
-								</div>
-								<div class="col-xs-2"></div>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+				<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaglogpage.min.css">
+
+				<style>
+					 .home-btn {
+						width: 80px;
+						height: 40px;
+						border-radius: 0.6em;
+						background-color: white;
+						border-color: gray;
+						border-style: solid;
+						border-width: 1px;
+					}
+				</style>
+			</head>
+			<body>
+				<div class="container">
+					<!--Page Header Section -->
+					<div class="page-header centerText" style="margin: 10px;">
+						<div class="row">
+							<div class="col-xs-2" style="padding: 30px 0 0 0;">
+								<button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+							</div>
+							<div class="col-xs-8">
+					   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
+				   			<h5>This Includes Automations, Device, Manager Logs</h5>
+							</div>
+							<div class="col-xs-2"></div>
+						</div>
+					</div>
+					<!--First Panel Section -->
+					<div class="panel panel-primary">
+					   <div class="panel-heading">
+					   	  <div class="row">
+							<div class="col-xs-6">
+								<span><h1 class="panel-title pnl-head-title centerText pull-left">Log Stream</h1></br><small class="pull-left" style="text-decoration: underline;">${logSz} Items</small></span>
+							</div>
+							<div class="col-xs-6">
+								<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn"></span></button>
 							</div>
 						</div>
-						<!--First Panel Section -->
-						<div class="panel panel-primary">
-						   <div class="panel-heading">
-						   	  <div class="row">
-								<div class="col-xs-6">
-									<span><h1 class="panel-title pnl-head-title centerText pull-left">Log Stream</h1></br><small class="pull-left" style="text-decoration: underline;">${logSz} Items</small></span>
-								</div>
-								<div class="col-xs-6">
-									<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn"></span></button>
-								</div>
+					   </div>
+					   <div class="panel-body" style="background-color: #DEDEDE;">
+							<div id="logBody" class="logs">
+								<div>${resultStr}</div>
 							</div>
-						   </div>
-						   <div class="panel-body" style="background-color: #DEDEDE;">
-								<div id="logBody" class="logs">
-									<div>${resultStr}</div>
-								</div>
-					   		</div>
-					  	</div>
-					</div>
-					<script>
-						\$(document).ready(function(){
-							\$("#rfrshBtn").click(function(){
-								window.location.reload(true);
-							});
+				   		</div>
+				  	</div>
+				</div>
+				<script>
+					\$(document).ready(function(){
+						\$("#rfrshBtn").click(function(){
+							window.location.reload(true);
+						});
 
-							\$("#rfrshBtn").hover(function(e){
-								\$(this).toggleClass('fa-spin');
-								\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
-							});
-							\$("#goHomeBtn").click(function(){
-								window.history.back();
-							});
+						\$("#rfrshBtn").hover(function(e){
+							\$(this).toggleClass('fa-spin');
+							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
 						});
-						\$("#logBody").flowtype({
-							minFont: 8,
-							maxFont: 14
+						\$("#goHomeBtn").click(function(){
+							window.history.back();
 						});
-					</script>
-				</body>
-			"""
+					});
+					\$("#logBody").flowtype({
+						minFont: 8,
+						maxFont: 14
+					});
+				</script>
+			</body>
+		"""
 /* "" */
-		}
-	} catch (ex) { log.error "renderLogData Exception:", ex }
+	}  catch (ex) { log.error "renderLogData Exception:", ex }
 	return null
 }
 
