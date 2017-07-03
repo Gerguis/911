@@ -2403,7 +2403,7 @@ def initWatchdogApp() {
 
 def initRemDiagApp() {
 	LogTrace("initRemDiagApp")
-	keepApp = atomicState?.enRemDiagLogging == true ? true : false
+	def keepApp = atomicState?.enRemDiagLogging == true ? true : false
 	def remDiagApp = getChildApps()?.findAll { it?.getAutomationType() == "remDiag" }
 	if(keepApp && remDiagApp?.size() < 1) {
 		LogAction("Installing Remote Diag App", "info", true)
