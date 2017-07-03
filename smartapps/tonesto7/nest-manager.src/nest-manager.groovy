@@ -75,7 +75,7 @@ preferences {
 	page(name: "nestLoginPrefPage")
 	page(name: "nestTokenResetPage")
 	page(name: "uninstallPage")
-	page(name: "diagPage")
+	page(name: "diagnosticPage")
 	page(name: "custWeatherPage")
 	page(name: "automationsPage")
 	page(name: "automationKickStartPage")
@@ -111,7 +111,7 @@ mappings {
 		// path("/execCmd/:command")	{action: [GET: "execCmd"]}
 		// path("/setData/:value")		{action: [GET: "getSetData", POST: "updateSetData", DELETE: "delSetData"]}
 		// path("/stateData/:value")	{action: [GET: "getStateData", POST: "updateStateData", DELETE: "delStateData"]}
-
+		path("/renderInstallData")	{action: [GET: "renderInstallData"]}
 		path("/receiveEventData") 	{action: [POST: "receiveEventData"]}
 		path("/streamStatus")		{action: [POST: "receiveStreamStatus"]}
 	}
@@ -575,7 +575,7 @@ def infoPage () {
 			href "changeLogPage", title: "View App Revision History", description: "Tap to view", image: getAppImg("change_log_icon.png")
 		}
 		section("Diagnostic Data:") {
-			href "diagPage", title: "View Diagnostic Info", description: "", image: getAppImg("diagnostic_icon.png")
+			href "diagnosticPage", title: "View Diagnostic Info", description: "", image: getAppImg("diagnostic_icon.png")
 		}
 		if(atomicState?.protects) {
 			section("Perform Nest Protect Device Tests:") {
@@ -656,10 +656,7 @@ def voiceRprtPrefPage() {
 
 def pollPrefPage() {
 	def execTime = now()
-	dynamicPage(name: "pollPrefPage", install: false) {
-		section("") {
-			paragraph "Polling Preferences", image: getAppImg("timer_icon.png")
-		}
+	dynamicPage(name: "pollPrefPage", title: "Polling Preferences", install: false) {
 		if(atomicState?.appData?.eventStreaming?.enabled == true || getDevOpt()) {
 			section("Rest Streaming (Experimental):") {
 				input(name: "restStreaming", title:"Enable Rest Streaming?", type: "bool", defaultValue: false, required: false, submitOnChange: true, image: getAppImg("two_way_icon.png"))
@@ -669,14 +666,14 @@ def pollPrefPage() {
 			}
 			if(settings?.restStreaming) {
 				section("Configure Streaming Service:") {
-					href "restSrvcDiscovery", title: "Auto-Discover Local Service", state: (settings?.selectedRestDevice ? "complete" : null),
+					href "restSrvcDiscovery", title: "Auto-Discover Local Service", state: (settings?.selectedRestDevice ? "complete" : null), image: getAppImg("search_icon.png"),
 							description: selectedRestDiscSrvcDesc() ? "Selected Service:\n${selectedRestDiscSrvcDesc()}" : "Discover NST Service on your local network"
 					if(!settings?.selectedRestDevice) {
 						input(name: "restStreamIp", title:"Rest Service Address", type: "text", required: true, submitOnChange: true, image: getAppImg("ip_icon.png"))
 						input(name: "restStreamPort", title:"Rest Service Port", type: "number", defaultValue: 3000, required: true, submitOnChange: true, image: getAppImg("port_icon.png"))
 					}
 					getRestSrvcDesc()
-					paragraph title: "Notice", "This is still an experimental feature.  It's subject to your local network and internet connections.  If communication is lost it will default back to standard polling."
+					paragraph title: "Notice", "This is still an experimental feature.  It's subject to your local network and internet connections.  If communication is lost the Manager will default back to standard polling."
 				}
 			} else {
 				restDiscoveryClean()
@@ -685,7 +682,7 @@ def pollPrefPage() {
 		}
 		section("Polling:") {
 			if(settings?.restStreaming && getRestHost()) {
-				paragraph "These settings are only used when rest streaming is inactive or disabled", required: true, state: null, image: getAppImg("info_icon2.png")
+				paragraph title: "NOTICE!", "These settings are only used when rest streaming is inactive or disabled", required: true, state: null, image: getAppImg("info_icon2.png")
 			}
 			input ("pollValue", "enum", title: "Device Poll Rate", required: false, defaultValue: 180, metadata: [values:pollValEnum(true)], submitOnChange: true, image: getAppImg("thermostat_icon.png"))
 			input ("pollStrValue", "enum", title: "Location Poll Rate", required: false, defaultValue: 180, metadata: [values:pollValEnum()], submitOnChange: true, image: getAppImg("nest_structure_icon.png"))
@@ -1575,7 +1572,7 @@ def debugPrefPage() {
 		}
 		section("Diagnostics:") {
 			def t1 = getRemDiagDesc()
-			href "diagPage", title: "View Diagnostic Info", description: (t1 ? "${t1 ?: ""}\n\nTap to view" : "Tap to view"), state: (t1) ? "complete" : null, image: getAppImg("diagnostic_icon.png")
+			href "diagnosticPage", title: "View Diagnostic Info", description: (t1 ? "${t1 ?: ""}\n\nTap to view" : "Tap to view"), state: (t1) ? "complete" : null, image: getAppImg("diagnostic_icon.png")
 		}
 		section ("Reset Application Data") {
 			input (name: "resetAllData", type: "bool", title: "Reset Application Data?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
@@ -1591,9 +1588,9 @@ def debugPrefPage() {
 	}
 }
 
-def diagPage () {
+def diagnosticPage () {
 	def execTime = now()
-	dynamicPage(name: "diagPage", title: "Diagnostics Page", install: false) {
+	dynamicPage(name: "diagnosticPage", title: "Diagnostics Page", install: false) {
 		section("App Info") {
 			paragraph "Current State Usage:\n${getStateSizePerc()}% (${getStateSize()} bytes)", required: true, state: (getStateSizePerc() <= 70 ? "complete" : null),
 					image: getAppImg("progress_bar.png")
@@ -1614,7 +1611,7 @@ def diagPage () {
 				input (name: "enRemDiagLogging", type: "bool", title: "Enable Log Collection?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("log.png"))
 			}
 		}
-		remDiagProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
+		diagLogProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
 
 		if(settings?.enDiagWebPage) {
 			section("What's Next:") {
@@ -1645,7 +1642,7 @@ def getRemDiagApp() {
 	return remDiagApp
 }
 
-void remDiagProcChange(setOn) {
+void diagLogProcChange(setOn) {
 	def diagAllowed = atomicState?.appData?.database?.allowRemoteDiag == true ? true : false
 	//log.debug "diagAllowed: $diagAllowed"
 	def doInit = false
@@ -1905,6 +1902,7 @@ def getAppDebugDesc() {
 	def str = ""
 	str += isAppDebug() ? "App Debug: (${debugStatus()})${advAppDebug ? "(Trace)" : ""}" : ""
 	str += isChildDebug() ? "${str ? "\n" : ""}Device Debug: (${deviceDebugStatus()})" : ""
+	str += settings?.showDataChgdLogs ? "${str ? "\n" : ""}Log API Changes: (${settings?.showDataChgdLogs ? "True" : "False"})" : ""
 	str += getRemDiagDesc() ? "${str ? "\n" : ""}${getRemDiagDesc()}" : ""
 	return (str != "") ? "${str}" : null
 }
@@ -2131,7 +2129,7 @@ def initialize() {
 def reInitBuiltins() {
 	initWatchdogApp()
 	initNestModeApp()
-	remDiagProcChange(settings?.enRemDiagLogging)
+	diagLogProcChange(settings?.enRemDiagLogging)
 }
 
 def initNestModeApp() {
@@ -6775,7 +6773,7 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			if(getDevOpt()) {
 				settingUpdate("enDiagWebPage", "false", "bool")
 			}
-			remDiagProcChange(false)
+			diagLogProcChange(false)
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
 		} else {
 			if(getStateSizePerc() >= 80) {
@@ -7606,7 +7604,7 @@ def getDeviceMetricCnts() {
 /******************************************************************************
 *					Firebase Analytics Functions		  	  *
 *******************************************************************************/
-def createInstallDataJson(returnMap=null) {
+def createInstallDataJson(returnMap=false) {
 	try {
 		generateInstallId()
 		def autoDesc = getInstAutoTypesDesc()			// This is a hack to get installedAutomations data updated without waiting for user to hit done
