@@ -7744,17 +7744,8 @@ def renderDiagHome() {
 			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 			<link rel="stylesheet" href="https://cdn.rawgit.com/toubou91/percircle/master/dist/css/percircle.css">
 			<script src="https://cdn.rawgit.com/toubou91/percircle/master/dist/js/percircle.js"></script>
-			<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaghomepage.min.css">
+			<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaghome.min.css">
 			<style>
-				.home-btn {
-					width: 80px;
-					height: 40px;
-					border-radius: 0.6em;
-					background-color: white;
-					border-color: gray;
-					border-style: solid;
-					border-width: 1px;
-				}
 			</style>
 		</head>
 		<body>
@@ -7864,26 +7855,7 @@ def renderDiagHome() {
 					</div>
 			  	</footer>
 
-			  	<script type="text/javascript">
-					\$(document).ready(function(){
-						\$(function() {
-							\$("#stateUseCirc").percircle();
-						});
-
-						\$("#rfrshBtn").click(function(){
-							window.location.reload(true);
-						});
-
-						\$("#rfrshBtn").hover(function(e){
-							\$(this).toggleClass('fa-spin');
-							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
-						});
-					});
-					\$("body").flowtype({
-					    minFont: 8,
-					    maxFont: 16
-					});
-			  	</script>
+			  	<script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
 		  	</div>
 		</body>
 	"""
@@ -7918,17 +7890,8 @@ def renderManagerData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagmandatapage.min.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.home-btn {
-						width: 80px;
-						height: 40px;
-						border-radius: 0.6em;
-						background-color: white;
-						border-color: gray;
-						border-style: solid;
-						border-width: 1px;
-					}
 				</style>
 			</head>
 			<body>
@@ -7979,26 +7942,7 @@ def renderManagerData() {
 			   </div>
 			   <div>
 			   </div>
-			   <script>
-					\$(document).ready(function(){
-						\$("#rfrshBtn").click(function(){
-							window.location.reload(true);
-						});
-
-						\$("#rfrshBtn").hover(function(e){
-							\$(this).toggleClass('fa-spin');
-							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
-						});
-
-						\$("#goHomeBtn").click(function(){
-							window.history.back();
-						});
-					});
-					\$("body").flowtype({
-						minFont: 8,
-						maxFont: 14
-					});
-				</script>
+			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
 			</body>
 		"""
 /* """ */
@@ -8022,17 +7966,9 @@ def renderAutomationData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagautodatapage.min.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.home-btn {
-						width: 80px;
-						height: 40px;
-						border-radius: 0.6em;
-						background-color: white;
-						border-color: gray;
-						border-style: solid;
-						border-width: 1px;
-					}
+					
 				</style>
 			</head>
 			<body>
@@ -8100,26 +8036,7 @@ def renderAutomationData() {
 		}
 		html += """
 			   </div>
-			   <script>
-					\$(document).ready(function(){
-						\$("#rfrshBtn").click(function(){
-							window.location.reload(true);
-						});
-
-						\$("#rfrshBtn").hover(function(e){
-							\$(this).toggleClass('fa-spin');
-							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
-						});
-
-						\$("#goHomeBtn").click(function(){
-							window.history.back();
-						});
-					});
-					\$("body").flowtype({
-						minFont: 8,
-						maxFont: 14
-					});
-				</script>
+			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
 			</body>
 		"""
 /* """ */
@@ -8143,17 +8060,8 @@ def renderDeviceData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagdevdatapage.min.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.home-btn {
-						width: 80px;
-						height: 40px;
-						border-radius: 0.6em;
-						background-color: white;
-						border-color: gray;
-						border-style: solid;
-						border-width: 1px;
-					}
 				</style>
 			</head>
 			<body>
@@ -8268,26 +8176,7 @@ def renderDeviceData() {
 		}
 		html += """
 			   </div>
-			   <script>
-					\$(document).ready(function(){
-						\$("#rfrshBtn").click(function(){
-							window.location.reload(true);
-						});
-
-						\$("#rfrshBtn").hover(function(e){
-							\$(this).toggleClass('fa-spin');
-							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
-						});
-
-						\$("#goHomeBtn").click(function(){
-							window.history.back();
-						});
-					});
-					\$("body").flowtype({
-						minFont: 8,
-						maxFont: 14
-					});
-				</script>
+			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
 			</body>
 		"""
 		render contentType: "text/html", data: html
@@ -8360,26 +8249,7 @@ def renderHtmlMapDesc(title, heading, datamap) {
 
 
 			   </div>
-			   <script>
-					\$(document).ready(function(){
-						\$("#rfrshBtn").click(function(){
-							window.location.reload(true);
-						});
-
-						\$("#rfrshBtn").hover(function(e){
-							\$(this).toggleClass('fa-spin');
-							\$(this).css("color",e.type === "mouseenter"? "lime" : "white");
-						});
-
-						\$("#goHomeBtn").click(function(){
-							window.history.back();
-						});
-					});
-					\$("body").flowtype({
-						minFont: 8,
-						maxFont: 14
-					});
-				</script>
+			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagdevdatapage.min.js"></script>
 			</body>
 		"""
 	/* """ */
