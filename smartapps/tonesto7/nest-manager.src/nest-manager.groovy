@@ -1632,7 +1632,7 @@ def getRemDiagApp() {
 	return remDiagApp
 }
 
-void remDiagProcChange(setOn, initCalled = false) {
+void remDiagProcChange(setOn) {
 	def diagAllowed = atomicState?.appData?.database?.allowRemoteDiag == true ? true : false
 	//log.debug "diagAllowed: $diagAllowed"
 	def doInit = false
@@ -1645,8 +1645,9 @@ void remDiagProcChange(setOn, initCalled = false) {
 			doInit = true
 		}
 	} else {
-		if(atomicState?.remDiagLogActivatedDt != null && (!diagAllowed || !setOn)) {
+		if(atomicState?.remDiagLogActivatedDt != null) {
 			msg += "deactivated"
+			settingUpdate("enRemDiagLogging", "false","bool")
 			atomicState?.enRemDiagLogging = false
 			atomicState?.remDiagLogActivatedDt = null	// require toggle off then on again to force back on after timeout
 			doInit = true
@@ -1657,15 +1658,13 @@ void remDiagProcChange(setOn, initCalled = false) {
 		kdata.each { kitem ->
 			state.remove(kitem?.key.toString())
 		}
-		if(!initCalled) {
-			initRemDiagApp()
-			LogAction(msg, "info", true)
-			if(!atomicState?.enRemDiagLogging) { //when turning off, tell automations; on user does done
-				def cApps = getChildApps()?.findAll { !(it?.getAutomationType() == "remDiag") }
-				if(cApps) {
-					cApps?.sort()?.each { chld ->
-						chld?.update()
-					}
+		initRemDiagApp()
+		LogAction(msg, "info", true)
+		if(!atomicState?.enRemDiagLogging) { //when turning off, tell automations; turn on - user does done
+			def cApps = getChildApps()?.findAll { !(it?.getAutomationType() == "remDiag") }
+			if(cApps) {
+				cApps?.sort()?.each { chld ->
+					chld?.update()
 				}
 			}
 		}
@@ -2118,7 +2117,7 @@ def initialize() {
 def reInitBuiltins() {
 	initWatchdogApp()
 	initNestModeApp()
-	initRemDiagApp()
+	remDiagProcChange(settings?.enRemDiagLogging)
 }
 
 def initNestModeApp() {
@@ -2404,11 +2403,6 @@ def initWatchdogApp() {
 
 def initRemDiagApp() {
 	LogTrace("initRemDiagApp")
-	def keepApp = atomicState?.enRemDiagLogging == true ? true : false
-	if(!keepApp && settings?.enRemDiagLogging) {
-		settingUpdate("enRemDiagLogging", "false","bool")
-		remDiagProcChange(false, true)
-	}
 	keepApp = atomicState?.enRemDiagLogging == true ? true : false
 	def remDiagApp = getChildApps()?.findAll { it?.getAutomationType() == "remDiag" }
 	if(keepApp && remDiagApp?.size() < 1) {
@@ -6753,7 +6747,6 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			reasonStr += "appData does not allow"
 		}
 		if(turnOff) {
-			settingUpdate("enRemDiagLogging", "false","bool")
 			remDiagProcChange(false)
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
 		} else {
@@ -6769,15 +6762,13 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			def data = atomicState?.remDiagLogDataStore ?: []
 			def t0 = data?.size()
 			if(t0 && (t0 > 20 || getLastRemDiagSentSec() > 120 || getStateSizePerc() >= 75)) {
-				//sendRemDiagData()
 				def remDiagApp = getRemDiagApp()
-				if(atomicState?.appData?.database?.allowRemoteDiag && atomicState?.enRemDiagLogging && remDiagApp) {
+				if(remDiagApp) {
 					remDiagApp?.savetoRemDiagChild(data)
-					atomicState?.remDiagLogDataStore = []
-					atomicState?.remDiagDataSentDt = getDtNow()
 				}
+				atomicState?.remDiagLogDataStore = []
+				atomicState?.remDiagDataSentDt = getDtNow()
 			}
-
 		}
 	}
 }
