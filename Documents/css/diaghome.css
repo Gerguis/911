@@ -40,8 +40,10 @@ body {
 }
 
 .logoIcn {
-    width: 48px;
-    height: 48px;
+    width: 1.7em;
+    height: auto;
+    max-width: 48px;
+    max-height: 48px;
 }
 
 .shortcutBtns {
@@ -79,7 +81,8 @@ body {
 .refresh-btn {
     color: white;
     outline: none;
-    font-size: 20px;
+    font-size: 1.1em;
+    padding-top: 8px;
 }
 
 .panel-border {
@@ -95,26 +98,17 @@ body {
     padding: 7px 0 0 0;
 }
 
-@media (min-width: 600px) {
-    .pnl-head-title {
-        font-size: 4.1vw;
-        padding: 7px 0;
-    }
-}
-
-@media (min-width: 600px) {
-    .pnl-head-title {
-        font-size: 20px;
-        padding: 7px 0;
-        "
-
-    }
+.title-text {
+    font-size: 2.0em;
 }
 
 .home-btn {
-    width: 80px;
-    height: 40px;
-    border-radius: 0.6em;
+    width: auto;
+    height: auto;
+    max-width: 80px;
+    max-height: 40px;
+    font-size: 1.1em;
+    border-radius: 0.4em;
     background-color: white;
     border-color: gray;
     border-style: solid;

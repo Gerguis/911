@@ -103,8 +103,8 @@ body {
 }
 
 .logoIcn {
-    width: 48px;
-    height: 48px;
+    max-width: 48px;
+    max-height: 48px;
 }
 
 .shortcutBtns {
@@ -114,30 +114,51 @@ body {
 .refresh-btn {
     color: white;
     outline: none;
-    font-size: 20px;
-    padding-top: 8px;
+    font-size: 1.3em;
+}
+
+.pnl-head-title {
+ font-size: 2.0em;
 }
 
 @media (min-width: 800px) {
-    .pnl-head-title {
-        font-size: 18px;
-        padding: 3px 0;
-    }
+ .pnl-head-title {
+  padding: 3px 0;
+ }
+ .refresh-btn {
+  padding-top: 8px;
+ }
 }
 
 @media (min-width: 600px) {
-    .pnl-head-title {
-        font-size: 16px;
-        padding: 5px 0;
-    }
+ .pnl-head-title {
+  padding: 5px 0;
+ }
+ .refresh-btn {
+  padding-top: 10px;
+ }
+}
+
+.title-text {
+    font-size: 2.0em;
 }
 
 .home-btn {
-    width: 80px;
-    height: 40px;
-    border-radius: 0.6em;
+    width: auto;
+    height: auto;
+    max-width: 80px;
+    max-height: 40px;
+    font-size: 1.1em;
+    border-radius: 0.4em;
     background-color: white;
     border-color: gray;
     border-style: solid;
     border-width: 1px;
+}
+.title-text {
+    font-size: 2.0em;
+}
+
+.panel-title-text {
+       font-size: 1.3em;
 }
