@@ -15,6 +15,7 @@
 import groovy.json.*
 import java.text.SimpleDateFormat
 import java.security.MessageDigest
+include 'asynchttp_v1'
 
 definition(
 	name: "${appName()}",
@@ -34,10 +35,8 @@ definition(
 	appSetting "devOpt"
 }
 
-include 'asynchttp_v1'
-
 def appVersion() { "5.1.6" }
-def appVerDate() { "7-2-2017" }
+def appVerDate() { "7-3-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -64,14 +63,9 @@ preferences {
 	page(name: "changeLogPage")
 	page(name: "prefsPage")
 	page(name: "infoPage")
-	page(name: "structInfoPage")
-	page(name: "tstatInfoPage")
-	page(name: "protInfoPage")
-	page(name: "camInfoPage")
 	page(name: "pollPrefPage")
 	page(name: "debugPrefPage")
 	page(name: "notifPrefPage")
-	page(name: "appParamsDataPage")
 	page(name: "devNamePage")
 	page(name: "alarmTestPage")
 	page(name: "simulateTestEventPage")
@@ -81,7 +75,7 @@ preferences {
 	page(name: "nestLoginPrefPage")
 	page(name: "nestTokenResetPage")
 	page(name: "uninstallPage")
-	page(name: "remoteDiagPage")
+	page(name: "diagPage")
 	page(name: "custWeatherPage")
 	page(name: "automationsPage")
 	page(name: "automationKickStartPage")
@@ -105,9 +99,9 @@ mappings {
 
 		//Web Diagnostics Pages
 		if(settings?.enDiagWebPage == true || getDevOpt() ) {
-			path("/diagHome")	{action: [GET: "renderDiagHome"]}
-			path("/getLogData")	{action: [GET: "renderLogData"]}
-			path("/getLogMap")	{action: [GET: "getLogMap"]}
+			path("/diagHome")		{action: [GET: "renderDiagHome"]}
+			path("/getLogData")		{action: [GET: "renderLogData"]}
+			//path("/getLogMap")	{action: [GET: "getLogMap"]}
 			path("/getManagerData")	{action: [GET: "renderManagerData"]}
 			path("/getAutoData")	{action: [GET: "renderAutomationData"]}
 			path("/getDeviceData")	{action: [GET: "renderDeviceData"]}
@@ -144,12 +138,13 @@ def authPage() {
 	if(!atomicState?.usageMetricsStore) { initAppMetricStore() }
 	if(atomicState?.notificationPrefs == null) { atomicState?.notificationPrefs = buildNotifPrefMap() }
 	def preReqOk = (atomicState?.preReqTested == true) ? true : preReqCheck()
+	def stateSz = getStateSizePerc()
 	if(!atomicState?.devHandlersTested) { deviceHandlerTest() }
 
-	if(!atomicState?.accessToken || (!atomicState?.isInstalled && (!atomicState?.devHandlersTested || !preReqOk))) {
+	if(!atomicState?.accessToken || (!atomicState?.isInstalled && (!atomicState?.devHandlersTested || !preReqOk)) || (stateSz > 90)) {
 		return dynamicPage(name: "authPage", title: "Status Page", nextPage: "", install: false, uninstall: false) {
 			section ("Status Page:") {
-				def desc
+				def desc = ""
 				if(!atomicState?.accessToken) {
 					desc = "OAuth is not Enabled for ${appName()} application.  Please click remove and review the installation directions again"
 				}
@@ -161,6 +156,9 @@ def authPage() {
 				}
 				else {
 					desc = "Application Status has not received any messages to display"
+				}
+				if(stateSz > 90) {
+					desc += "${desc != "" ? "\n\n" : ""}Your Manager State Usage is Greater than 90% full.  This is not normal and you should notify the developer."
 				}
 				LogAction("Status Message: $desc", "warn", true)
 				paragraph "$desc", required: true, state: null
@@ -215,6 +213,9 @@ def mainPage() {
 				def rStrEn = (atomicState?.appData?.eventStreaming?.enabled || getDevOpt() || betaMarker())
 				href "pollPrefPage", title: "", state: ((atomicState?.restStreamingOn && rStrEn) ? "complete" : null), image: getAppImg("two_way_icon.png"),
 						description: "Nest Streaming: (${(!atomicState?.restStreamingOn || !rStrEn) ? "Inactive" : "Active"})"
+			}
+			if(settings?.enDiagWebPage) {
+				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("diagnostic_icon.png")
 			}
 			if(atomicState?.appData && !appDevType()) {
 				if(isAppUpdateAvail()) {
@@ -565,35 +566,23 @@ def infoPage () {
 			href "feedbackPage", title: "Send Developer Feedback", description: "", image: getAppImg("feedback_icon.png")
 
 		}
-
-		section("View App Info, Diagnostic Data:") {
-			paragraph "Current State Usage:\n${getStateSizePerc()}% (${getStateSize()} bytes)", required: true, state: (getStateSizePerc() <= 70 ? "complete" : null),
-					image: getAppImg("progress_bar.png")
-			href "changeLogPage", title: "View App Revision History", description: "Tap to view", image: getAppImg("change_log_icon.png")
-
-			if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras || atomicState?.weatherDevice)) {
-				input "enDiagWebPage", "bool", title: "Enable Diagnostic Web Page?", description: "", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("diagnostic_icon.png")
-				if(settings?.enDiagWebPage) {
-					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to View and Share", required: true,state: "complete"
-					href "remoteDiagPage", title: "Collect Logs for Diagnosis", description: "", image: getAppImg("log.png")
-				}
-			}
+		section("Credits:") {
+			paragraph title: "Creator:", "Anthony S. (@tonesto7)", state: "complete"
+			paragraph title: "Co-Author:", "Eric S. (@E_Sch)", state: "complete"
+			paragraph title: "Collaborator:", "Ben W. (@desertblade)", state: "complete"
 		}
-
+		section("App Change Details:") {
+			href "changeLogPage", title: "View App Revision History", description: "Tap to view", image: getAppImg("change_log_icon.png")
+		}
+		section("Diagnostic Data:") {
+			href "diagPage", title: "View Diagnostic Info", description: "", image: getAppImg("diagnostic_icon.png")
+		}
 		if(atomicState?.protects) {
 			section("Perform Nest Protect Device Tests:") {
 				def dt = atomicState?.isAlarmCoTestActiveDt
 				href "alarmTestPage", title: "Test Nest Protect Automations\nBy Simulating Alarm Events", description: "${dt ? "Last Tested:\n$dt\n\n" : ""}Tap to Begin...", image: getAppImg("test_icon.png")
 			}
 		}
-
-		section("Credits:") {
-			paragraph title: "Creator:", "Anthony S. (@tonesto7)", state: "complete"
-			paragraph title: "Co-Author:", "Eric S. (@E_Sch)", state: "complete"
-			paragraph title: "Collaborator:", "Ben W. (@desertblade)", state: "complete"
-		}
-
-
 		section("Licensing Info:") {
 			paragraph "${textCopyright()}\n${textLicense()}"
 		}
@@ -632,11 +621,16 @@ def prefsPage() {
 			input ("useMilitaryTime", "bool", title: "Use Military Time (HH:mm)?", defaultValue: false, submitOnChange: true, required: false, image: getAppImg("military_time_icon.png"))
 			input ("disAppIcons", "bool", title: "Disable App Icons?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("no_icon.png"))
 			input ("debugAppendAppName", "bool", title: "Show App/Device Name on all Log Entries?", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("log.png"))
-			input ("showDataChgdLogs", "bool", title: "Show Changed Data Items in Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("switch_on_icon.png"))
+			input ("showDataChgdLogs", "bool", title: "Show API Changes in Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("switch_on_icon.png"))
 			atomicState.needChildUpd = true
 		}
 		section("Customize Application Label:") {
 			label title:"Application Label (optional)", required:false
+		}
+		section("SmartApp Security") {
+			paragraph title:"What does resetting do?", "If you share your url with someone and want to remove their access you can reset your token and this will invalidate any URL you shared and create a new one for you."
+			input (name: "resetSTAccessToken", type: "bool", title: "Reset SmartThings Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
+			if(settings?.resetSTAccessToken) { resetSTAccessToken() }
 		}
 		incPrefLoadCnt()
 		devPageFooter("prefLoadCnt", execTime)
@@ -1570,7 +1564,7 @@ def debugPrefPage() {
 	def execTime = now()
 	dynamicPage(name: "debugPrefPage", install: false) {
 		section ("Application Logs") {
-			input ("showDataChgdLogs", "bool", title: "Show Changed Data Items in Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("switch_on_icon.png"))
+			input ("showDataChgdLogs", "bool", title: "Show API Changes in Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("switch_on_icon.png"))
 			input (name: "appDebug", type: "bool", title: "Show ${appName()} Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
 			if(appDebug) {
 				input (name: "advAppDebug", type: "bool", title: "Show Verbose Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("list_icon.png"))
@@ -1579,12 +1573,12 @@ def debugPrefPage() {
 		section ("Child Device Logs") {
 			input (name: "childDebug", type: "bool", title: "Show Device Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
 		}
-		section("Remote Diagnostics:") {
+		section("Diagnostics:") {
 			def t1 = getRemDiagDesc()
-			href "remoteDiagPage", title: "View Diagnostic Info?", description: (t1 ? "${t1 ?: ""}\n\nTap to modify" : "Tap to configure"), state: (t1) ? "complete" : null, image: getAppImg("diagnostic_icon.png")
+			href "diagPage", title: "View Diagnostic Info", description: (t1 ? "${t1 ?: ""}\n\nTap to view" : "Tap to view"), state: (t1) ? "complete" : null, image: getAppImg("diagnostic_icon.png")
 		}
 		section ("Reset Application Data") {
-			input (name: "resetAllData", type: "bool", title: "Reset Application Data?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
+			input (name: "resetAllData", type: "bool", title: "Reset Application Data?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
 			if(settings?.resetAllData) { LogAction("Reset Application Data Enabled", "info", true) }
 			else { LogAction("Reset Application Data Disabled", "info", true) }
 		}
@@ -1597,27 +1591,46 @@ def debugPrefPage() {
 	}
 }
 
-def remoteDiagPage () {
+def diagPage () {
 	def execTime = now()
-	dynamicPage(name: "remoteDiagPage", title: "Allow Developer to View Your Logs", install: false) {
-		section() {
-			def formatVal = settings?.useMilitaryTime ? "MMM d, yyyy - HH:mm:ss" : "MMM d, yyyy - h:mm:ss a"
-			def tf = new SimpleDateFormat(formatVal)
-			if(getTimeZone()) { tf.setTimeZone(getTimeZone()) }
-			paragraph title: "How will this work?", "Once enabled this SmartApp will create a child app to store your logs in this diagnostic app and you will share the url with the developer.  Turn off to remove the diag app and all data."
-			paragraph "This will automatically turn off 48 hours"
-			input (name: "enRemDiagLogging", type: "bool", title: "Enable Log Collection?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("diagnostic_icon.png"))
-		}
-		remDiagProcChange(settings?.enRemDiagLogging)
-
-		section() {
-			if(atomicState?.enRemDiagLogging) {
-				def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
-				paragraph str, required: true, state: "complete"
+	dynamicPage(name: "diagPage", title: "Diagnostics Page", install: false) {
+		section("App Info") {
+			paragraph "Current State Usage:\n${getStateSizePerc()}% (${getStateSize()} bytes)", required: true, state: (getStateSizePerc() <= 70 ? "complete" : null),
+					image: getAppImg("progress_bar.png")
+			if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras || atomicState?.weatherDevice)) {
+				input "enDiagWebPage", "bool", title: "Enable Diagnostic Web Page?", description: "", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("diagnostic_icon.png")
+				if(settings?.enDiagWebPage) {
+					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("diagnostic_icon.png")
+				}
 			}
 		}
-		incRemDiagLoadCnt()
-		devPageFooter("remDiagLoadCnt", execTime)
+		if(settings?.enDiagWebPage) {
+			section("Log Collection:") {
+				def formatVal = settings?.useMilitaryTime ? "MMM d, yyyy - HH:mm:ss" : "MMM d, yyyy - h:mm:ss a"
+				def tf = new SimpleDateFormat(formatVal)
+				if(getTimeZone()) { tf.setTimeZone(getTimeZone()) }
+				paragraph title: "How will the log collection work?", "Once enabled this SmartApp will create a child app to store your logs in this diagnostic app and you can view the page or share the url with the developer.  Turn off to remove the diag app and all data."
+				paragraph "This will automatically turn off 48 hours"
+				input (name: "enRemDiagLogging", type: "bool", title: "Enable Log Collection?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("log.png"))
+			}
+		}
+		remDiagProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
+
+		if(settings?.enDiagWebPage) {
+			section("What's Next:") {
+				if(atomicState?.enRemDiagLogging) {
+					def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
+					paragraph str, required: true, state: "complete"
+				}
+			}
+		}
+		section("SmartApp Security") {
+			paragraph title:"What does resetting do?", "If you share your url with someone and want to remove their access you can reset your token and this will invalidate any URL you shared and create a new one for you."
+			input (name: "resetSTAccessToken", type: "bool", title: "Reset Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
+			if(settings?.resetSTAccessToken) { resetSTAccessToken() }
+		}
+		incDiagLoadCnt()
+		devPageFooter("diagLoadCnt", execTime)
 	}
 }
 
@@ -1898,7 +1911,8 @@ def getAppDebugDesc() {
 
 def getRemDiagDesc() {
 	def str = ""
-	str += settings?.enRemDiagLogging ? "Remote Logging: (${settings.enRemDiagLogging})" : ""
+	str += settings?.enDiagWebPage ? "Web Page: (${settings.enDiagWebPage})" : ""
+	str += settings?.enRemDiagLogging ? "${settings?.enDiagWebPage ? "\n" : ""}Log Collection: (${settings.enRemDiagLogging})" : ""
 	return (str != "") ? "${str}" : null
 }
 
@@ -6469,6 +6483,16 @@ def getAccessToken() {
 	}
 }
 
+void resetSTAccessToken() {
+	LogAction("Resetting SmartApp Access Token....", "info", true)
+	revokeAccessToken()
+	atomicState?.accessToken = null
+	if(getAccessToken()) {
+		LogAction("Reset SmartApp Access Token... Successful", "info", true)
+		settingUpdate("resetSTAccessToken", "false", "bool")
+	}
+}
+
 def generateInstallId() {
 	if(!atomicState?.installationId) { atomicState?.installationId = UUID?.randomUUID().toString() }
 }
@@ -6747,6 +6771,10 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			reasonStr += "appData does not allow"
 		}
 		if(turnOff) {
+			settingUpdate("enRemDiagLogging", "false", "bool")
+			if(getDevOpt()) {
+				settingUpdate("enDiagWebPage", "false", "bool")
+			}
 			remDiagProcChange(false)
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
 		} else {
@@ -7653,7 +7681,7 @@ def renderInstallData() {
 def renderLogData() {
 	try {
 		def remDiagApp = getRemDiagApp()
-		def resultStr = "Hmmm. Something might be wrong... No log was data returned!!!"
+		def resultStr = "There are no logs to show... Is logging turned on?"
 
 		def logData = remDiagApp?.getRemLogData()
 		if(logData) {
@@ -7664,11 +7692,6 @@ def renderLogData() {
 }
 
 def getDiagHomeUrl() { getAppEndpointUrl("diagHome") }
-
-// path("/getLogMap")	{action: [GET: "getLogMap"]}
-// path("/execCmd/:command")	{action: [GET: "execCmd"]}
-// path("/setData/:value")		{action: [GET: "getSetData", POST: "updateSetData", DELETE: "delSetData"]}
-// path("/stateData/:value")	{action: [GET: "getStateData", POST: "updateStateData", DELETE: "delStateData"]}
 
 def getLogMap() {
 	try {
@@ -7735,6 +7758,7 @@ def renderDiagHome() {
 			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 			<link rel="stylesheet" href="https://cdn.rawgit.com/toubou91/percircle/master/dist/css/percircle.css">
 			<script src="https://cdn.rawgit.com/toubou91/percircle/master/dist/js/percircle.js"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 			<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diaghome.min.css">
 			<style>
 			</style>
@@ -7841,12 +7865,13 @@ def renderDiagHome() {
 				<footer class="footer">
 					<div class="container">
 	   					<div class="well well-sm footerText">
-							<span>External Access URL: <a href="${remDiagUrl}">Link</a></span>
+						<textarea id="siteUrl" style="display: none;">${remDiagUrl}</textarea>
+     					<span>External Access URL: <button id="copyUrlBtn" class="btn" type="button" data-clipboard-target="#siteUrl"><i class="fa fa-clipboard" aria-hidden="true"></i></button></span>
 			    		</div>
 					</div>
 			  	</footer>
 
-			  	<script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
+			  	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
 		  	</div>
 		</body>
 	"""
@@ -7881,6 +7906,7 @@ def renderManagerData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 				</style>
@@ -7933,7 +7959,7 @@ def renderManagerData() {
 			   </div>
 			   <div>
 			   </div>
-			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
+			   <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 /* """ */
@@ -7957,6 +7983,7 @@ def renderAutomationData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 
@@ -8027,7 +8054,7 @@ def renderAutomationData() {
 		}
 		html += """
 			   </div>
-			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
+			   <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 /* """ */
@@ -8051,6 +8078,7 @@ def renderDeviceData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 				</style>
@@ -8167,7 +8195,7 @@ def renderDeviceData() {
 		}
 		html += """
 			   </div>
-			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
+			   <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 		render contentType: "text/html", data: html
@@ -8199,7 +8227,8 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagmandatapage.min.css">
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 					.home-btn {
 						width: 80px;
@@ -8238,7 +8267,7 @@ def renderHtmlMapDesc(title, heading, datamap) {
 			   </div>
 			  </div>
 			 </div>
-			 <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
+			 <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 	/* """ */
