@@ -103,6 +103,8 @@ body {
 }
 
 .logoIcn {
+    width: 1.7em;
+    height: auto;
     max-width: 48px;
     max-height: 48px;
 }
@@ -118,25 +120,25 @@ body {
 }
 
 .pnl-head-title {
- font-size: 2.0em;
+    font-size: 2.0em;
 }
 
 @media (min-width: 800px) {
- .pnl-head-title {
-  padding: 3px 0;
- }
- .refresh-btn {
-  padding-top: 8px;
- }
+    .pnl-head-title {
+        padding: 3px 0;
+    }
+    .refresh-btn {
+        padding-top: 8px;
+    }
 }
 
 @media (min-width: 600px) {
- .pnl-head-title {
-  padding: 5px 0;
- }
- .refresh-btn {
-  padding-top: 10px;
- }
+    .pnl-head-title {
+        padding: 5px 0;
+    }
+    .refresh-btn {
+        padding-top: 10px;
+    }
 }
 
 .title-text {
@@ -155,10 +157,11 @@ body {
     border-style: solid;
     border-width: 1px;
 }
+
 .title-text {
     font-size: 2.0em;
 }
 
 .panel-title-text {
-       font-size: 1.3em;
+    font-size: 1.3em;
 }
