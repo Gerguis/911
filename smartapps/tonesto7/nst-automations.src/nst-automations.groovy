@@ -7537,12 +7537,12 @@ def getRemLogData() {
 				}
 
 				resultStr += """
-					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logEvtDt">${tf?.format(logItem?.dt)}</span>: <span class="label $tCls">${logItem?.type}</span> | <span class="logSrcFmt ${srcCls}" style="font-style: italic;">${logItem?.src}</span>: ${logItem?.msg}</span>
+					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logEvtDt">${tf?.format(logItem?.dt)}</span>: <span class="label $tCls">${logItem?.type}</span> | <span class="logSrcFmt ${srcCls}">${logItem?.src}</span>: ${logItem?.msg}</span>
 				"""
 				cnt = cnt+1
 			}
 		} else {
-			resultStr = "There is no Logs available or maybe log collection is not enabled."
+			resultStr = "There are NO log entries available."
 		}
 
 		return """
@@ -7571,11 +7571,11 @@ def getRemLogData() {
 					<div class="page-header centerText" style="margin: 10px;">
 						<div class="row">
 							<div class="col-xs-2" style="padding: 30px 0 0 0;">
-								<button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+								<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
 							</div>
 							<div class="col-xs-8">
-					   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h2>
-				   			<h5>This Includes Automations, Device, Manager Logs</h5>
+					   		<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
+				   			<h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
 							</div>
 							<div class="col-xs-2"></div>
 						</div>
@@ -7585,11 +7585,18 @@ def getRemLogData() {
 					   <div class="panel-heading">
 					   	  <div class="row">
 							<div class="col-xs-6">
-								<span><h1 class="panel-title pnl-head-title centerText pull-left">Log Stream</h1></br><small class="pull-left" style="text-decoration: underline;">${logSz} Items</small></span>
+								<div class="col-12" style="padding-left: 15px;">
+							   		<div class="row">
+										<h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
+							   		</div>
+							   		<div class="row">
+										<small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
+							   		</div>
+							  	</div>
 							</div>
-							<div class="col-xs-6">
+							<div class="col-xs-6" style="vertical-align: middle; padding-top: 0px;">
 								<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn"></span></button>
-							</div>
+						    </div>
 						</div>
 					   </div>
 					   <div class="panel-body" style="background-color: #DEDEDE;">

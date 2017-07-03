@@ -3538,7 +3538,7 @@ def didChange(old, newer, type, src) {
 					atomicState?.forceChildUpd = true
 					LogTrace("structure old newer not the same ${atomicState?.structures}")
 					// whatChanged(t0, t1, "/structures", "structure")
-					if(atomicState?.enRemDiagLogging == true || settings?.showDataChgdLogs != true) {
+					if(atomicState?.enRemDiagLogging == true && settings?.showDataChgdLogs != true) {
 						LogAction("API Structure Data HAS Changed ($srcStr)", "info", true)
 					} else {
 						def chgs = getChanges(t0, t1, "/structures", "structure")
@@ -7764,7 +7764,7 @@ def renderDiagHome() {
 		<body>
 			<div class="container">
 				<div class="page-header centerText" style="margin: 10px;">
-			   		<h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Diagnostics</img></h2>
+			   		<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>Diagnostics Home</h3>
 			   	</div>
 			   	<!--First Panel Section -->
 			   	<div class="panel panel-primary">
@@ -7772,10 +7772,10 @@ def renderDiagHome() {
 					<div class="panel-heading">
 						<div class="row">
 							<div class="col-xs-6">
-								<h1 style="padding: 7px 0; font-size: 20px;" class="panel-title centerText pull-left">Install Details</h1>
+								<h1 class="panel-title centerText pull-left" style="padding: 7px 0;font-size: 1.6em;" >Install Details</h1>
 							</div>
-						 	<div class="col-xs-6">
-						 		<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn"></span></button>
+							<div class="col-xs-6" style="">
+								<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn" style="font-size: 1.1em;"></span></button>
 							</div>
 						</div>
 					</div>
@@ -7844,7 +7844,7 @@ def renderDiagHome() {
 				<!--Second Panel Section -->
 		  		<div class="panel panel-default">
 		   			<div class="panel-heading">
-		    			<h1 class="panel-title">Shortcuts</h1>
+		    			<h1 class="panel-title" style="font-size: 1.6em;">Shortcuts</h1>
 		   			</div>
 		   			<div class="panel-body">
 						<div class="col-xs-6 centerText">
@@ -7910,53 +7910,56 @@ def renderManagerData() {
 				</style>
 			</head>
 			<body>
-			 <div class="container">
-			 	<div class="page-header centerText" style="margin: 10px;">
-			   	  <div class="row">
-				   <div class="col-xs-2" style="padding: 25px 0 0 0;">
-					   <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
-				   </div>
-				   <div class="col-xs-8">
-					   <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h2>
-				   </div>
-				   <div class="col-xs-2" style="padding: 20px 30px 0 0;">
-					   <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
-				   </div>
-			    </div>
-			  </div>
-			  <div class="panel panel-primary">
-			   <div class="panel-heading">
-			    <h1 class="panel-title">Setting Data:</h1>
-			   </div>
-			   <div class="panel-body">
-			    <div>
-			     <p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
-			    </div>
-			   </div>
-			  </div>
+				 <div class="container">
+				 	<div class="page-header centerText" style="margin: 10px;">
+					   	<div class="row">
+						   	<div class="col-xs-2" style="padding: 25px 0 0 0;">
+							   	<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+						   	</div>
+						   	<div class="col-xs-8">
+							   	<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>Manager Data</h3>
+						   	</div>
+						   	<div class="col-xs-2" style="padding: 15px 25px 0 0;">
+							   	<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+						   	</div>
+					    </div>
+				  	</div>
+					<div class="panel panel-primary">
+		  			   	<div class="panel-heading">
+		  					<h1 class="panel-title panel-title-text">NST Manager:</h1>
+		  			   	</div>
+		  		   	  	<div class="panel-body">
+		  					<div style="padding: 5px;">
+							  	<div class="panel panel-default">
+							   		<div class="panel-heading">
+							    		<h1 class="panel-title panel-title-text">Setting Data:</h1>
+							   		</div>
+							   		<div class="panel-body">
+							    		<div><p>${setDesc.toString().replaceAll("\n", "<br>")}</p></div>
+							   		</div>
+							  	</div>
 
-			  <div class="panel panel-primary">
-			   <div class="panel-heading">
-			    <h1 class="panel-title">State Data:</h1>
-			   </div>
-			   <div class="panel-body">
-			    <div>
-			     <p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
-			    </div>
-			   </div>
-			  </div>
+							  	<div class="panel panel-default">
+							   		<div class="panel-heading">
+							    		<h1 class="panel-title panel-title-text">State Data:</h1>
+							   		</div>
+							   		<div class="panel-body">
+							    		<div><p>${stateDesc.toString().replaceAll("\n", "<br>")}</p></div>
+							   		</div>
+							  	</div>
 
-			  <div class="panel panel-primary">
-			   <div class="panel-heading">
-			    <h1 class="panel-title">Meta Data:</h1>
-			   </div>
-			   <div class="panel-body">
-			    <div>
-			     <p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
-			    </div>
-			   </div>
-			   <div>
-			   </div>
+							  	<div class="panel panel-default">
+							   		<div class="panel-heading">
+							    		<h1 class="panel-title panel-title-text">Meta Data:</h1>
+							   		</div>
+							   		<div class="panel-body">
+							    		<div><p>${metaDesc.toString().replaceAll("\n", "<br>")}</p></div>
+							   		</div>
+							   	<div>
+							</div>
+						</div>
+					</div>
+			   	</div>
 			   <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
@@ -7984,24 +7987,23 @@ def renderAutomationData() {
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-
 				</style>
 			</head>
 			<body>
 				<div class="container">
-				   <div class="page-header centerText" style="margin: 10px;">
-					  <div class="row">
-						  <div class="col-xs-2" style="padding: 15px 0 0 0;">
-							  <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
-						  </div>
-						  <div class="col-xs-8">
-							  <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Automation Data</img></h2>
-						  </div>
-						  <div class="col-xs-2" style="padding: 10px 30px 0 0;">
-							  <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
-						  </div>
-					  </div>
-				  </div>
+				   	<div class="page-header centerText" style="margin: 10px;">
+					  	<div class="row">
+						  	<div class="col-xs-2" style="padding: 25px 0 0 0;">
+							  	<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+						  	</div>
+						  	<div class="col-xs-8">
+							  	<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img> Automation Data</h3>
+						  	</div>
+						  	<div class="col-xs-2" style="padding: 15px 25px 0 0;">
+							  	<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+						  	</div>
+					  	</div>
+				  	</div>
 		"""
 /* "" */
 		getAllChildApps()?.each { cApp ->
@@ -8009,45 +8011,42 @@ def renderAutomationData() {
 			def stateDesc = getMapDescStr(cApp?.getState()?.findAll { !(it?.key in ["remDiagLogDataStore", "cssData"]) })
 			def metaDesc = getMapDescStr(cApp?.getMetadata())
 			html += """
-				  <div class="page-header">
-				   <div class="centerText">
-					<h2>${cApp?.getLabel()}</h2>
-				   </div>
-				  </div>
-				  <div class="panel panel-primary">
-				   <div class="panel-heading">
-					<h1 class="panel-title">Setting Data:</h1>
-				   </div>
-				   <div class="panel-body">
-					<div>
-					 <p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
-					</div>
-				   </div>
-				  </div>
+			<div class="panel panel-primary">
+			   	<div class="panel-heading">
+					<h1 class="panel-title panel-title-text">${cApp?.getLabel()}:</h1>
+			   	</div>
+		   	  	<div class="panel-body">
+					<div style="padding: 5px;">
 
-				  <div class="panel panel-primary">
-				   <div class="panel-heading">
-					<h1 class="panel-title">State Data:</h1>
-				   </div>
-				   <div class="panel-body">
-					<div>
-					 <p>${stateDesc.toString().replaceAll("\n", "<br>")}</p>
-					</div>
-				   </div>
-				  </div>
+					  	<div class="panel panel-default">
+						   	<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">Setting Data:</h1>
+						   	</div>
+					   		<div class="panel-body">
+								<div><p>${setDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					   		</div>
+						</div>
 
-				  <div class="panel panel-primary">
-				   <div class="panel-heading">
-					<h1 class="panel-title">Meta Data:</h1>
-				   </div>
-				   <div class="panel-body">
-					<div>
-					 <p>${metaDesc.toString().replaceAll("\n", "<br>")}</p>
+					  	<div class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">State Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><p>${stateDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					   		</div>
+					  	</div>
+
+					  	<div class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">Meta Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><p>${metaDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					   		</div>
+					   	</div>
 					</div>
-				   </div>
-				   <div>
-				 </div>
-			   </div>
+			   	</div>
+			</div>
 			"""
 		}
 		html += """
@@ -8083,31 +8082,25 @@ def renderDeviceData() {
 			</head>
 			<body>
 				<div class="container">
-				<div class="page-header centerText" style="margin: 10px;">
-				<div class="row">
-				 <div class="col-xs-2" style="padding: 15px 0 0 0;">
-					 <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
-				 </div>
-				 <div class="col-xs-8">
-					 <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Device Data</img></h2>
-				 </div>
-				 <div class="col-xs-2" style="padding: 10px 30px 0 0;">
-					 <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
-				 </div>
-			  </div>
-			</div>
+					<div class="page-header centerText" style="margin: 10px;">
+						<div class="row">
+				 			<div class="col-xs-2" style="padding: 25px 0 0 0;">
+					 			<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+				 			</div>
+				 			<div class="col-xs-8">
+					 			<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>Device Data</h3>
+				 			</div>
+				 			<div class="col-xs-2" style="padding: 15px 25px 0 0;">
+					 			<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+				 			</div>
+			  			</div>
+					</div>
 		"""
 /*  */
 		def devices = app.getChildDevices(true)
 		devices?.each { dev ->
 			def setDesc = getMapDescStr(dev?.getSettings())
-
-			def stData = dev?.getState()
-			def stateData = [:]
-			stData?.sort().each { item ->
-				stateData[item?.key] = item?.value
-			}
-			def stateDesc = getMapDescStr(stateData)
+			def stateDesc = getMapDescStr(dev?.getState()?.findAll { !(it?.key in ["cssData"]) })
 
 			def attrDesc = ""; def cnt = 1
 			def devData = dev?.supportedAttributes.collect { it as String }
@@ -8127,67 +8120,55 @@ def renderDeviceData() {
 			def capDesc = getMapDescStr(t0)
 
 			html += """
-				<div class="page-header">
-				 <div class="centerText">
-				  <h2>${dev?.getLabel()}</h2>
-				 </div>
+			<div class="panel panel-primary">
+			 	<div class="panel-heading">
+			  		<h1 class="panel-title panel-title-text">${dev?.getLabel()}:</h1>
+			 	</div>
+			 	<div class="panel-body">
+					<div style="padding: 5px;">
+					  	<div class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">Setting Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><p>${setDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					   		</div>
+					  	</div>
+					  	<div class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">State Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><p style="word-wrap: break-word">${stateDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					   		</div>
+					  	</div>
+					  	<div class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">Attribute Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><p>${attrDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					   		</div>
+					  	</div>
+					  	<div class="panel panel-default">
+						  	<div class="panel-heading">
+						  		<h1 class="panel-title panel-title-text">Command Data:</h1>
+							</div>
+							<div class="panel-body">
+						   		<div><p>${commDesc.toString().replaceAll("\n", "<br>")}</p></div>
+							</div>
+					  	</div>
+						<div class="panel panel-default">
+					 		<div class="panel-heading">
+					  			<h1 class="panel-title panel-title-text">Capability Data:</h1>
+					 		</div>
+					 		<div class="panel-body">
+					  			<div><p>${capDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					 		</div>
+						</div>
+				  	</div>
 				</div>
-
-				<div class="panel panel-primary">
-				 <div class="panel-heading">
-				  <h1 class="panel-title">Setting Data:</h1>
-				 </div>
-				 <div class="panel-body">
-				  <div>
-				   <p>${setDesc.toString().replaceAll("\n", "<br>")}</p>
-				  </div>
-				 </div>
-				</div>
-
-				<div class="panel panel-primary">
-				 <div class="panel-heading">
-				  <h1 class="panel-title">State Data:</h1>
-				 </div>
-				 <div class="panel-body">
-				  <div>
-				   <p style="word-wrap: normal">${stateDesc.toString().replaceAll("\n", "<br>")}</p>
-				  </div>
-				 </div>
-				</div>
-
-				<div class="panel panel-primary">
-				 <div class="panel-heading">
-				  <h1 class="panel-title">Attribute Data:</h1>
-				 </div>
-				 <div class="panel-body">
-				  <div>
-				   <p>${attrDesc.toString().replaceAll("\n", "<br>")}</p>
-				  </div>
-				 </div>
-				</div>
-
-
-			   	<div class="panel panel-primary">
-					<div class="panel-heading">
-					<h1 class="panel-title">Command Data:</h1>
-				  </div>
-				  <div class="panel-body">
-					 <div>
-					  <p>${commDesc.toString().replaceAll("\n", "<br>")}</p>
-					 </div>
-				  </div>
-				</div>
-
-			  <div class="panel panel-primary">
-			   <div class="panel-heading">
-				<h1 class="panel-title">Capability Data:</h1>
-			   </div>
-			   <div class="panel-body">
-				<div>
-				 <p>${capDesc.toString().replaceAll("\n", "<br>")}</p>
-				</div>
-			   </div>
-			  </div>
+			</div>
 			"""
 /* """ */
 		}
@@ -8228,15 +8209,6 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.home-btn {
-						width: 80px;
-						height: 40px;
-						border-radius: 0.6em;
-						background-color: white;
-						border-color: gray;
-						border-style: solid;
-						border-width: 1px;
-					}
 				</style>
 			</head>
 			<body>
@@ -8244,19 +8216,19 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				<div class="page-header centerText" style="margin: 10px;">
 				  <div class="row">
 				   <div class="col-xs-2" style="padding: 25px 0 0 0;">
-					   <button id="goHomeBtn" class="btn btn-large home-btn"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+					   <button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
 				   </div>
 				   <div class="col-xs-8">
-					   <h2><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> ${heading}</img></h2>
+					   <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>${heading}</h3>
 				   </div>
-				   <div class="col-xs-2" style="padding: 20px 30px 0 0;">
-					   <button id="rfrshBtn" type="button" class="btn-link pull-right" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+				   <div class="col-xs-2" style="padding: 15px 25px 0 0;">
+					   <button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
 				   </div>
 				</div>
 			  </div>
 			  <div class="panel panel-primary">
 			   <div class="panel-heading">
-				<h1 class="panel-title">${heading}:</h1>
+				<h1 class="panel-title panel-title-text">${heading}:</h1>
 			   </div>
 			   <div class="panel-body">
 				<div>

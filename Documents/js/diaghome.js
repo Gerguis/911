@@ -14,7 +14,8 @@ $(document).ready(function() {
 
 $("body").flowtype({
     minFont: 8,
-    maxFont: 14
+    maxFont: 14,
+    fontRatio: 35
 });
 
 var btn = document.getElementById('copyUrlBtn');
