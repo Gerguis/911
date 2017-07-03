@@ -1,7 +1,4 @@
 $(document).ready(function() {
-    $(function() {
-        $("#stateUseCirc").percircle();
-    });
     $("#rfrshBtn").click(function() {
         window.location.reload(true);
     });
@@ -9,6 +6,10 @@ $(document).ready(function() {
     $("#rfrshBtn").hover(function(e) {
         $(this).toggleClass('fa-spin');
         $(this).css("color", e.type === "mouseenter" ? "lime" : "white");
+    });
+
+    $("#goHomeBtn").click(function() {
+        window.history.back();
     });
 });
 

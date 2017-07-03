@@ -7598,7 +7598,7 @@ def getRemLogData() {
 				   		</div>
 				  	</div>
 				</div>
-				<script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
+				<script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 /* "" */

@@ -7942,7 +7942,7 @@ def renderManagerData() {
 			   </div>
 			   <div>
 			   </div>
-			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
+			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 /* """ */
@@ -7968,7 +7968,7 @@ def renderAutomationData() {
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					
+
 				</style>
 			</head>
 			<body>
@@ -8036,7 +8036,7 @@ def renderAutomationData() {
 		}
 		html += """
 			   </div>
-			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
+			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 /* """ */
@@ -8176,7 +8176,7 @@ def renderDeviceData() {
 		}
 		html += """
 			   </div>
-			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
+			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 		render contentType: "text/html", data: html
@@ -8246,10 +8246,8 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				</div>
 			   </div>
 			  </div>
-
-
-			   </div>
-			   <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagdevdatapage.min.js"></script>
+			 </div>
+			 <script href="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 	/* """ */
