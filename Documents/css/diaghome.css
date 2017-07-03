@@ -110,3 +110,13 @@ body {
 
     }
 }
+
+.home-btn {
+    width: 80px;
+    height: 40px;
+    border-radius: 0.6em;
+    background-color: white;
+    border-color: gray;
+    border-style: solid;
+    border-width: 1px;
+}
