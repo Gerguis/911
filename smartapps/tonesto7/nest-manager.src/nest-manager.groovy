@@ -98,7 +98,10 @@ mappings {
 		path("/oauth/callback") 	{action: [GET: "callback"]}
 
 		//Web Diagnostics Pages
-		if(settings?.enDiagWebPage == true || getDevOpt() ) {
+		if(getDevOpt() ) {
+			settingUpdate("enDiagWebPage", "true", "bool")
+		}
+		if(settings?.enDiagWebPage == true) {
 			path("/diagHome")		{action: [GET: "renderDiagHome"]}
 			path("/getLogData")		{action: [GET: "renderLogData"]}
 			//path("/getLogMap")	{action: [GET: "getLogMap"]}
@@ -1650,8 +1653,6 @@ void diagLogProcChange(setOn) {
 	if(diagAllowed && setOn) {
 		if(!atomicState?.enRemDiagLogging && atomicState?.remDiagLogActivatedDt == null) {
 			msg += "activated"
-			atomicState?.enRemDiagLogging = true
-			atomicState?.remDiagLogActivatedDt = getDtNow()
 			doInit = true
 		}
 	} else {
@@ -1667,6 +1668,10 @@ void diagLogProcChange(setOn) {
 		def kdata = getState()?.findAll { (it?.key in ["remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt" ]) }
 		kdata.each { kitem ->
 			state.remove(kitem?.key.toString())
+		}
+		if(diagAllowed && setOn) {
+			atomicState?.enRemDiagLogging = true
+			atomicState?.remDiagLogActivatedDt = getDtNow()
 		}
 		initRemDiagApp()
 		LogAction(msg, "info", true)
@@ -2129,7 +2134,7 @@ def initialize() {
 def reInitBuiltins() {
 	initWatchdogApp()
 	initNestModeApp()
-	diagLogProcChange(settings?.enRemDiagLogging)
+	diagLogProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
 }
 
 def initNestModeApp() {
@@ -6768,11 +6773,20 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			turnOff = true
 			reasonStr += "appData does not allow"
 		}
+		def remDiagApp = getRemDiagApp()
+/*
+		if(!remDiagApp) {
+			turnOff = true
+			reasonStr += "Child app not found"
+		}
+*/
 		if(turnOff) {
+/*
 			settingUpdate("enRemDiagLogging", "false", "bool")
 			if(getDevOpt()) {
 				settingUpdate("enDiagWebPage", "false", "bool")
 			}
+*/
 			diagLogProcChange(false)
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
 		} else {
@@ -6788,12 +6802,14 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			def data = atomicState?.remDiagLogDataStore ?: []
 			def t0 = data?.size()
 			if(t0 && (t0 > 20 || getLastRemDiagSentSec() > 120 || getStateSizePerc() >= 75)) {
-				def remDiagApp = getRemDiagApp()
 				if(remDiagApp) {
 					remDiagApp?.savetoRemDiagChild(data)
+					atomicState?.remDiagDataSentDt = getDtNow()
+				} else {
+					//diagLogProcChange(false)
+					log.warn "Remote Diagnostics Child app not found"
 				}
 				atomicState?.remDiagLogDataStore = []
-				atomicState?.remDiagDataSentDt = getDtNow()
 			}
 		}
 	}
@@ -6929,7 +6945,7 @@ def stateCleanup() {
 		"showProtAlarmStateEvts", "showAwayAsAuto", "cmdQ", "recentSendCmd", "currentWeather", "altNames", "locstr", "custLocStr", "autoAppInstalled", "nestStructures", "lastSentExceptionDataDt",
 		"tDevVer", "pDevVer", "camDevVer", "presDevVer", "weatDevVer", "vtDevVer", "streamDevVer", "dashSetup", "dashboardUrl", "apiIssues", "stateSize", "haveRun", "lastStMode", "lastPresSenAway", "automationsActive",
 		"temperatures", "powers", "energies", "use24Time", "useMilitaryTime", "advAppDebug", "appDebug", "awayModes", "homeModes", "childDebug", "updNotifyWaitVal", "appApiIssuesWaitVal",
-		"misPollNotifyWaitVal", "misPollNotifyMsgWaitVal", "devHealthMsgWaitVal", "nestLocAway", "heardFromRestDt", "autoSaVer", "lastAnalyticUpdDt", "lastHeardFromRestDt"
+		"misPollNotifyWaitVal", "misPollNotifyMsgWaitVal", "devHealthMsgWaitVal", "nestLocAway", "heardFromRestDt", "autoSaVer", "lastAnalyticUpdDt", "lastHeardFromRestDt", "remDiagApp", "remDiagClientId", "restorationInProgress"
  	]
 	data.each { item ->
 		state.remove(item?.toString())
