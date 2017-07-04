@@ -3178,6 +3178,9 @@ def finishPoll(str=null, dev=null) {
 	updateWebStuff()
 	notificationCheck() //Checks if a notification needs to be sent for a specific event
 	broadcastCheck()
+	if(atomicState?.enRemDiagLogging && settings?.enRemDiagLogging) {
+		saveLogtoRemDiagStore("", "", "", true) // force flush of remote logs
+	}
 }
 
 def finishPollHandler(data) {
@@ -6759,27 +6762,29 @@ def Logger(msg, type, logSrc=null) {
 	else { log.error "${labelstr}Logger Error - type: ${type} | msg: ${msg} | logSrc: ${logSrc}" }
 }
 
-def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
+def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null, frc=null) {
 	//log.trace "saveLogtoRemDiagStore($msg, $type, $logSrcType)"
 
 	if(atomicState?.enRemDiagLogging && settings?.enRemDiagLogging) {
 		def turnOff = false
 		def reasonStr = ""
-		if(getRemDiagActSec() > (3600 * 48)) {
-			turnOff = true
-			reasonStr += "was active for last 48 hours "
-		}
-		if(!atomicState?.appData?.database?.allowRemoteDiag) {
-			turnOff = true
-			reasonStr += "appData does not allow"
-		}
-		def remDiagApp = getRemDiagApp()
+		if(frc == false) {
+			if(getRemDiagActSec() > (3600 * 48)) {
+				turnOff = true
+				reasonStr += "was active for last 48 hours "
+			}
+			if(!atomicState?.appData?.database?.allowRemoteDiag) {
+				turnOff = true
+				reasonStr += "appData does not allow"
+			}
+			def remDiagApp = getRemDiagApp()
 /*
-		if(!remDiagApp) {
-			turnOff = true
-			reasonStr += "Child app not found"
-		}
+			if(!remDiagApp) {
+				turnOff = true
+				reasonStr += "Child app not found"
+			}
 */
+		}
 		if(turnOff) {
 /*
 			settingUpdate("enRemDiagLogging", "false", "bool")
@@ -6787,21 +6792,24 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 				settingUpdate("enDiagWebPage", "false", "bool")
 			}
 */
+			saveLogtoRemDiagStore("Diagnostics disabled due to ${reasonStr}", "info", "Manager", true)
 			diagLogProcChange(false)
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
 		} else {
 			if(getStateSizePerc() >= 65) {
 				log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
 			} else {
-				def data = atomicState?.remDiagLogDataStore ?: []
-				def item = ["dt":new Date().getTime(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
-				data << item
-				atomicState?.remDiagLogDataStore = data
+				if(msg) {
+					def data = atomicState?.remDiagLogDataStore ?: []
+					def item = ["dt":new Date().getTime(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
+					data << item
+					atomicState?.remDiagLogDataStore = data
+				}
 			}
 
 			def data = atomicState?.remDiagLogDataStore ?: []
 			def t0 = data?.size()
-			if(t0 && (t0 > 20 || getLastRemDiagSentSec() > 120 || getStateSizePerc() >= 65)) {
+			if(t0 && (t0 > 30 || frc || getLastRemDiagSentSec() > 120 || getStateSizePerc() >= 65)) {
 				if(remDiagApp) {
 					remDiagApp?.savetoRemDiagChild(data)
 					atomicState?.remDiagDataSentDt = getDtNow()
