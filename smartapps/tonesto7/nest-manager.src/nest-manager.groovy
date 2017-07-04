@@ -7403,82 +7403,75 @@ def simulateTestEventPage(params) {
 	}
 }
 
-def getMapDescStr(data) {
+def dumpListDesc(data, level) {
 	def str = ""
 	def cnt = 1
-	data?.sort()?.each { par ->
-		if(par?.value instanceof Map || par?.value instanceof List || par?.value instanceof ArrayList) {
-			str += "${cnt>1 ? "\n\n" : ""} • ${par?.key.toString()}:"
-			if(par?.value instanceof Map) {
-				def map2 = par?.value
-				def cnt2 = 1
-				map2?.sort()?.each { par2 ->
-					if(par2?.value instanceof Map) { //This handles second level maps
-						def map3 = par2?.value
-						def cnt3 = 1
-						str += "\n   ${cnt2 < map2?.size() ? "├―" : "└―"} ${par2?.key.toString()}:"
-						map3?.sort()?.each { par3 ->
-							if(par3?.value instanceof Map) { //This handles third level maps
-								def map4 = par3?.value
-								def cnt4 = 1
-								str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "├―" : "└―"} ${par3?.key.toString()}:"
-								map4?.sort()?.each { par4 ->
-									if (par4?.value instanceof Map) { //This handles fourth level maps
-										def map5 = par4?.value
-										def cnt5 = 1
-										str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "├―" : "└―"} ${par4?.key.toString()}:"
-										map5?.sort()?.each { par5 ->
-											str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "│" : " "}  ${cnt5 < map5?.size() ? "├―" : "└―"} ${par5}"
-											cnt5 = cnt5+1
-										}
-									}
-									else if (par4?.value instanceof List || par?.value instanceof ArrayList) { //This handles forth level lists
-										def list4 = par4?.value?.collect {it}
-										def cnt5 = 1
-										str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "│" : "└―"} ${par4?.key.toString()}:"
-										list4?.each { par5 ->
-											str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "│" : " "}  ${cnt5 < list4?.size() ? "├―" : "└―"} ${par5}"
-											cnt5 = cnt5+1
-										}
-									} else {
-										str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "├―" : "└―"} ${par4?.key.toString()}: (${par4?.value})"
-									}
-									cnt4 = cnt4+1
-								}
-							}
-							else if (par3?.value instanceof List || par?.value instanceof ArrayList) { //This handles third level lists
-								def list3 = par3?.value?.collect {it}
-								def cnt4 = 1
-								str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "├―" : "└―"} ${par3?.key.toString()}:"
-								list3?.each { par4 ->
-									str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < list3?.size() ? "├―" : "└―"} ${par4}"
-									cnt4 = cnt4+1
-								}
-							} else {
-								str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "├―" : "└―"} ${par3?.key.toString()}: (${par3?.value})"
-							}
-							cnt3 = cnt3+1
-						}
-						cnt2 = cnt2+1
-					} else {
-						str += "\n   ${cnt2 < map2?.size() ? "├―" : "└―"} ${par2?.key.toString()}: (${par2?.value})"
-						cnt2 = cnt2+1
-					}
-				}
-			}
-			if(par?.value instanceof List || par?.value instanceof ArrayList) {
-				def list2 = par?.value?.collect {it}
-				def cnt2 = 1
-				list2?.each { par2 ->
-					str += "\n   ${cnt2 < list2?.size() ? "├―" : "└―"} ${par2}"
-					cnt2 = cnt2+1
-				}
-			}
+
+	def list1 = data?.collect {it}
+	list1?.each { par ->
+		if(par instanceof Map) {
+			def newmap = [:]
+			newmap["INSERTED item${cnt}"] = par
+			str += dumpMapDesc(newmap, level+1)
+		} else if(par instanceof List || par instanceof ArrayList) {
+			def newmap = [:]
+			newmap["item${cnt}"] = par
+			str += dumpMapDesc(newmap, level+1)
 		} else {
-			str += "${cnt>1 ? "\n\n" : "\n"} • ${par?.key.toString()}: (${par?.value})"
+			def lineStrt = "\n"
+			for(int i=0; i < level; i++) {
+				if(i+1 < level) {
+					lineStrt += "   |"
+				} else {
+					lineStrt += "   "
+				}
+			}
+			lineStrt += "${cnt == 1 && list1.size() > 1 ? "┌―" : cnt < list1?.size() ? "├―" : "└―"} "
+			str += "${lineStrt}${par}"
 		}
 		cnt = cnt+1
 	}
+	return str
+}
+
+def dumpMapDesc(data, level) {
+	def str = ""
+	def cnt = 1
+	data?.sort()?.each { par ->
+		def lineStrt = ""
+
+		if(level == 0) {
+			lineStrt = "\n\n • "
+		} else {
+			lineStrt = "\n"
+			for(int i=0; i < level; i++) {
+				if(i+1 < level) {
+					lineStrt += "   |"
+				} else {
+					lineStrt += "   "
+				}
+			}
+			lineStrt += "${cnt < data?.size() ? "├―" : "└―"} "
+		}
+		if(par?.value instanceof Map) {
+			str += "${lineStrt}${par?.key.toString()}: MAP"
+			str += dumpMapDesc(par?.value, level+1)
+		}
+		else if(par?.value instanceof List || par?.value instanceof ArrayList) {
+			str += "${lineStrt}${par?.key.toString()}: LIST OR ARRAYLIST"
+			str += dumpListDesc(par?.value, level+1)
+		}
+		else {
+			str += "${lineStrt}${par?.key.toString()}: (${par?.value})"
+		}
+		cnt = cnt + 1
+	}
+	return str
+}
+
+def getMapDescStr(data) {
+	def str = ""
+	str = dumpMapDesc(data,0)
 	//log.debug "str: $str"
 	return str != "" ? str : "No Data was returned"
 }
