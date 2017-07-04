@@ -7455,14 +7455,14 @@ def savetoRemDiagChild(List newdata) {
 	//LogTrace("savetoRemDiagChild($msg, $type, $logSrcType)")
 	if(atomicState?.automationType == "remDiag") {
 		def stateSz = getStateSizePerc()
-		if(stateSz >= 85) {
+		if(stateSz >= 75) {
 			// this is log.xxxx to avoid looping/recursion
 			log.warn "savetoRemDiagChild: log storage trimming state size is ${getStateSizePerc()}%"
 		}
 		if(newdata?.size() > 0) {
 			def data = atomicState?.remDiagLogDataStore ?: []
 			def cnt = 0
-			while(data && stateSz >= 80 && cnt < 50) {
+			while(data && stateSz >= 70 && cnt < 50) {
 				data.remove(0)
 				atomicState?.remDiagLogDataStore = data
 				stateSz = getStateSizePerc()
@@ -7470,12 +7470,13 @@ def savetoRemDiagChild(List newdata) {
 			}
 			newdata?.each { logItem ->
 				data << logItem
+				cnt -= 1
 				//log.debug "item: $logItem"
 				//def item = ["dt":getDtNow(), "type":type, "src":(logSrcType ?: "Not Set"), "msg":msg]
 			}
 			atomicState?.remDiagLogDataStore = data
 			stateSz = getStateSizePerc()
-			while(data && stateSz >= 85 && cnt < 50) {
+			while(data && stateSz >= 75 && cnt < 50) {
 				data.remove(0)
 				atomicState?.remDiagLogDataStore = data
 				stateSz = getStateSizePerc()
