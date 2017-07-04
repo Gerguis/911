@@ -6790,7 +6790,7 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 			diagLogProcChange(false)
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
 		} else {
-			if(getStateSizePerc() >= 80) {
+			if(getStateSizePerc() >= 65) {
 				log.warn "saveLogtoRemDiagStore: remoteDiag log storage suspended state size is ${getStateSizePerc()}%"
 			} else {
 				def data = atomicState?.remDiagLogDataStore ?: []
@@ -6801,7 +6801,7 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null) {
 
 			def data = atomicState?.remDiagLogDataStore ?: []
 			def t0 = data?.size()
-			if(t0 && (t0 > 20 || getLastRemDiagSentSec() > 120 || getStateSizePerc() >= 75)) {
+			if(t0 && (t0 > 20 || getLastRemDiagSentSec() > 120 || getStateSizePerc() >= 65)) {
 				if(remDiagApp) {
 					remDiagApp?.savetoRemDiagChild(data)
 					atomicState?.remDiagDataSentDt = getDtNow()
