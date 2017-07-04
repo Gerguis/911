@@ -98,10 +98,7 @@ mappings {
 		path("/oauth/callback") 	{action: [GET: "callback"]}
 
 		//Web Diagnostics Pages
-		if(getDevOpt() ) {
-			settingUpdate("enDiagWebPage", "true", "bool")
-		}
-		if(settings?.enDiagWebPage == true) {
+		if(settings?.enDiagWebPage == true || getDevOpt()) {
 			path("/diagHome")		{action: [GET: "renderDiagHome"]}
 			path("/getLogData")		{action: [GET: "renderLogData"]}
 			//path("/getLogMap")	{action: [GET: "getLogMap"]}
@@ -144,7 +141,7 @@ def authPage() {
 	def stateSz = getStateSizePerc()
 	if(!atomicState?.devHandlersTested) { deviceHandlerTest() }
 
-	if(!atomicState?.accessToken || (!atomicState?.isInstalled && (!atomicState?.devHandlersTested || !preReqOk)) || (stateSz > 90)) {
+	if(!atomicState?.accessToken || (!atomicState?.isInstalled && (!atomicState?.devHandlersTested || !preReqOk)) || (stateSz > 80)) {
 		return dynamicPage(name: "authPage", title: "Status Page", nextPage: "", install: false, uninstall: false) {
 			section ("Status Page:") {
 				def desc = ""
@@ -160,8 +157,8 @@ def authPage() {
 				else {
 					desc = "Application Status has not received any messages to display"
 				}
-				if(stateSz > 90) {
-					desc += "${desc != "" ? "\n\n" : ""}Your Manager State Usage is Greater than 90% full.  This is not normal and you should notify the developer."
+				if(stateSz > 80) {
+					desc += "${desc != "" ? "\n\n" : ""}Your Manager State Usage is Greater than 80% full.  This is not normal and you should notify the developer."
 				}
 				LogAction("Status Message: $desc", "warn", true)
 				paragraph "$desc", required: true, state: null
@@ -1604,6 +1601,9 @@ def diagnosticPage () {
 				}
 			}
 		}
+		if(getDevOpt()) {
+			settingUpdate("enDiagWebPage","true", "bool")
+		}
 		if(settings?.enDiagWebPage) {
 			section("Log Collection:") {
 				def formatVal = settings?.useMilitaryTime ? "MMM d, yyyy - HH:mm:ss" : "MMM d, yyyy - h:mm:ss a"
@@ -1915,7 +1915,7 @@ def getAppDebugDesc() {
 def getRemDiagDesc() {
 	def str = ""
 	str += settings?.enDiagWebPage ? "Web Page: (${settings.enDiagWebPage})" : ""
-	str += settings?.enRemDiagLogging ? "${settings?.enDiagWebPage ? "\n" : ""}Log Collection: (${settings.enRemDiagLogging})" : ""
+	str += settings?.enRemDiagLogging ? "${str ? "\n" : ""}Log Collection: (${settings.enRemDiagLogging})" : ""
 	return (str != "") ? "${str}" : null
 }
 
@@ -3187,7 +3187,7 @@ def finishPollHandler(data) {
 
 def schedFinishPoll(devChg) {
 	def curNow = now()
-	atomicState?.lastFinishedPoll = curNow
+	//atomicState?.lastFinishedPoll = curNow
 	finishPoll(false, devChg)
 	return
 /*
@@ -6943,9 +6943,10 @@ def stateCleanup() {
 
 	def data = [ "exLogs", "pollValue", "pollStrValue", "pollWaitVal", "tempChgWaitVal", "cmdDelayVal", "testedDhInst", "missedPollNotif", "updateMsgNotif", "updChildOnNewOnly", "disAppIcons",
 		"showProtAlarmStateEvts", "showAwayAsAuto", "cmdQ", "recentSendCmd", "currentWeather", "altNames", "locstr", "custLocStr", "autoAppInstalled", "nestStructures", "lastSentExceptionDataDt",
-		"tDevVer", "pDevVer", "camDevVer", "presDevVer", "weatDevVer", "vtDevVer", "streamDevVer", "dashSetup", "dashboardUrl", "apiIssues", "stateSize", "haveRun", "lastStMode", "lastPresSenAway", "automationsActive",
-		"temperatures", "powers", "energies", "use24Time", "useMilitaryTime", "advAppDebug", "appDebug", "awayModes", "homeModes", "childDebug", "updNotifyWaitVal", "appApiIssuesWaitVal",
-		"misPollNotifyWaitVal", "misPollNotifyMsgWaitVal", "devHealthMsgWaitVal", "nestLocAway", "heardFromRestDt", "autoSaVer", "lastAnalyticUpdDt", "lastHeardFromRestDt", "remDiagApp", "remDiagClientId", "restorationInProgress"
+		"tDevVer", "pDevVer", "camDevVer", "presDevVer", "weatDevVer", "vtDevVer", "streamDevVer", "dashSetup", "dashboardUrl", "apiIssues", "stateSize", "haveRun", "lastStMode", "lastPresSenAway",
+		"automationsActive", "temperatures", "powers", "energies", "use24Time", "useMilitaryTime", "advAppDebug", "appDebug", "awayModes", "homeModes", "childDebug", "updNotifyWaitVal",
+		"appApiIssuesWaitVal", "misPollNotifyWaitVal", "misPollNotifyMsgWaitVal", "devHealthMsgWaitVal", "nestLocAway", "heardFromRestDt", "autoSaVer", "lastAnalyticUpdDt", "lastHeardFromRestDt",
+		"remDiagApp", "remDiagClientId", "restorationInProgress", "diagManagAppStateFilters", "diagChildAppStateFilters", "lastFinishedPoll"
  	]
 	data.each { item ->
 		state.remove(item?.toString())
@@ -6955,13 +6956,16 @@ def stateCleanup() {
 		data = [ "cmdQ2", "cmdQ3", "cmdQ4", "cmdQ5", "cmdQ6", "cmdQ7", "cmdQ8", "cmdQ9", "cmdQ10", "cmdQ11", "cmdQ12", "cmdQ13", "cmdQ14", "cmdQ15", "lastCmdSentDt2", "lastCmdSentDt3",
 			"lastCmdSentDt4", "lastCmdSentDt5", "lastCmdSentDt6", "lastCmdSentDt7", "lastCmdSentDt8", "lastCmdSentDt9", "lastCmdSentDt10", "lastCmdSentDt11", "lastCmdSentDt12", "lastCmdSentDt13",
 			"lastCmdSentDt14", "lastCmdSentDt15", "recentSendCmd2", "recentSendCmd3", "recentSendCmd4", "recentSendCmd5", "recentSendCmd6", "recentSendCmd7", "recentSendCmd8", "recentSendCmd9",
-			"recentSendCmd10", "recentSendCmd11", "recentSendCmd12", "recentSendCmd13", "recentSendCmd14", "recentSendCmd15" ]
+			"recentSendCmd10", "recentSendCmd11", "recentSendCmd12", "recentSendCmd13", "recentSendCmd14", "recentSendCmd15"
+		]
 		data.each { item ->
 			state.remove(item?.toString())
 		}
 	}
 	atomicState.forceChildUpd = true
-	def sdata = [ "showAwayAsAuto", "temperatures", "powers", "energies", "childDevDataPageDev", "childDevDataRfsh", "childDevDataStateFilter", "childDevPageShowAttr", "childDevPageShowCapab", "childDevPageShowCmds" ]
+	def sdata = [ "showAwayAsAuto", "temperatures", "powers", "energies", "childDevDataPageDev", "childDevDataRfsh", "childDevDataStateFilter", "childDevPageShowAttr", "childDevPageShowCapab", "childDevPageShowCmds",
+			"managAppPageRfsh", "managAppPageShowMeta", "managAppPageShowSet", "managAppPageShowState", "updChildOnNewOnly"
+	]
 	sdata.each { item ->
 		if(settings?."${item}" != null) {
 			settingUpdate("${item.toString()}", "")	// clear settings
