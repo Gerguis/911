@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "7-3-2017" }
+def appVerDate() { "7-4-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -7416,52 +7416,52 @@ def getMapDescStr(data) {
 					if(par2?.value instanceof Map) { //This handles second level maps
 						def map3 = par2?.value
 						def cnt3 = 1
-						str += "\n     ${cnt2 < map2?.size() ? "├" : "└"} ${par2?.key.toString()}:"
+						str += "\n   ${cnt2 < map2?.size() ? "├―" : "└―"} ${par2?.key.toString()}:"
 						map3?.sort()?.each { par3 ->
 							if(par3?.value instanceof Map) { //This handles third level maps
 								def map4 = par3?.value
 								def cnt4 = 1
-								str += "\n     ${cnt2 < map2?.size() ? "│" : "    "}${cnt3 < map3?.size() ? "├" : "└"} ${par3?.key.toString()}:"
+								str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "├―" : "└―"} ${par3?.key.toString()}:"
 								map4?.sort()?.each { par4 ->
-									if(par4?.value instanceof Map) { //This handles fourth level maps
+									if (par4?.value instanceof Map) { //This handles fourth level maps
 										def map5 = par4?.value
 										def cnt5 = 1
-										str += "\n   ${cnt2 < map2?.size() ? "│" : "    "}${cnt3 < map3?.size() ? "│" : "    "}${cnt4 < map4?.size() ? "├" : "└"} ${par4?.key.toString()}:"
+										str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "├―" : "└―"} ${par4?.key.toString()}:"
 										map5?.sort()?.each { par5 ->
-											str += "\n   ${cnt2 < map2?.size()  ? "│" : "    "}${cnt3 < map3?.size() ? "│" : "    "}${cnt4 < map4?.size() ? "│" : "    "}${cnt5 < map5?.size() ? "├" : "└"} ${par5}"
+											str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "│" : " "}  ${cnt5 < map5?.size() ? "├―" : "└―"} ${par5}"
 											cnt5 = cnt5+1
 										}
 									}
-									else if(par4?.value instanceof List || par?.value instanceof ArrayList) { //This handles forth level lists
+									else if (par4?.value instanceof List || par?.value instanceof ArrayList) { //This handles forth level lists
 										def list4 = par4?.value?.collect {it}
 										def cnt5 = 1
-										str += "\n   ${cnt2 < map2?.size() ? "│" : "    "}${cnt3 < map3?.size() ? "│" : "    "}${cnt4 < map4?.size() ? "│" : "└"} ${par4?.key.toString()}:"
+										str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "│" : "└―"} ${par4?.key.toString()}:"
 										list4?.each { par5 ->
-											str += "\n   ${cnt2 < map2?.size()  ? "│" : "    "}${cnt3 < map3?.size() ? "│" : "    "}${cnt4 < map4?.size() ? "│" : "    "}${cnt5 < list4?.size() ? "├" : "└"} ${par5}"
+											str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "│" : " "}  ${cnt5 < list4?.size() ? "├―" : "└―"} ${par5}"
 											cnt5 = cnt5+1
 										}
 									} else {
-										str += "\n   ${cnt2 < map2?.size()  ? "│" : "    "}${cnt3 < map3?.size()  ? "│" : "    "}${cnt4 < map4?.size() ? "├" : "└"} ${par4?.key.toString()}: (${par4?.value})"
+										str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < map4?.size() ? "├―" : "└―"} ${par4?.key.toString()}: (${par4?.value})"
 									}
 									cnt4 = cnt4+1
 								}
 							}
-							else if(par3?.value instanceof List || par?.value instanceof ArrayList) { //This handles third level lists
+							else if (par3?.value instanceof List || par?.value instanceof ArrayList) { //This handles third level lists
 								def list3 = par3?.value?.collect {it}
 								def cnt4 = 1
-								str += "\n   ${cnt2 < map2?.size() ? "│" : "    "}${cnt3 < map3?.size() ? "├" : "└"} ${par3?.key.toString()}:"
+								str += "\n   ${cnt2 < map2?.size() ? "│" : " "}  ${cnt3 < map3?.size() ? "├―" : "└―"} ${par3?.key.toString()}:"
 								list3?.each { par4 ->
-									str += "\n   ${cnt2 < map2?.size()  ? "│" : "    "}${cnt3 < map3?.size() ? "│" : "    "}${cnt4 < list3?.size() ? "├" : "└"} ${par4}"
+									str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "│" : " "}  ${cnt4 < list3?.size() ? "├―" : "└―"} ${par4}"
 									cnt4 = cnt4+1
 								}
 							} else {
-								str += "\n   ${cnt2 < map2?.size()  ? "│" : "    "}${cnt3 < map3?.size() ? "├" : "└"} ${par3?.key.toString()}: (${par3?.value})"
+								str += "\n   ${cnt2 < map2?.size()  ? "│" : " "}  ${cnt3 < map3?.size() ? "├―" : "└―"} ${par3?.key.toString()}: (${par3?.value})"
 							}
 							cnt3 = cnt3+1
 						}
 						cnt2 = cnt2+1
 					} else {
-						str += "\n   ${cnt2 < map2?.size() ? "├" : "└"} ${par2?.key.toString()}: (${par2?.value})"
+						str += "\n   ${cnt2 < map2?.size() ? "├―" : "└―"} ${par2?.key.toString()}: (${par2?.value})"
 						cnt2 = cnt2+1
 					}
 				}
@@ -7470,7 +7470,7 @@ def getMapDescStr(data) {
 				def list2 = par?.value?.collect {it}
 				def cnt2 = 1
 				list2?.each { par2 ->
-					str += "\n   ${cnt2 < list2?.size() ? "├" : "└"} ${par2}"
+					str += "\n   ${cnt2 < list2?.size() ? "├―" : "└―"} ${par2}"
 					cnt2 = cnt2+1
 				}
 			}
@@ -7935,6 +7935,9 @@ def renderManagerData() {
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
+					.mapDataFmt {
+						font-family: Consolas, monaco, monospace;
+					}
 				</style>
 			</head>
 			<body>
@@ -7963,7 +7966,7 @@ def renderManagerData() {
 							    		<h1 class="panel-title panel-title-text">Setting Data:</h1>
 							   		</div>
 							   		<div class="panel-body">
-							    		<div><p>${setDesc.toString().replaceAll("\n", "<br>")}</p></div>
+							    		<div class="mapDataFmt"><p><pre>${setDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 							   		</div>
 							  	</div>
 
@@ -7972,7 +7975,7 @@ def renderManagerData() {
 							    		<h1 class="panel-title panel-title-text">State Data:</h1>
 							   		</div>
 							   		<div class="panel-body">
-							    		<div><p>${stateDesc.toString().replaceAll("\n", "<br>")}</p></div>
+							    		<div class="mapDataFmt"><p><pre>${stateDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 							   		</div>
 							  	</div>
 
@@ -7981,7 +7984,7 @@ def renderManagerData() {
 							    		<h1 class="panel-title panel-title-text">Meta Data:</h1>
 							   		</div>
 							   		<div class="panel-body">
-							    		<div><p>${metaDesc.toString().replaceAll("\n", "<br>")}</p></div>
+							    		<div class="mapDataFmt"><p><pre>${metaDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 							   		</div>
 							   	<div>
 							</div>
@@ -8051,7 +8054,7 @@ def renderAutomationData() {
 								<h1 class="panel-title panel-title-text">Setting Data:</h1>
 						   	</div>
 					   		<div class="panel-body">
-								<div><p>${setDesc.toString().replaceAll("\n", "<br>")}</p></div>
+								<div><p><pre>${setDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 					   		</div>
 						</div>
 
@@ -8060,7 +8063,7 @@ def renderAutomationData() {
 								<h1 class="panel-title panel-title-text">State Data:</h1>
 					   		</div>
 					   		<div class="panel-body">
-								<div><p>${stateDesc.toString().replaceAll("\n", "<br>")}</p></div>
+								<div><p><pre>${stateDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 					   		</div>
 					  	</div>
 
@@ -8069,7 +8072,7 @@ def renderAutomationData() {
 								<h1 class="panel-title panel-title-text">Meta Data:</h1>
 					   		</div>
 					   		<div class="panel-body">
-								<div><p>${metaDesc.toString().replaceAll("\n", "<br>")}</p></div>
+								<div><p><pre>${metaDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 					   		</div>
 					   	</div>
 					</div>
@@ -8159,7 +8162,7 @@ def renderDeviceData() {
 								<h1 class="panel-title panel-title-text">Setting Data:</h1>
 					   		</div>
 					   		<div class="panel-body">
-								<div><p>${setDesc.toString().replaceAll("\n", "<br>")}</p></div>
+								<div><p><pre>${setDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 					   		</div>
 					  	</div>
 					  	<div class="panel panel-default">
@@ -8167,7 +8170,7 @@ def renderDeviceData() {
 								<h1 class="panel-title panel-title-text">State Data:</h1>
 					   		</div>
 					   		<div class="panel-body">
-								<div><p style="word-wrap: break-word">${stateDesc.toString().replaceAll("\n", "<br>")}</p></div>
+								<div><p><pre>${stateDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 					   		</div>
 					  	</div>
 					  	<div class="panel panel-default">
@@ -8175,7 +8178,7 @@ def renderDeviceData() {
 								<h1 class="panel-title panel-title-text">Attribute Data:</h1>
 					   		</div>
 					   		<div class="panel-body">
-								<div><p>${attrDesc.toString().replaceAll("\n", "<br>")}</p></div>
+								<div><p><pre>${attrDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 					   		</div>
 					  	</div>
 					  	<div class="panel panel-default">
@@ -8183,7 +8186,7 @@ def renderDeviceData() {
 						  		<h1 class="panel-title panel-title-text">Command Data:</h1>
 							</div>
 							<div class="panel-body">
-						   		<div><p>${commDesc.toString().replaceAll("\n", "<br>")}</p></div>
+						   		<div><p><pre>${commDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 							</div>
 					  	</div>
 						<div class="panel panel-default">
@@ -8191,7 +8194,7 @@ def renderDeviceData() {
 					  			<h1 class="panel-title panel-title-text">Capability Data:</h1>
 					 		</div>
 					 		<div class="panel-body">
-					  			<div><p>${capDesc.toString().replaceAll("\n", "<br>")}</p></div>
+					  			<div><p><pre>${capDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
 					 		</div>
 						</div>
 				  	</div>
@@ -8259,10 +8262,8 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				<h1 class="panel-title panel-title-text">${heading}:</h1>
 			   </div>
 			   <div class="panel-body">
-				<div>
-				 <p>${datamap.toString().replaceAll("\n", "<br>")}</p>
-				</div>
-			   </div>
+					<div><p><pre>${datamap.toString().replaceAll("\n", "<br>")}</pre></p></div>
+			   	</div>
 			  </div>
 			 </div>
 			 <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
