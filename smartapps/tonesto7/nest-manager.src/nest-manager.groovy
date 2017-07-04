@@ -6963,7 +6963,7 @@ def stateCleanup() {
 		}
 	}
 	atomicState.forceChildUpd = true
-	def sdata = [ "showAwayAsAuto", "temperatures", "powers", "energies", "childDevDataPageDev", "childDevDataRfsh", "childDevDataStateFilter", "childDevPageShowAttr", "childDevPageShowCapab", "childDevPageShowCmds",
+	def sdata = [ "showAwayAsAuto", "temperatures", "powers", "energies", "childDevDataPageDev", "childDevPageRfsh", "childDevDataRfshVal", "childDevDataStateFilter", "childDevPageShowAttr", "childDevPageShowCapab", "childDevPageShowCmds", "childDevPageShowState",
 			"managAppPageRfsh", "managAppPageShowMeta", "managAppPageShowSet", "managAppPageShowState", "updChildOnNewOnly"
 	]
 	sdata.each { item ->
