@@ -1617,7 +1617,7 @@ def diagnosticPage () {
 		diagLogProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
 
 		if(settings?.enDiagWebPage) {
-			section("What's Next:") {
+			section() {
 				if(atomicState?.enRemDiagLogging) {
 					def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
 					paragraph str, required: true, state: "complete"
