@@ -3,7 +3,7 @@ $(document).ready(function() {
         window.location.reload(true);
     });
     $("#rfrshBtn").hover(function(e) {
-	    $("#frshBtnIcn").toggleClass('fa-spin');
+	    $("#rfrshBtnIcn").toggleClass('fa-spin');
     });
     $("#goHomeBtn").click(function() {
         window.history.back();
