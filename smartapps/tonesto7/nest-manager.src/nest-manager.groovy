@@ -7403,7 +7403,7 @@ def simulateTestEventPage(params) {
 	}
 }
 
-def dumpListDesc(data, level, List lastLevel) {
+def dumpListDesc(data, level, List lastLevel, listLabel) {
 	def str = ""
 	def cnt = 1
 	def newLevel = lastLevel
@@ -7413,12 +7413,12 @@ def dumpListDesc(data, level, List lastLevel) {
 		def t0 = cnt - 1
 		if(par instanceof Map) {
 			def newmap = [:]
-			newmap["INSERTED item${t0}"] = par
+			newmap["${listLabel}[${t0}]"] = par
 			newLevel[(level+1)] = newLevel[level]
 			str += dumpMapDesc(newmap, level+1, newLevel)
 		} else if(par instanceof List || par instanceof ArrayList) {
 			def newmap = [:]
-			newmap["INSERTED item${t0}"] = par
+			newmap["${listLabel}[${t0}]"] = par
 			newLevel[(level+1)] = newLevel[level]
 			str += dumpMapDesc(newmap, level+1, newLevel)
 		} else {
@@ -7480,7 +7480,7 @@ def dumpMapDesc(data, level, List lastLevel) {
 		else if(par?.value instanceof List || par?.value instanceof ArrayList) {
 			str += "${lineStrt}${par?.key.toString()}: [List]"
 			newLevel[(level+1)] = theLast
-			str += dumpListDesc(par?.value, level+1, newLevel)
+			str += dumpListDesc(par?.value, level+1, newLevel, par?.key.toString())
 		}
 		else {
 			str += "${lineStrt}${par?.key.toString()}: (${par?.value})  (${getObjType(par?.value)})"
