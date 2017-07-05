@@ -7414,13 +7414,15 @@ def dumpListDesc(data, level, List lastLevel, listLabel) {
 		if(par instanceof Map) {
 			def newmap = [:]
 			newmap["${listLabel}[${t0}]"] = par
-			newLevel[(level+1)] = newLevel[level]
-			str += dumpMapDesc(newmap, level+1, newLevel)
+			//newLevel[(level+1)] = newLevel[level]
+			//str += dumpMapDesc(newmap, level+1, newLevel)
+			str += dumpMapDesc(newmap, level, newLevel)
 		} else if(par instanceof List || par instanceof ArrayList) {
 			def newmap = [:]
 			newmap["${listLabel}[${t0}]"] = par
-			newLevel[(level+1)] = newLevel[level]
-			str += dumpMapDesc(newmap, level+1, newLevel)
+			//newLevel[(level+1)] = newLevel[level]
+			//str += dumpMapDesc(newmap, level+1, newLevel)
+			str += dumpMapDesc(newmap, level, newLevel)
 		} else {
 			def lineStrt = "\n"
 			for(int i=0; i < level; i++) {
@@ -7435,7 +7437,7 @@ def dumpListDesc(data, level, List lastLevel, listLabel) {
 				}
 			}
 			lineStrt += "${cnt == 1 && list1.size() > 1 ? "┌―" : cnt < list1?.size() ? "├―" : "└―"} "
-			str += "${lineStrt}${par}  (${getObjType(par)})"
+			str += "${lineStrt}${listLabel}[${t0}]: ${par}  (${getObjType(par)})"
 		}
 		cnt = cnt+1
 	}
