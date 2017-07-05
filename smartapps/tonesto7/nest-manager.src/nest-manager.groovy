@@ -7414,15 +7414,13 @@ def dumpListDesc(data, level, List lastLevel, listLabel) {
 		if(par instanceof Map) {
 			def newmap = [:]
 			newmap["${listLabel}[${t0}]"] = par
-			//newLevel[(level+1)] = newLevel[level]
-			//str += dumpMapDesc(newmap, level+1, newLevel)
-			str += dumpMapDesc(newmap, level, newLevel)
+			newLevel[level] = false
+			str += dumpMapDesc(newmap, level, newLevel, true)
 		} else if(par instanceof List || par instanceof ArrayList) {
 			def newmap = [:]
 			newmap["${listLabel}[${t0}]"] = par
-			//newLevel[(level+1)] = newLevel[level]
-			//str += dumpMapDesc(newmap, level+1, newLevel)
-			str += dumpMapDesc(newmap, level, newLevel)
+			newLevel[level] = false
+			str += dumpMapDesc(newmap, level, newLevel, true)
 		} else {
 			def lineStrt = "\n"
 			for(int i=0; i < level; i++) {
@@ -7444,13 +7442,13 @@ def dumpListDesc(data, level, List lastLevel, listLabel) {
 	return str
 }
 
-def dumpMapDesc(data, level, List lastLevel) {
+def dumpMapDesc(data, level, List lastLevel, listCall=false) {
 	def str = ""
 	def cnt = 1
 	data?.sort()?.each { par ->
 		def lineStrt = ""
 		def newLevel = lastLevel
-		def thisIsLast = cnt == data?.size() ? true : false
+		def thisIsLast = (cnt == data?.size() && !listCall) ? true : false
 		if(level > 0) {
 			newLevel[(level-1)] = thisIsLast
 		}
@@ -7472,7 +7470,7 @@ def dumpMapDesc(data, level, List lastLevel) {
 					lineStrt += "   "
 				}
 			}
-			lineStrt += "${cnt < data?.size() ? "├―" : "└―"} "
+			lineStrt += "${(cnt < data?.size() || listCall) ? "├―" : "└―"} "
 		}
 		if(par?.value instanceof Map) {
 			str += "${lineStrt}${par?.key.toString()}: (Map)"
