@@ -3,11 +3,6 @@ $(document).ready(function() {
         window.location.reload(true);
     });
 
-    $("#rfrshBtn").hover(function(e) {
-        $(this).toggleClass('fa-spin');
-        $(this).css("color", e.type === "mouseenter" ? "lime" : "white");
-    });
-
     $("#goHomeBtn").click(function() {
         window.history.back();
     });
@@ -15,5 +10,6 @@ $(document).ready(function() {
 
 $("body").flowtype({
     minFont: 8,
-    maxFont: 14
+    maxFont: 14,
+    fontRatio: 35
 });
