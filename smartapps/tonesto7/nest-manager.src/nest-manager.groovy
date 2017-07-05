@@ -6762,7 +6762,7 @@ def Logger(msg, type, logSrc=null) {
 	else { log.error "${labelstr}Logger Error - type: ${type} | msg: ${msg} | logSrc: ${logSrc}" }
 }
 
-def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null, frc=null) {
+def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null, frc=false) {
 	//log.trace "saveLogtoRemDiagStore($msg, $type, $logSrcType)"
 
 	if(atomicState?.enRemDiagLogging && settings?.enRemDiagLogging) {
@@ -7085,6 +7085,7 @@ def getDaysSinceUpdated() {
 
 def getObjType(obj, retType=false) {
 	if(obj instanceof String) {return "String"}
+	else if(obj instanceof GString) {return "GString"}
 	else if(obj instanceof Map) {return "Map"}
 	else if(obj instanceof List) {return "List"}
 	else if(obj instanceof ArrayList) {return "ArrayList"}
