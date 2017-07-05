@@ -7414,13 +7414,15 @@ def dumpListDesc(data, level, List lastLevel, listLabel) {
 		if(par instanceof Map) {
 			def newmap = [:]
 			newmap["${listLabel}[${t0}]"] = par
-			newLevel[level] = false
-			str += dumpMapDesc(newmap, level, newLevel, true)
+			def t1 = (cnt == list1.size()) ? true : false
+			newLevel[level] = t1
+			str += dumpMapDesc(newmap, level, newLevel, !t1)
 		} else if(par instanceof List || par instanceof ArrayList) {
 			def newmap = [:]
 			newmap["${listLabel}[${t0}]"] = par
-			newLevel[level] = false
-			str += dumpMapDesc(newmap, level, newLevel, true)
+			def t1 = (cnt == list1.size()) ? true : false
+			newLevel[level] = t1
+			str += dumpMapDesc(newmap, level, newLevel, !t1)
 		} else {
 			def lineStrt = "\n"
 			for(int i=0; i < level; i++) {
