@@ -7403,50 +7403,69 @@ def simulateTestEventPage(params) {
 	}
 }
 
-def dumpListDesc(data, level) {
+def dumpListDesc(data, level, List lastLevel) {
 	def str = ""
 	def cnt = 1
+	def newLevel = lastLevel
 
 	def list1 = data?.collect {it}
 	list1?.each { par ->
+		def t0 = cnt - 1
 		if(par instanceof Map) {
 			def newmap = [:]
-			newmap["INSERTED item${cnt}"] = par
-			str += dumpMapDesc(newmap, level+1)
+			newmap["INSERTED item${t0}"] = par
+			newLevel[(level+1)] = newLevel[level]
+			str += dumpMapDesc(newmap, level+1, newLevel)
 		} else if(par instanceof List || par instanceof ArrayList) {
 			def newmap = [:]
-			newmap["item${cnt}"] = par
-			str += dumpMapDesc(newmap, level+1)
+			newmap["INSERTED item${t0}"] = par
+			newLevel[(level+1)] = newLevel[level]
+			str += dumpMapDesc(newmap, level+1, newLevel)
 		} else {
 			def lineStrt = "\n"
 			for(int i=0; i < level; i++) {
 				if(i+1 < level) {
-					lineStrt += "   |"
+					if(!lastLevel[i]) {
+						lineStrt += "   |"
+					} else {
+						lineStrt += "    "
+					}
 				} else {
 					lineStrt += "   "
 				}
 			}
 			lineStrt += "${cnt == 1 && list1.size() > 1 ? "┌―" : cnt < list1?.size() ? "├―" : "└―"} "
-			str += "${lineStrt}${par}"
+			str += "${lineStrt}${par}  (${getObjType(par)})"
 		}
 		cnt = cnt+1
 	}
 	return str
 }
 
-def dumpMapDesc(data, level) {
+def dumpMapDesc(data, level, List lastLevel) {
 	def str = ""
 	def cnt = 1
 	data?.sort()?.each { par ->
 		def lineStrt = ""
+		def newLevel = lastLevel
+		def thisIsLast = cnt == data?.size() ? true : false
+		if(level > 0) {
+			newLevel[(level-1)] = thisIsLast
+		}
+		def theLast = thisIsLast
 
 		if(level == 0) {
 			lineStrt = "\n\n • "
 		} else {
+			theLast == (last && thisIsLast) ? true : false
 			lineStrt = "\n"
 			for(int i=0; i < level; i++) {
 				if(i+1 < level) {
-					lineStrt += "   |"
+					if(!newLevel[i]) {
+						lineStrt += "   |"
+					} else {
+						lineStrt += "    "
+					}
 				} else {
 					lineStrt += "   "
 				}
@@ -7454,15 +7473,17 @@ def dumpMapDesc(data, level) {
 			lineStrt += "${cnt < data?.size() ? "├―" : "└―"} "
 		}
 		if(par?.value instanceof Map) {
-			str += "${lineStrt}${par?.key.toString()}: MAP"
-			str += dumpMapDesc(par?.value, level+1)
+			str += "${lineStrt}${par?.key.toString()}: (Map)"
+			newLevel[(level+1)] = theLast
+			str += dumpMapDesc(par?.value, level+1, newLevel)
 		}
 		else if(par?.value instanceof List || par?.value instanceof ArrayList) {
-			str += "${lineStrt}${par?.key.toString()}: LIST OR ARRAYLIST"
-			str += dumpListDesc(par?.value, level+1)
+			str += "${lineStrt}${par?.key.toString()}: [List]"
+			newLevel[(level+1)] = theLast
+			str += dumpListDesc(par?.value, level+1, newLevel)
 		}
 		else {
-			str += "${lineStrt}${par?.key.toString()}: (${par?.value})"
+			str += "${lineStrt}${par?.key.toString()}: (${par?.value})  (${getObjType(par?.value)})"
 		}
 		cnt = cnt + 1
 	}
@@ -7471,7 +7492,8 @@ def dumpMapDesc(data, level) {
 
 def getMapDescStr(data) {
 	def str = ""
-	str = dumpMapDesc(data,0)
+	def lastLevel = [true]
+	str = dumpMapDesc(data, 0, lastLevel)
 	//log.debug "str: $str"
 	return str != "" ? str : "No Data was returned"
 }
