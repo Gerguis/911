@@ -7099,8 +7099,6 @@ def getObjType(obj, retType=false) {
 	else { return "unknown"}
 }
 
-def preStrObj() { [1:"•", 2:"│", 3:"├", 4:"└", 5:"    "] }
-
 def getShowHelp() { return atomicState?.showHelp == false ? false : true }
 
 def getTimeZone() {
@@ -7402,103 +7400,6 @@ def simulateTestEventPage(params) {
 			}
 		}
 	}
-}
-
-def dumpListDesc(data, level, List lastLevel, listLabel) {
-	def str = ""
-	def cnt = 1
-	def newLevel = lastLevel
-
-	def list1 = data?.collect {it}
-	list1?.each { par ->
-		def t0 = cnt - 1
-		if(par instanceof Map) {
-			def newmap = [:]
-			newmap["${listLabel}[${t0}]"] = par
-			def t1 = (cnt == list1.size()) ? true : false
-			newLevel[level] = t1
-			str += dumpMapDesc(newmap, level, newLevel, !t1)
-		} else if(par instanceof List || par instanceof ArrayList) {
-			def newmap = [:]
-			newmap["${listLabel}[${t0}]"] = par
-			def t1 = (cnt == list1.size()) ? true : false
-			newLevel[level] = t1
-			str += dumpMapDesc(newmap, level, newLevel, !t1)
-		} else {
-			def lineStrt = "\n"
-			for(int i=0; i < level; i++) {
-				if(i+1 < level) {
-					if(!lastLevel[i]) {
-						lineStrt += "   |"
-					} else {
-						lineStrt += "    "
-					}
-				} else {
-					lineStrt += "   "
-				}
-			}
-			lineStrt += "${cnt == 1 && list1.size() > 1 ? "┌―" : cnt < list1?.size() ? "├―" : "└―"} "
-			str += "${lineStrt}${listLabel}[${t0}]: ${par}  (${getObjType(par)})"
-		}
-		cnt = cnt+1
-	}
-	return str
-}
-
-def dumpMapDesc(data, level, List lastLevel, listCall=false) {
-	def str = ""
-	def cnt = 1
-	data?.sort()?.each { par ->
-		def lineStrt = ""
-		def newLevel = lastLevel
-		def thisIsLast = (cnt == data?.size() && !listCall) ? true : false
-		if(level > 0) {
-			newLevel[(level-1)] = thisIsLast
-		}
-		def theLast = thisIsLast
-
-		if(level == 0) {
-			lineStrt = "\n\n • "
-		} else {
-			theLast == (last && thisIsLast) ? true : false
-			lineStrt = "\n"
-			for(int i=0; i < level; i++) {
-				if(i+1 < level) {
-					if(!newLevel[i]) {
-						lineStrt += "   |"
-					} else {
-						lineStrt += "    "
-					}
-				} else {
-					lineStrt += "   "
-				}
-			}
-			lineStrt += "${(cnt < data?.size() || listCall) ? "├―" : "└―"} "
-		}
-		if(par?.value instanceof Map) {
-			str += "${lineStrt}${par?.key.toString()}: (Map)"
-			newLevel[(level+1)] = theLast
-			str += dumpMapDesc(par?.value, level+1, newLevel)
-		}
-		else if(par?.value instanceof List || par?.value instanceof ArrayList) {
-			str += "${lineStrt}${par?.key.toString()}: [List]"
-			newLevel[(level+1)] = theLast
-			str += dumpListDesc(par?.value, level+1, newLevel, par?.key.toString())
-		}
-		else {
-			str += "${lineStrt}${par?.key.toString()}: (${par?.value})  (${getObjType(par?.value)})"
-		}
-		cnt = cnt + 1
-	}
-	return str
-}
-
-def getMapDescStr(data) {
-	def str = ""
-	def lastLevel = [true]
-	str = dumpMapDesc(data, 0, lastLevel)
-	//log.debug "str: $str"
-	return str != "" ? str : "No Data was returned"
 }
 
 def getChildStateKeys(type) {
@@ -7924,6 +7825,101 @@ def renderDiagHome() {
 	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
 }
 
+def dumpListDesc(data, level, List lastLevel, listLabel, html=false) {
+	def str = ""
+	def cnt = 1
+	def newLevel = lastLevel
+
+	def list1 = data?.collect {it}
+	list1?.each { par ->
+		def t0 = cnt - 1
+		if(par instanceof Map) {
+			def newmap = [:]
+			newmap["${listLabel}[${t0}]"] = par
+			def t1 = (cnt == list1.size()) ? true : false
+			newLevel[level] = t1
+			str += dumpMapDesc(newmap, level, newLevel, !t1)
+		} else if(par instanceof List || par instanceof ArrayList) {
+			def newmap = [:]
+			newmap["${listLabel}[${t0}]"] = par
+			def t1 = (cnt == list1.size()) ? true : false
+			newLevel[level] = t1
+			str += dumpMapDesc(newmap, level, newLevel, !t1)
+		} else {
+			def lineStrt = "\n"
+			for(int i=0; i < level; i++) {
+				lineStrt += (i+1 < level) ? (!lastLevel[i] ? "   │" : "    " ) : "   "
+			}
+			lineStrt += (cnt == 1 && list1.size() > 1) ? "┌── " : (cnt < list1?.size() ? "├── " : "└── ")
+			str += "${lineStrt}${listLabel}[${t0}]: ${par} (${getObjType(par)})"
+		}
+		cnt = cnt+1
+	}
+	return str
+}
+
+def dumpMapDesc(data, level, List lastLevel, listCall=false, html=false) {
+	def str = ""
+	def cnt = 1
+	data?.sort()?.each { par ->
+		def lineStrt = ""
+		def newLevel = lastLevel
+		def thisIsLast = (cnt == data?.size() && !listCall) ? true : false
+		if(level > 0) {
+			newLevel[(level-1)] = thisIsLast
+		}
+		def theLast = thisIsLast
+		if(level == 0) {
+			lineStrt = "\n\n • "
+		} else {
+			theLast == (last && thisIsLast) ? true : false
+			lineStrt = "\n"
+			for(int i=0; i < level; i++) {
+				lineStrt += (i+1 < level) ? (!newLevel[i] ? "   │" : "    " ) : "   "
+			}
+			lineStrt += ((cnt < data?.size() || listCall) && !thisIsLast) ? "├── " : "└── "
+		}
+		if(par?.value instanceof Map) {
+			str += "${lineStrt}${par?.key.toString()}: (Map)"
+			newLevel[(level+1)] = theLast
+			str += dumpMapDesc(par?.value, level+1, newLevel)
+		}
+		else if(par?.value instanceof List || par?.value instanceof ArrayList) {
+			str += "${lineStrt}${par?.key.toString()}: [List]"
+			newLevel[(level+1)] = theLast
+
+			str += dumpListDesc(par?.value, level+1, newLevel, par?.key.toString())
+		}
+		else {
+			def objType = getObjType(par?.value)
+			if(html) {
+				def cls = mapDescValHtmlCls(par?.value)
+				str += "<span>${lineStrt}${par?.key.toString()}: (${par?.value}) (${objType})</span>"
+			} else {
+				str += "${lineStrt}${par?.key.toString()}: (${par?.value}) (${objType})"
+			}
+		}
+		cnt = cnt + 1
+	}
+	return str
+}
+
+def mapDescValHtmlCls(value) {
+	if(!value) { return "" }
+}
+
+def preSymObj() { [1:"•", 2:"│", 3:"├", 4:"└", 5:"    ", 6:"┌"] }
+
+def getMapDescStr(data) {
+	def str = ""
+	def lastLevel = [true]
+	str = dumpMapDesc(data, 0, lastLevel)
+	//log.debug "str: $str"
+	return str != "" ? str : "No Data was returned"
+}
+
+
+
 def renderManagerData() {
 	try {
 		def setDesc = getMapDescStr(getSettings())
@@ -7945,7 +7941,8 @@ def renderManagerData() {
 				<title>NST Diagnostics - Manager Data</title>
 
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-   				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
+				<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
    				<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
@@ -7954,7 +7951,149 @@ def renderManagerData() {
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 					.mapDataFmt {
-						font-family: Consolas, monaco, monospace;
+
+					}
+					.refresh-btn {
+					    color: black;
+						width: auto;
+					    height: auto;
+					    max-width: 90px;
+					    max-height: 40px;
+					    font-size: 1.0em;
+						border-radius: 0.4em;
+					    background-color: white;
+					    border-color: gray;
+					    border-style: solid;
+					    border-width: 1px;
+					}
+					.nav-menu-links {
+					    text-decoration: none;
+					    color: #232323;
+					    transition: color 0.3s ease;
+					}
+
+					.nav-menu-links:hover {
+					    color: tomato;
+					}
+
+					#menuToggle {
+					    display: block;
+					    position: relative;
+					    vertical-align: middle;
+					    top: 5px;
+					    left: 20px;
+					    z-index: 1;
+					    -webkit-user-select: none;
+					    user-select: none;
+					}
+
+					#menuToggle input {
+					    display: block;
+					    width: 40px;
+					    height: 32px;
+					    position: absolute;
+					    top: -7px;
+					    left: -5px;
+					    cursor: pointer;
+					    opacity: 0;
+					    /* hide this */
+					    z-index: 2;
+					    /* and place it over the hamburger */
+					    -webkit-touch-callout: none;
+					}
+
+
+					/*
+					 * Just a quick hamburger
+					 */
+
+					#menuToggle span {
+					    display: block;
+					    width: 30px;
+					    height: 3px;
+					    margin-bottom: 5px;
+					    position: relative;
+					    background: black;
+					    border-radius: 3px;
+					    z-index: 1;
+					    transform-origin: 4px 0px;
+					    transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), background 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), opacity 0.55s ease;
+					}
+
+					#menuToggle span:first-child {
+					    transform-origin: 0% 0%;
+					}
+
+					#menuToggle span:nth-last-child(2) {
+					    transform-origin: 0% 100%;
+					}
+
+
+					/*
+					 * Transform all the slices of hamburger
+					 * into a crossmark.
+					 */
+
+					#menuToggle input:checked~span {
+					    opacity: 1;
+					    transform: rotate(45deg) translate(-2px, -1px);
+					    background: #232323;
+					}
+
+
+					/*
+					 * But let's hide the middle one.
+					 */
+
+					#menuToggle input:checked~span:nth-last-child(3) {
+					    opacity: 0;
+					    transform: rotate(0deg) scale(0.2, 0.2);
+					}
+
+
+					/*
+					 * Ohyeah and the last one should go the other direction
+					 */
+
+					#menuToggle input:checked~span:nth-last-child(2) {
+					    opacity: 1;
+					    transform: rotate(-45deg) translate(0, -1px);
+					}
+
+
+					/*
+					 * Make this absolute positioned
+					 * at the top left of the screen
+					 */
+
+					#menu {
+					    position: absolute;
+					    width: 300px;
+					    margin: -100px 0 0 -58px;
+					    padding: 50px;
+					    padding-top: 125px;
+					    background: #ededed;
+					    list-style-type: none;
+					    -webkit-font-smoothing: antialiased;
+					    /* to stop flickering of text in safari */
+					    transform-origin: 0% 0%;
+					    transform: translate(-100%, 0);
+					    transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+					}
+
+					#menu li {
+					    padding: 10px 0;
+					    font-size: 19px;
+					}
+
+
+					/*
+					 * And let's fade it in from the left
+					 */
+
+					#menuToggle input:checked~ul {
+					    transform: scale(1.0, 1.0);
+					    opacity: 1;
 					}
 				</style>
 			</head>
@@ -7963,13 +8102,33 @@ def renderManagerData() {
 				 	<div class="page-header centerText" style="margin: 10px;">
 					   	<div class="row">
 						   	<div class="col-xs-2" style="padding: 25px 0 0 0;">
-							   	<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+								<nav role="navigation">
+									<div id="menuToggle">
+										<input type="checkbox" />
+										<span></span>
+										<span></span>
+										<span></span>
+										<ul id="menu">
+											<button id="goHomeBtn" class="btn-link"><li><i class="fa fa-home" aria-hidden="true"></i> Go Home</li></button>
+
+											<hr/>
+											<a class="nav-menu-links" href="#"><li>About</li></a>
+											<a class="nav-menu-links" href="#"><li>Info</li></a>
+											<a class="nav-menu-links" href="#"><li>Contact</li></a>
+											<a class="nav-menu-links" href="https://erikterwan.com/" target="_blank"><li>Show me more</li></a>
+											<a class="nav-menu-links" href="#"><li>About</li></a>
+											<a class="nav-menu-links" href="#"><li>Info</li></a>
+											<a class="nav-menu-links" href="#"><li>Contact</li></a>
+											<a class="nav-menu-links" href="https://erikterwan.com/" target="_blank"><li>Show me more</li></a>
+										</ul>
+									</div>
+								</nav>
 						   	</div>
 						   	<div class="col-xs-8">
 							   	<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>Manager Data</h3>
 						   	</div>
-						   	<div class="col-xs-2" style="padding: 15px 25px 0 0;">
-							   	<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+						   	<div class="col-xs-2" style="padding: 25px 10px 0 0;">
+							   	<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
 						   	</div>
 					    </div>
 				  	</div>
@@ -7984,7 +8143,7 @@ def renderManagerData() {
 							    		<h1 class="panel-title panel-title-text">Setting Data:</h1>
 							   		</div>
 							   		<div class="panel-body">
-							    		<div class="mapDataFmt"><p><pre>${setDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
+							    		<div class="mapDataFmt"><pre>${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 							   		</div>
 							  	</div>
 
@@ -7993,7 +8152,7 @@ def renderManagerData() {
 							    		<h1 class="panel-title panel-title-text">State Data:</h1>
 							   		</div>
 							   		<div class="panel-body">
-							    		<div class="mapDataFmt"><p><pre>${stateDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
+							    		<div class="mapDataFmt"><pre>${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 							   		</div>
 							  	</div>
 
@@ -8002,13 +8161,14 @@ def renderManagerData() {
 							    		<h1 class="panel-title panel-title-text">Meta Data:</h1>
 							   		</div>
 							   		<div class="panel-body">
-							    		<div class="mapDataFmt"><p><pre>${metaDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
+							    		<div class="mapDataFmt"><pre>${metaDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 							   		</div>
-							   	<div>
+							   	</div>
 							</div>
 						</div>
 					</div>
 			   	</div>
+
 			   <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
@@ -8043,14 +8203,34 @@ def renderAutomationData() {
 				   	<div class="page-header centerText" style="margin: 10px;">
 					  	<div class="row">
 						  	<div class="col-xs-2" style="padding: 25px 0 0 0;">
-							  	<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+								<nav role="navigation">
+									<div id="menuToggle">
+										<input type="checkbox" />
+										<span></span>
+										<span></span>
+										<span></span>
+										<ul id="menu">
+											<button id="goHomeBtn" class="btn-link"><li><i class="fa fa-home" aria-hidden="true"></i> Go Home</li></button>
+
+											<hr/>
+											<a class="nav-menu-links" href="#"><li>About</li></a>
+											<a class="nav-menu-links" href="#"><li>Info</li></a>
+											<a class="nav-menu-links" href="#"><li>Contact</li></a>
+											<a class="nav-menu-links" href="https://erikterwan.com/" target="_blank"><li>Show me more</li></a>
+											<a class="nav-menu-links" href="#"><li>About</li></a>
+											<a class="nav-menu-links" href="#"><li>Info</li></a>
+											<a class="nav-menu-links" href="#"><li>Contact</li></a>
+											<a class="nav-menu-links" href="https://erikterwan.com/" target="_blank"><li>Show me more</li></a>
+										</ul>
+									</div>
+								</nav>
 						  	</div>
 						  	<div class="col-xs-8">
 							  	<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img> Automation Data</h3>
 						  	</div>
-						  	<div class="col-xs-2" style="padding: 15px 25px 0 0;">
-							  	<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
-						  	</div>
+							<div class="col-xs-2" style="padding: 25px 10px 0 0;">
+							   	<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+						   	</div>
 					  	</div>
 				  	</div>
 		"""
@@ -8108,8 +8288,125 @@ def renderAutomationData() {
 	} catch (ex) { log.error "renderAutomationData Exception:", ex }
 }
 
+def navHtmlBuilder(navMap, idNum) {
+	def res = [:]
+	def htmlStr = ""
+	def jsStr = ""
+	if(navMap?.key) {
+		htmlStr += htmlStr != "" ? "\n" : ""
+		htmlStr += """<a id="nav-key-item${idNum}" class="nav-menu-links"><li style="list-style-type: none;"}>${navMap?.key}</li></a>"""
+		jsStr += navJsBuilder("nav-key-item${idNum}", "key-item${idNum}")
+	}
+	if(navMap?.items) {
+		def nItems = navMap?.items
+		htmlStr += """\n<ul>"""
+		nItems?.each {
+			htmlStr += """\n<a id="nav-subitem${idNum}-${it?.toString().toLowerCase()}" class="nav-menu-links"><li style="list-style-type: disc;"}>${it}</li></a>"""
+			jsStr += navJsBuilder("nav-subitem${idNum}-${it?.toString().toLowerCase()}", "item${idNum}-${it?.toString().toLowerCase()}")
+		}
+		htmlStr += """\n</ul>"""
+	}
+	res["html"] = htmlStr
+	res["js"] = jsStr
+	return res
+}
+
+def navJsBuilder(btnId, divId) {
+	def res = """
+		\$("#${btnId}").click(function() {
+			\$('html, body').animate({
+				scrollTop: \$("#${divId}").offset().top
+			}, 2000);
+		});
+	"""
+	return "\n\n${res}"
+}
+
 def renderDeviceData() {
 	try {
+		def devHtml = ""
+		def navHtml = ""
+		def scrStr = ""
+		def devices = app.getChildDevices(true)
+		def devNum = 1
+		devices?.each { dev ->
+			def navMap = [:]
+			navMap = ["key":dev?.getLabel(), "items":["Settings", "State", "Attributes", "Commands", "Capabilities"]]
+			def navItems = navHtmlBuilder(navMap, devNum)
+			if(navItems?.html) { navHtml += navItems?.html }
+			if(navItems?.js) { scrStr += navItems?.js }
+			def setDesc = getMapDescStr(dev?.getSettings())
+			def stateDesc = getMapDescStr(dev?.getState()?.findAll { !(it?.key in ["cssData"]) })
+
+			def attrDesc = ""; def cnt = 1
+			def devData = dev?.supportedAttributes.collect { it as String }
+			devData?.sort().each {
+				attrDesc += "${cnt>1 ? "\n\n" : "\n"} • ${"$it" as String}: (${dev.currentValue("$it")})"
+				cnt = cnt+1
+			}
+
+			def commDesc = ""; cnt = 1
+			dev?.supportedCommands?.sort()?.each { cmd ->
+				commDesc += "${cnt>1 ? "\n\n" : "\n"} • ${cmd.name}(${!cmd?.arguments ? "" : cmd?.arguments.toString().toLowerCase().replaceAll("\\[|\\]", "")})"
+				cnt = cnt+1
+			}
+
+			def data = dev?.capabilities?.sort()?.collect {it as String}
+			def t0 = [ "capabilities":data ]
+			def capDesc = getMapDescStr(t0)
+			devHtml += """
+			<div class="panel panel-primary">
+			 	<div id="key-item${devNum}" class="panel-heading">
+			  		<h1 class="panel-title panel-title-text">${dev?.getLabel()}:</h1>
+			 	</div>
+			 	<div class="panel-body">
+					<div style="padding: 5px;">
+					  	<div id="item${devNum}-settings" class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">Setting Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><pre>${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+					   		</div>
+					  	</div>
+					  	<div id="item${devNum}-state" class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">State Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><pre>${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+					   		</div>
+					  	</div>
+					  	<div id="item${devNum}-attributes" class="panel panel-default">
+					   		<div class="panel-heading">
+								<h1 class="panel-title panel-title-text">Attribute Data:</h1>
+					   		</div>
+					   		<div class="panel-body">
+								<div><pre>${attrDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+					   		</div>
+					  	</div>
+					  	<div id="item${devNum}-commands" class="panel panel-default">
+						  	<div class="panel-heading">
+						  		<h1 class="panel-title panel-title-text">Command Data:</h1>
+							</div>
+							<div class="panel-body">
+						   		<div><pre>${commDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+							</div>
+					  	</div>
+						<div id="item${devNum}-capabilities" class="panel panel-default">
+					 		<div class="panel-heading">
+					  			<h1 class="panel-title panel-title-text">Capability Data:</h1>
+					 		</div>
+					 		<div class="panel-body">
+					  			<div><pre>${capDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+					 		</div>
+						</div>
+				  	</div>
+				</div>
+			</div>
+			"""
+			devNum = devNum+1
+		}
 		def html = """
 			<head>
 				<meta charset="utf-8">
@@ -8134,96 +8431,34 @@ def renderDeviceData() {
 					<div class="page-header centerText" style="margin: 10px;">
 						<div class="row">
 				 			<div class="col-xs-2" style="padding: 25px 0 0 0;">
-					 			<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+								<nav role="navigation">
+									<div id="menuToggle">
+										<input type="checkbox" />
+										<span></span>
+										<span></span>
+										<span></span>
+										<ul id="menu">
+											<button id="goHomeBtn" class="btn-link"><li><i class="fa fa-home" aria-hidden="true"></i> Go Home</li></button>
+											<hr/>
+											${navHtml}
+										</ul>
+									</div>
+								</nav>
 				 			</div>
 				 			<div class="col-xs-8">
 					 			<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>Device Data</h3>
 				 			</div>
-				 			<div class="col-xs-2" style="padding: 15px 25px 0 0;">
-					 			<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
-				 			</div>
+							<div class="col-xs-2" style="padding: 25px 10px 0 0;">
+							   	<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+						   	</div>
 			  			</div>
 					</div>
-		"""
-/*  */
-		def devices = app.getChildDevices(true)
-		devices?.each { dev ->
-			def setDesc = getMapDescStr(dev?.getSettings())
-			def stateDesc = getMapDescStr(dev?.getState()?.findAll { !(it?.key in ["cssData"]) })
-
-			def attrDesc = ""; def cnt = 1
-			def devData = dev?.supportedAttributes.collect { it as String }
-			devData?.sort().each {
-				attrDesc += "${cnt>1 ? "\n\n" : "\n"} • ${"$it" as String}: (${dev.currentValue("$it")})"
-				cnt = cnt+1
-			}
-
-			def commDesc = ""; cnt = 1
-			dev?.supportedCommands?.sort()?.each { cmd ->
-				commDesc += "${cnt>1 ? "\n\n" : "\n"} • ${cmd.name}(${!cmd?.arguments ? "" : cmd?.arguments.toString().toLowerCase().replaceAll("\\[|\\]", "")})"
-				cnt = cnt+1
-			}
-
-			def data = dev?.capabilities?.sort()?.collect {it as String}
-			def t0 = [ "capabilities":data ]
-			def capDesc = getMapDescStr(t0)
-
-			html += """
-			<div class="panel panel-primary">
-			 	<div class="panel-heading">
-			  		<h1 class="panel-title panel-title-text">${dev?.getLabel()}:</h1>
-			 	</div>
-			 	<div class="panel-body">
-					<div style="padding: 5px;">
-					  	<div class="panel panel-default">
-					   		<div class="panel-heading">
-								<h1 class="panel-title panel-title-text">Setting Data:</h1>
-					   		</div>
-					   		<div class="panel-body">
-								<div><p><pre>${setDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
-					   		</div>
-					  	</div>
-					  	<div class="panel panel-default">
-					   		<div class="panel-heading">
-								<h1 class="panel-title panel-title-text">State Data:</h1>
-					   		</div>
-					   		<div class="panel-body">
-								<div><p><pre>${stateDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
-					   		</div>
-					  	</div>
-					  	<div class="panel panel-default">
-					   		<div class="panel-heading">
-								<h1 class="panel-title panel-title-text">Attribute Data:</h1>
-					   		</div>
-					   		<div class="panel-body">
-								<div><p><pre>${attrDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
-					   		</div>
-					  	</div>
-					  	<div class="panel panel-default">
-						  	<div class="panel-heading">
-						  		<h1 class="panel-title panel-title-text">Command Data:</h1>
-							</div>
-							<div class="panel-body">
-						   		<div><p><pre>${commDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
-							</div>
-					  	</div>
-						<div class="panel panel-default">
-					 		<div class="panel-heading">
-					  			<h1 class="panel-title panel-title-text">Capability Data:</h1>
-					 		</div>
-					 		<div class="panel-body">
-					  			<div><p><pre>${capDesc.toString().replaceAll("\n", "<br>")}</pre></p></div>
-					 		</div>
-						</div>
-				  	</div>
-				</div>
-			</div>
-			"""
-/* """ */
-		}
-		html += """
+					${devHtml}
 			   </div>
 			   <script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
+			   <script>
+			   	${scrStr}
+			   </script>
 			</body>
 		"""
 		render contentType: "text/html", data: html
@@ -8265,13 +8500,24 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				<div class="page-header centerText" style="margin: 10px;">
 				  <div class="row">
 				   <div class="col-xs-2" style="padding: 25px 0 0 0;">
-					   <button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
+					   <nav role="navigation">
+						   <div id="menuToggle">
+							   <input type="checkbox" />
+							   <span></span>
+							   <span></span>
+							   <span></span>
+							   <ul id="menu">
+								   <button id="goHomeBtn" class="btn-link"><li><i class="fa fa-home" aria-hidden="true"></i> Go Home</li></button>
+								   <hr/>
+							   </ul>
+						   </div>
+					   </nav>
 				   </div>
 				   <div class="col-xs-8">
 					   <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>${heading}</h3>
 				   </div>
-				   <div class="col-xs-2" style="padding: 15px 25px 0 0;">
-					   <button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn" ><span class="fa fa-refresh refresh-btn" style="color: black;"></span></button>
+				   <div class="col-xs-2" style="padding: 25px 10px 0 0;">
+					   <button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
 				   </div>
 				</div>
 			  </div>
