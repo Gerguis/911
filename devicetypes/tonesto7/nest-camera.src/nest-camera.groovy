@@ -840,6 +840,14 @@ void take() {
 	takePicture(state?.snapshot_url)
 }
 
+void mute() {
+	Logger("Nest API does not allow turning microphone off...")
+}
+
+void unmute() {
+	Logger("Nest API does not allow turning microphone on...")
+}
+
 private getPictureName() {
 	def pictureUuid = java.util.UUID.randomUUID().toString().replaceAll('-', '')
 	getCamUUID(getPublicVidID()) + "_$pictureUuid" + ".jpg"
