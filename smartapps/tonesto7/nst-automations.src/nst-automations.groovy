@@ -7564,50 +7564,68 @@ def getRemLogData() {
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 
 				<style>
+				.left-head-col {
+					padding: 20px 0 0 40px;
+					vertical-align: middle;
+				}
+
+				.right-head-col {
+					padding: 20px 40px 0 0;
+					vertical-align: middle;
+				}
 				</style>
 			</head>
 			<body>
+				<button onclick="topFunction()" id="scrollTopBtn" title="Go to top">Back to Top</button>
+				<!--Page Header Section -->
+				<div class="page-header centerText" style="margin: 10px;">
+					<div class="row">
+						<div class="col-xs-2 left-head-col">
+							<span style="font-size:32px;cursor:pointer" onclick="openNav()">&#9776;</span>
+						</div>
+						<div class="col-xs-8 centerText">
+							<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
+							<h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
+						</div>
+						<div class="col-xs-2 right-head-col">
+							<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+						</div>
+					</div>
+				</div>
 				<div class="container">
-					<!--Page Header Section -->
-					<div class="page-header centerText" style="margin: 10px;">
-						<div class="row">
-							<div class="col-xs-2" style="padding: 30px 0 0 0;">
-								<button id="goHomeBtn" class="btn home-btn pull-left"><i class="fa fa-arrow-left" aria-hidden="true"></i> Home</button>
-							</div>
-							<div class="col-xs-8">
-					   		<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
-				   			<h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
-							</div>
-							<div class="col-xs-2"></div>
+					<div id="mySidenav" class="sidenav">
+						<div class="navMenu">
+							<a href="javascript:void(0)" class="closebtn centerText" onclick="closeNav()">&times;</a>
+							<ul>
+								<button id="goHomeBtn" class="btn-link"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button>
+								<hr/>
+							</ul>
 						</div>
 					</div>
 					<!--First Panel Section -->
-					<div class="panel panel-primary">
-					   <div class="panel-heading">
-					   	  <div class="row">
-							<div class="col-xs-6">
-								<div class="col-12" style="padding-left: 15px;">
-							   		<div class="row">
-										<h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
-							   		</div>
-							   		<div class="row">
-										<small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
-							   		</div>
-							  	</div>
-							</div>
-							<div class="col-xs-6" style="vertical-align: middle; padding-top: 0px;">
-								<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn"></span></button>
-						    </div>
-						</div>
-					   </div>
-					   <div class="panel-body" style="background-color: #DEDEDE;">
-							<div id="logBody" class="logs">
-								<div>${resultStr}</div>
-							</div>
-				   		</div>
-				  	</div>
+					<div id="main" class="panel-body">
+						<div class="panel panel-primary">
+						   	<div class="panel-heading">
+								<div class="row">
+									<div class="col-12" style="padding-left: 30px;">
+								   		<div class="row">
+											<h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
+								   		</div>
+								   		<div class="row">
+											<small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
+								   		</div>
+								  	</div>
+								</div>
+						   </div>
+						   <div class="panel-body" style="background-color: #DEDEDE;">
+								<div id="logBody" class="logs">
+									<div>${resultStr}</div>
+								</div>
+					   		</div>
+					  	</div>
+					</div>
 				</div>
-				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
+				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""
 /* "" */
