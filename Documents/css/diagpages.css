@@ -156,7 +156,6 @@ html {
     background-color: #ededed;
     -webkit-font-smoothing: antialiased;
     overflow-x: scroll;
-    transition: 0.5s;
     padding-top: 60px;
 }
 
@@ -164,9 +163,7 @@ html {
     text-decoration: none;
     font-size: 16px;
     color: #232323;
-    transition: color 0.3s ease;
     display: block;
-    transition: 0.3s;
 }
 
 .sidenav a:hover, .offcanvas a:focus {
@@ -211,4 +208,14 @@ html {
 
 #scrollTopBtn:hover {
     background-color: #green;
+}
+
+.left-head-col {
+    padding: 20px 0 0 40px;
+    vertical-align: middle;
+}
+
+.right-head-col {
+    padding: 20px 40px 0 0;
+    vertical-align: middle;
 }
