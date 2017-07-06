@@ -427,6 +427,7 @@ def devPrefPage() {
 				href "custWeatherPage", title: "Customize Weather Location?", description: (t1 ? "${t1}\n\nTap to modify" : ""), state: (t1 ? "complete":""), image: getAppImg("weather_icon_grey.png")
 				input ("weathAlertNotif", "bool", title: "Local Weather Alerts?", description: "", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("weather_alert_icon.png"))
 				input ("weatherShowGraph", "bool", title: "Weather History Graph?", description: "", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("graph_icon2.png"))
+				atomicState.needChildUpd = true
 			}
 		}
 		if(atomicState?.presDevice) {
@@ -442,33 +443,41 @@ def devPrefPage() {
 
 def getCamActivityZones(devId) {
 	def actZones = atomicState?.deviceData?.cameras[devId]?.activity_zones
-	def zones = [:]
+	def camZones = [:]
 	if(actZones.size()) {
 		actZones?.each { zn ->
-			def adni = [zn?.id.toString()].join('.')
-			zones[adni] = zn?.name?.toString()
+			def zId = zn?.id
+			def zName = zn?.name
+			def adni = [zId].join('.')
+			camZones[adni] = zName
 		}
 	}
-	return zones
+	return camZones
 }
 
 def camMotionZoneFltrPage() {
 	def execTime = now()
 	dynamicPage(name: "camMotionZoneFltrPage", title: "", nextPage: "", install: false) {
-		atomicState?.cameras?.sort {it?.value}.each { cam ->
-			def zones = getCamActivityZones(cam?.key)
-			def zoneDesc = zones.size() ? "Found (${zones.size()}) Zones" : "No Zones Found"
-			LogAction("${zoneDesc} (${zones})", "info", true)
-			section("Camera: (${cam?.value})") {
-				if(!zones?.size()) {
+		def cnt = 1
+		atomicState?.cameras.sort{it?.value}.each { cam ->
+
+		   	def t0 = cam?.key
+			def t1 = cam?.value
+			def camZones = getCamActivityZones(t0)
+			def zoneDesc = camZones.size() ? "Found (${camZones.size()}) Zones" : "No Zones Found"
+			LogAction("${zoneDesc} (${camZones})", "info", true)
+			section("Camera: (${t1})") {
+				if(!camZones?.size()) {
 					paragraph "No Zones were found for this camera."
 				} else {
-					input(name: "${cam?.key}_cam_zones", title:"Available Zones", type: "enum",  description: "${zoneDesc}", required: false, multiple: true, submitOnChange: true, metadata: [values:zones], image: getAppImg("camera_icon.png"))
+					input(name: "${t0}_zones", title:"Available Zones", type: "enum",  description: "${zoneDesc}", required: false, multiple: true, submitOnChange: true,
+							metadata: [values:camZones], image: getAppImg("camera_icon.png"))
 				}
 			}
+
 		}
 
-
+		atomicState.needChildUpd = true
 		incCamZoneFltLoadCnt()
 		devPageFooter("camZoneFltLoadCnt", execTime)
 	}
@@ -7854,8 +7863,10 @@ def renderManagerData() {
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.mapDataFmt {
-
+					.mapDataFmt {}
+					.container {
+						width: 90%;
+						padding: 5px;
 					}
 				</style>
 			</head>
@@ -8008,8 +8019,10 @@ def renderAutomationData() {
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.mapDataFmt {
-
+					.mapDataFmt {}
+					.container {
+						width: 90%;
+						padding: 5px 0;
 					}
 				</style>
 			</head>
@@ -8194,6 +8207,10 @@ def renderDeviceData() {
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 					.mapDataFmt {}
+					.container {
+						width: 90%;
+						padding: 5px 0;
+					}
 				</style>
 			</head>
 			<body>
@@ -8266,8 +8283,10 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.mapDataFmt {
-
+					.mapDataFmt {}
+					.container {
+						width: 90%;
+						padding: 5px 0;
 					}
 				</style>
 			</head>
