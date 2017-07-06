@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "7-4-2017" }
+def appVerDate() { "7-6-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -397,7 +397,7 @@ def devPrefPage() {
 					input "motionSndChgWaitVal", "enum", title: "Delay before Motion/Sound Events are marked Inactive?", required: false, defaultValue: 60, metadata: [values:waitValAltEnum(true)], submitOnChange: true, image: getAppImg("motion_icon.png")
 					input "camEnMotionZoneFltr", "bool", title: "Allow filtering motion events by configured zones?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("motion_icon.png")
 					if(settings?.camEnMotionZoneFltr) {
-						href "camMotionZoneFltrPage", title: "Select the Zones for each camera to be used to trigger Motion?", description: "\n\nTap to modify", state: (t1 ? "complete":""), image: getAppImg("motion_icon.png")
+						href "camMotionZoneFltrPage", title: "Select the Zones for each camera to be used to trigger Motion?", description: "\nTap to modify", image: getAppImg("motion_icon.png")
 					}
 					atomicState.needChildUpd = true
 				} else {
@@ -440,14 +440,30 @@ def devPrefPage() {
 	}
 }
 
+def getCamActivityZones(devId) {
+	def actZones = atomicState?.deviceData?.cameras[devId]?.activity_zones
+	def zones = [:]
+	if(actZones.size()) {
+		actZones?.each { zn ->
+			def adni = [zn?.id.toString()].join('.')
+			zones[adni] = zn?.name?.toString()
+		}
+	}
+	return zones
+}
+
 def camMotionZoneFltrPage() {
 	def execTime = now()
 	dynamicPage(name: "camMotionZoneFltrPage", title: "", nextPage: "", install: false) {
-		atomicState?.cameras?.each { cam ->
+		atomicState?.cameras?.sort {it?.value}.each { cam ->
 			def zones = getCamActivityZones(cam?.key)
+			def zoneDesc = zones.size() ? "Found (${zones.size()}) Zones" : "No Zones Found"
+			LogAction("${zoneDesc} (${zones})", "info", true)
 			section("Camera: (${cam?.value})") {
-				if(zones?.size() > 0) {
-					input(name: "${cam?.value}_cam_zones", title:"Available Zones", type: "enum", required: false, multiple: true, submitOnChange: true, metadata: [values:zones], image: getAppImg("camera_icon.png"))
+				if(!zones?.size()) {
+					paragraph "No Zones were found for this camera."
+				} else {
+					input(name: "${cam?.key}_cam_zones", title:"Available Zones", type: "enum",  description: "${zoneDesc}", required: false, multiple: true, submitOnChange: true, metadata: [values:zones], image: getAppImg("camera_icon.png"))
 				}
 			}
 		}
@@ -6225,17 +6241,7 @@ def getMyLockId() {
 	if(parent) { return atomicState?.myID } else { return null }
 }
 
-def getCamActivityZones(devId) {
-	def actZones = atomicState?.deviceData?.cameras[devId]?.activity_zones
-	def zones = [:]
-	if(actZones) {
-		actZones?.each { zn ->
-			def adni = [zn?.id].join('.')
-			zones[adni] = zn?.name
-		}
-	}
-	return zones
-}
+
 
 def addRemoveVthermostat(tstatdni, tval, myID) {
 	def odevId = tstatdni
