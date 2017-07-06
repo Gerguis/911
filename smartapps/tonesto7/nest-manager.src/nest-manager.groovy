@@ -72,6 +72,7 @@ preferences {
 	page(name: "devNameResetPage")
 	page(name: "resetDiagQueuePage")
 	page(name: "devPrefPage")
+	page(name: "camMotionZoneFltrPage")
 	page(name: "nestLoginPrefPage")
 	page(name: "nestTokenResetPage")
 	page(name: "uninstallPage")
@@ -394,6 +395,10 @@ def devPrefPage() {
 				if(atomicState?.appData?.eventStreaming?.enabled == true || getDevOpt() || betaMarker()) {
 					input "camTakeSnapOnEvt", "bool", title: "Take Snapshot on Motion Events?", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("motion_icon.png")
 					input "motionSndChgWaitVal", "enum", title: "Delay before Motion/Sound Events are marked Inactive?", required: false, defaultValue: 60, metadata: [values:waitValAltEnum(true)], submitOnChange: true, image: getAppImg("motion_icon.png")
+					input "camEnMotionZoneFltr", "bool", title: "Allow filtering motion events by configured zones?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("motion_icon.png")
+					if(settings?.camEnMotionZoneFltr) {
+						href "camMotionZoneFltrPage", title: "Select the Zones for each camera to be used to trigger Motion?", description: "\n\nTap to modify", state: (t1 ? "complete":""), image: getAppImg("motion_icon.png")
+					}
 					atomicState.needChildUpd = true
 				} else {
 					paragraph "No Camera Device Options Yet..."
@@ -432,6 +437,24 @@ def devPrefPage() {
 		}
 		incDevCustLoadCnt()
 		devPageFooter("devCustLoadCnt", execTime)
+	}
+}
+
+def camMotionZoneFltrPage() {
+	def execTime = now()
+	dynamicPage(name: "camMotionZoneFltrPage", title: "", nextPage: "", install: false) {
+		atomicState?.cameras?.each { cam ->
+			def zones = getCamActivityZones(cam?.key)
+			section("Camera: (${cam?.value})") {
+				if(zones?.size() > 0) {
+					input(name: "${cam?.value}_cam_zones", title:"Available Zones", type: "enum", required: false, multiple: true, submitOnChange: true, metadata: [values:zones], image: getAppImg("camera_icon.png"))
+				}
+			}
+		}
+
+
+		incCamZoneFltLoadCnt()
+		devPageFooter("camZoneFltLoadCnt", execTime)
 	}
 }
 
@@ -941,32 +964,11 @@ def automationSchedulePage() {
 						def schDesc = schItem?.value
 						def schInUse = (curSch?.toInteger() == schNum?.toInteger()) ? true : false
 						if(schNum && schDesc) {
-							//def sLbl = "schMot_${schNum}_SchedActive"
-							//def aActSet = !capp?.getSettingVal(sLbl) ? false : true
 							paragraph "${schDesc}", state: schInUse ? "complete" : ""
-							//input(name: "${sLbl}", type: "bool", title: "Schedule ${schNum} Active", required: false, submitOnChange: true, defaultValue: aActSet, image: getAppImg("switch_on_icon.png"))
-							//schedActMap["$schNum"] = settings["${sLbl}"]
 						}
 					}
 				}
 			}
-			// if(schedActMap.size()) {
-			// 	log.debug "schedActMap: $schedActMap"
-			// 	def schNeedUpd = false
-			// 	schedActMap?.each { schSet ->
-			// 		def sKey = schSet?.key
-			// 		def sVal = schSet?.value
-			// 		def sLbl = "schMot_${sKey}_SchedActive"
-			// 		log.debug "schSet: $schSet | chldSet: ${capp?.getSettingVal(sLbl)}"
-			// 		def aActSet = capp?.getSettingVal(sLbl)
-			// 		if(sVal.toString() != capp?.getSettingVal(sLbl).toString()) {
-			// 			schNeedUpd = true
-			// 			LogAction("modifying schedule (${sKey}) state to (${sVal})...", "debug", true)
-			// 			capp?.updSchedActiveState(sKey.toString(), sVal.toString())
-			// 		} else { LogAction("no schedule changes detected.  Ignoring...", "info", true) }
-			// 	}
-			// 	if(schNeedUpd == true) { capp?.updateScheduleStateMap() }
-			// }
 		}
 		if(schSize < 1) {
 			section("") {
@@ -1918,132 +1920,6 @@ def getRemDiagDesc() {
 	str += settings?.enRemDiagLogging ? "${str ? "\n" : ""}Log Collection: (${settings.enRemDiagLogging})" : ""
 	return (str != "") ? "${str}" : null
 }
-
-/*
-def getDevChgDesc() {
-	if(!atomicState?.currentDevMap) { currentDevMap(true) }
-	def added = [:]
-	def deleted = [:]
-	def result = compareDevMap(atomicState?.currentDevMap?.instDevicesMap, currentDevMap()?.instDevicesMap, added, deleted)
-	log.debug "getDevChgDesc | result: $result"
-	def res = []
-	def opts = ["added", "removed"]
-	def keys = ["thermostats", "vThermostats", "protects", "cameras", "presDevice", "weatherDevice"]
-	opts?.each { t ->
-		def str = ""
-		if(result?."${t}"?.size()) {
-			def cnt = 1
-			result?."${t}"?.each {
-				if(it?.key in ["presDevice", "weatherDevice"]) {
-					str += it?.key ? "${cnt>1 ? "\n" : ""}Virtual Devices" : ""
-					if(it?.key == "presDevice") {
-						str += it?.key ? "\n • Presence Device" : ""
-					} else {
-						str += it?.key ? "\n • Weather Device" : ""
-					}
-				} else {
-					str += it?.key ? "${cnt>1 ? "\n\n" : ""}${strCapitalize(it?.key)}:" : ""
-					if(it?.value?.size()) {
-						it?.value?.each { val ->
-							str += val ? "\n • $val" : ""
-						}
-					}
-				}
-				cnt = cnt+1
-			}
-			//log.debug "str: $str"
-			if(str != "") {
-				res += section("Pending Device Changes:") {
-					if(t == "added") {
-						paragraph title: "Installing", str, state: "complete"
-					} else if(t=="removed") {
-						paragraph title: "Removing", str, required: true, state: null
-					}
-				}
-			}
-		}
-	}
-	return disp?.size() ? disp : null
-}
-
-def compareDevMap(map1, map2, added, deleted, lastkey=null) {
-	//LogTrace("compareDevMap(map1, map2, $added, $deleted, $lastkey)")
-	def keys = ["thermostats", "vThermostats", "protects", "cameras", "presDevice", "weatherDevice"]
-	for(m1 in map1) {
-		def keyVal = m1?.key.toString()
-		def m1Key = map1?."${keyVal}"
-		def m2Key = map2?."${keyVal}"
-		if ((m1Key != null) && (m2Key == null)) {
-			log.debug "Map1 Key${keyVal ? " (2nd Lvl.)" : ""}: ($keyVal) | M1Key: $m1Key | M2Key: $m2Key | M1Data: $m1"
-			def val = lastkey ?: keyVal
-			if(val in keys) {
-				log.debug "val: $val"
-				if(deleted[val] == null) { deleted[val] = [] } //if the key is invalid then create the map entry
-				deleted[val].push(m1Key)
-				log.debug "($val) Devices Pending Removal: ${m1Key}"
-			}
-		} else {
-			if ((m1Key instanceof Map) && (m2Key instanceof Map)) {
-				compareDevMap(m1Key, m2Key, added, deleted, keyVal)
-			}
-		}
-	}
-	for(m2 in map2) {
-		def keyVal = m2?.key.toString()
-		def m1Key = map1?."${keyVal}"
-		def m2Key = map2?."${keyVal}"
-		if ((m2Key != null) && (m1Key == null)) {
-			log.debug "Map2 Key${keyVal ? " (2nd Lvl.)" : ""}: ($keyVal) | M2Key: $m2Key | M1Key: $m1Key | M2Data: $m2"
-			def val = lastkey ?: m2Key
-			if(val in keys) {
-				if(added[val] == null) { added[val] = [] }
-				added[val].push(m2Key)
-				log.debug "($val) Devices Pending Install: ${m2Key}"
-			}
-		}
-	}
-	return ["added":added, "removed":deleted]
-}
-
-def currentDevMap(update=false) {
-	def res = [:]
-	def keys = ["thermostats", "vThermostats", "protects", "cameras", "presDevice", "weatherDevice"]
-	try {
-		keys?.each { key ->
-			def items = [:]
-			def var = atomicState?."${key}"
-			if(var) {
-				if(res[key] == null) { res[key] = [:] }
-				var?.each { item ->
-					if(key == "presDevice") {
-						def val = [(getNestPresId().toString()):getNestPresLabel().toString()]
-						res[key] << val
-						//log.debug "val: ${val}"
-					}
-					else if(key == "weatherDevice") {
-						def val = [(getNestWeatherId().toString()):getNestWeatherLabel().toString()]
-						res[key] << val
-						//log.debug "val: ${val}"
-					} else {
-						if(item?.key) {
-							res[key] << [(item?.key):item?.value]
-						}
-					}
-				}
-			}
-		}
-		res = ["instDevicesMap":res]
-		//log.debug "res: ${res}"
-		if(update) {
-			atomicState?.currentDevMap = res
-		} else { return res }
-	} catch (ex) {
-		log.error "currentDevMap Exception:", ex
-		sendExceptionData(ex, "currentDevMap")
-	}
-	return ""
-}
-*/
 
 /******************************************************************************
 *					  			NEST LOGIN PAGES		  	  		  		  *
@@ -5587,7 +5463,7 @@ def getAskAlexaMultiQueueEn() {
 
 def initAppMetricStore() {
 	def items = ["mainLoadCnt", "devLocLoadCnt", "diagLoadCnt", "remDiagLoadCnt", "prefLoadCnt", "autoLoadCnt", "protTestLoadCnt", "helpLoadCnt", "infoLoadCnt", "chgLogLoadCnt", "nestLoginLoadCnt", "pollPrefLoadCnt", "devCustLoadCnt",
-		"vRprtPrefLoadCnt", "notifPrefLoadCnt", "logPrefLoadCnt", "viewAutoSchedLoadCnt", "viewAutoStatLoadCnt", "autoGlobPrefLoadCnt", "devCustNameLoadCnt", "custWeathLoadCnt"]
+		"vRprtPrefLoadCnt", "notifPrefLoadCnt", "logPrefLoadCnt", "camZoneFltLoadCnt", "viewAutoSchedLoadCnt", "viewAutoStatLoadCnt", "autoGlobPrefLoadCnt", "devCustNameLoadCnt", "custWeathLoadCnt"]
 	def data = atomicState?.usageMetricsStore ?: [:]
 	items?.each { if(!data[it]) { data[it] = 0 } }
 	atomicState?.usageMetricsStore = data
@@ -5613,6 +5489,7 @@ def incDevCustNameLoadCnt() { incMetricCntVal("devCustNameLoadCnt") }
 def incCustWeathLoadCnt() { incMetricCntVal("custWeathLoadCnt") }
 def incPollPrefLoadCnt() { incMetricCntVal("pollPrefLoadCnt") }
 def incDevCustLoadCnt() { incMetricCntVal("devCustLoadCnt") }
+def incCamZoneFltLoadCnt() { incMetricCntVal("camZoneFltLoadCnt") }
 def incVrprtPrefLoadCnt() { incMetricCntVal("vRprtPrefLoadCnt") }
 def incNotifPrefLoadCnt() { incMetricCntVal("notifPrefLoadCnt") }
 def incAppNotifPrefLoadCnt() { incMetricCntVal("appNotifPrefLoadCnt") }
@@ -6346,6 +6223,18 @@ def setMyLockId(val) {
 
 def getMyLockId() {
 	if(parent) { return atomicState?.myID } else { return null }
+}
+
+def getCamActivityZones(devId) {
+	def actZones = atomicState?.deviceData?.cameras[devId]?.activity_zones
+	def zones = [:]
+	if(actZones) {
+		actZones?.each { zn ->
+			def adni = [zn?.id].join('.')
+			zones[adni] = zn?.name
+		}
+	}
+	return zones
 }
 
 def addRemoveVthermostat(tstatdni, tval, myID) {
