@@ -325,7 +325,7 @@ body.nav-expanded {
     padding: 0, 0;
 }
 
-.logtype-label {
+.label {
     display: inline;
     padding: .2em .6em .3em;
     font-weight: bold;
