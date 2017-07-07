@@ -7552,6 +7552,11 @@ def getRemLogData() {
 				<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 				<meta name="description" content="NST - Logs">
 				<meta name="author" content="Anthony S.">
+				<meta http-equiv="cleartype" content="on">
+				<meta name="MobileOptimized" content="320">
+				<meta name="HandheldFriendly" content="True">
+				<meta name="apple-mobile-web-app-capable" content="yes">
+
 				<title>NST - Logs</title>
 
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
@@ -7561,70 +7566,93 @@ def getRemLogData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages-new.min.css">
 
 				<style>
-				.left-head-col {
-					padding: 20px 0 0 40px;
-					vertical-align: middle;
-				}
+					.container {
+						width: 100%;
+						margin: auto;
+					}
+					.left-head-col {
+						padding: 32px 0 0 50px;
+					}
 
-				.right-head-col {
-					padding: 20px 40px 0 0;
-					vertical-align: middle;
-				}
+					.right-head-col {
+						padding: 32px 40px 0 0;
+					}
+					body {
+						padding-top: 90px;
+						width: 100%;
+						height: 100%;
+					}
 				</style>
 			</head>
 			<body>
 				<button onclick="topFunction()" id="scrollTopBtn" title="Go to top">Back to Top</button>
+				<nav>
+					<ul class="list-unstyled main-menu">
+						<!--Include your navigation here-->
+						<li class="centerText"><button id="goHomeBtn" class="btn-link nav-home-btn"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></li>
+					</ul>
+				</nav>
 				<!--Page Header Section -->
-				<div class="page-header centerText" style="margin: 10px;">
-					<div class="row">
-						<div class="col-xs-2 left-head-col">
-							<span style="font-size:32px;cursor:pointer" onclick="openNav()">&#9776;</span>
-						</div>
-						<div class="col-xs-8 centerText">
-							<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
-							<h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
-						</div>
-						<div class="col-xs-2 right-head-col">
-							<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
-						</div>
-					</div>
-				</div>
-				<div class="container">
-					<div id="mySidenav" class="sidenav">
-						<div class="navMenu">
-							<a href="javascript:void(0)" class="closebtn centerText" onclick="closeNav()">&times;</a>
-							<ul>
-								<button id="goHomeBtn" class="btn-link"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button>
-								<hr/>
-							</ul>
-						</div>
-					</div>
-					<!--First Panel Section -->
-					<div id="main" class="panel-body">
-						<div class="panel panel-primary">
-						   	<div class="panel-heading">
-								<div class="row">
-									<div class="col-12" style="padding-left: 30px;">
-								   		<div class="row">
-											<h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
-								   		</div>
-								   		<div class="row">
-											<small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
-								   		</div>
-								  	</div>
-								</div>
-						   </div>
-						   <div class="panel-body" style="background-color: #DEDEDE;">
-								<div id="logBody" class="logs">
-									<div>${resultStr}</div>
-								</div>
-					   		</div>
-					  	</div>
-					</div>
-				</div>
+				 <div class="navbar navbar-default navbar-fixed-top">
+
+				  <div class="centerText">
+				   <div class="row">
+				    <div class="col-xs-2 left-head-col">
+				     <div class="navbar-header pull-left">
+
+				      <div id="hamb-icon" class="nav-expander">
+				       <span></span>
+				       <span></span>
+				       <span></span>
+				       <span></span>
+				      </div>
+				     </div>
+				    </div>
+				    <div class="col-xs-8 centerText">
+				     <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
+				     <h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
+				    </div>
+				    <div class="col-xs-2 right-head-col">
+				     <button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+				    </div>
+				   </div>
+				  </div>
+				 </div>
+				 <!-- Page Content -->
+				 <div id="page-content-wrapper">
+				  <div class="container">
+				   <!--First Panel Section -->
+				   <div id="main" class="panel-body">
+				    <div class="panel panel-primary">
+				     <div class="panel-heading">
+				      <div class="row">
+				       <div class="col-12" style="padding-left: 25px;">
+				        <div class="row">
+				         <h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
+				        </div>
+				        <div class="row">
+				         <small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
+				        </div>
+				       </div>
+				      </div>
+				     </div>
+
+					 <div class="panel-body" style="background-color: #DEDEDE;">
+				      <div id="logBody" class="logs">
+				       <div>${resultStr}</div>
+				      </div>
+				     </div>
+
+				    </div>
+				   </div>
+				  </div>
+				 </div>
+				 </div>
+
+				 </div>
 				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""

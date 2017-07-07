@@ -1,3 +1,5 @@
+var hdrHeight = $("#top-hdr").height();
+
 $(document).ready(function() {
     $("#rfrshBtn").click(function() {
         window.location.reload(true);
@@ -8,6 +10,35 @@ $(document).ready(function() {
     $("#goHomeBtn").click(function() {
         window.history.back();
     });
+
+    //Navigation Menu Slider
+	$("#hamb-icon").on("click", function(e) {
+		e.preventDefault();
+		$(this).toggleClass("open");
+
+		$("body").toggleClass("nav-expanded");
+	});
+	$("#nav-close").on("click", function(e) {
+		e.preventDefault();
+		$("body").removeClass("nav-expanded");
+	});
+
+	// Initialize navgoco with default options
+	$(".main-menu").navgoco({
+		caret: '<span class="caret"></span>',
+		accordion: false,
+		openClass: "open",
+		save: true,
+		cookie: {
+			name: "navgoco",
+			expires: false,
+			path: "/"
+		},
+		slide: {
+			duration: 300,
+			easing: "swing"
+		}
+	});
 });
 
 $("body").flowtype({
@@ -15,16 +46,6 @@ $("body").flowtype({
     maxFont: 14,
     fontRatio: 35
 });
-
-function openNav() {
-    document.getElementById("mySidenav").style.width = "300px";
-    document.getElementById("main").style.marginLeft = "300px";
-}
-
-function closeNav() {
-    document.getElementById("mySidenav").style.width = "0";
-    document.getElementById("main").style.marginLeft = "0";
-}
 
 window.onscroll = function() {scrollFunction()};
 
