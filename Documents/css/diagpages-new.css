@@ -143,10 +143,6 @@ body {
     font-size: 2.0em;
 }
 
-.title-text {
-    font-size: 2.0em;
-}
-
 .panel-title-text {
     font-size: 1.3em;
 }
@@ -241,7 +237,7 @@ body.nav-expanded {
 }
 
 .main-menu li a:hover {
-    color: #FFFFFF;
+    color: tomato;
     text-decoration: none;
 }
 
