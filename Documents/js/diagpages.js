@@ -1,3 +1,5 @@
+var hdrHeight = $("#top-hdr").height();
+
 $(document).ready(function() {
     $("#rfrshBtn").click(function() {
         window.location.reload(true);
