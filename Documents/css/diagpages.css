@@ -73,12 +73,12 @@ body {
     #rfrshBtn {
         font-size: 1.1em;
     }
-    .left-head-col {
+    /*.left-head-col {
         padding: 25px 0 0 50px;
     }
     .right-head-col {
         padding: 25px 40px 0 0;
-    }
+    }*/
 }
 
 .export-pdf-btn {
