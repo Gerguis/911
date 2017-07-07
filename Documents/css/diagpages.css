@@ -29,11 +29,11 @@ body {
 }
 
 .left-head-col {
-    padding-top: 2.5em;
+    padding: 2.5em 0 0 40px;
 }
 
 .right-head-col {
-    padding-top: 2.5em;
+    padding: 2.5em 40px 0 0;
 }
 
 .links {
