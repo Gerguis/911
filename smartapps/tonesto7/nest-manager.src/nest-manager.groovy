@@ -7893,7 +7893,6 @@ def renderManagerData() {
 				  	<div class="nav-home-btn centerText"><button id="goHomeBtn" class="btn-link" title="Go Back to Home Page"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></div>
 					<ul class="list-unstyled main-menu">
 						<!--Include your navigation here-->
-						<li class="centerText"><button id="goHomeBtn" class="btn-link nav-home-btn"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></li>
 						${navHtml}
 					</ul>
 				</nav>
