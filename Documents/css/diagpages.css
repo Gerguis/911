@@ -33,8 +33,6 @@ body {
     padding: 25px 40px 0 0;
 }
 
-
-
 .links {
     padding: 10px;
     font-size: 18px;
@@ -91,17 +89,17 @@ body {
 
 nav {
     background: white;
-    border: solid 1.2px grey;
+    border: none;
     display: block;
-    height: 90%;
+    height: 92%;
     overflow: auto;
     position: fixed;
     right: -17em;
+    top: 85px;
     font-size: 15px;
-    top: 103px;
     width: 16em;
     z-index: 2000;
-    box-shadow: 4px 2px 10px lightgrey;
+    box-shadow: 4px 4px 10px gray;
     transition: all 0.3s ease-in-out 0s, visibility 0.3s linear 0.3s, z-index 0s linear 0.01s;
     -webkit-transition: left 0.3s;
     -moz-transition: left 0.3s;
@@ -317,6 +315,7 @@ body.nav-expanded {
     padding-right: 8px;
 }
 
+
 /**************************************
     LOG PAGE SECTION CSS
 ***************************************/
@@ -446,5 +445,5 @@ body.nav-expanded {
 }
 
 #scrollTopBtn:hover {
-    background-color: green;
+    background-color: #3174AE;
 }
