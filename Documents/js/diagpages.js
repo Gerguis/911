@@ -1,17 +1,19 @@
 var hdrHeight = $("#top-hdr").height();
+$("body").animate({ paddingTop: hdrHeight + 10 });
+$("nav").offset({ top: hdrHeight + 1 });
 
 $(document).ready(function() {
-    $("#rfrshBtn").click(function() {
-        window.location.reload(true);
-    });
-    $("#rfrshBtn").hover(function(e) {
-        $("#rfrshBtnIcn").toggleClass('fa-spin');
-    });
-    $("#goHomeBtn").click(function() {
-        window.history.back();
-    });
+	$("#rfrshBtn").click(function() {
+		window.location.reload(true);
+	});
+	$("#rfrshBtn").hover(function(e) {
+		$("#rfrshBtnIcn").toggleClass("fa-spin");
+	});
+	$("#goHomeBtn").click(function() {
+		window.history.back();
+	});
 
-    //Navigation Menu Slider
+	//Navigation Menu Slider
 	$("#hamb-icon").on("click", function(e) {
 		e.preventDefault();
 		$(this).toggleClass("open");
@@ -23,42 +25,33 @@ $(document).ready(function() {
 		$("body").removeClass("nav-expanded");
 	});
 
-	// Initialize navgoco with default options
-	$(".main-menu").navgoco({
-		caret: '<span class="caret"></span>',
-		accordion: false,
-		openClass: "open",
-		save: true,
-		cookie: {
-			name: "navgoco",
-			expires: false,
-			path: "/"
-		},
-		slide: {
-			duration: 300,
-			easing: "swing"
-		}
+	$("#exportLogPdfBtn").click(function() {
+		var element = document.getElementById('#logBody');
+		html2pdf(element, {
+			margin:       1,
+			filename:     'log-data.pdf',
+			image:        { type: 'jpeg', quality: 0.98 },
+			html2canvas:  { dpi: 192, letterRendering: true },
+			jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+		});
 	});
 });
 
 $("body").flowtype({
-    minFont: 8,
-    maxFont: 14,
-    fontRatio: 35
+	minFont: 8,
+	maxFont: 14,
+	fontRatio: 35
 });
 
-window.onscroll = function() {scrollFunction()};
+$(window).scroll(function() {
+	if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+		$("#scrollTopBtn").css({ display: "block" });
+	} else {
+		$("#scrollTopBtn").css({ display: "none" });
+	}
+});
 
-function scrollFunction() {
-    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-        document.getElementById("scrollTopBtn").style.display = "block";
-    } else {
-        document.getElementById("scrollTopBtn").style.display = "none";
-    }
-}
-
-// When the user clicks on the button, scroll to the top of the document
 function topFunction() {
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
+	document.body.scrollTop = 0;
+	document.documentElement.scrollTop = 0;
 }

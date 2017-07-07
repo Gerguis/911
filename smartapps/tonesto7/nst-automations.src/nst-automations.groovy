@@ -7491,11 +7491,19 @@ def getDiagHomeUrl() { parent?.getAppEndpointUrl("diagHome") }
 
 def getRemLogData() {
 	try {
+		def appHtml = ""
+		def navHtml = ""
+		def scrStr = ""
 		def logData = atomicState?.remDiagLogDataStore
 		def resultStr = ""
 		def tf = new SimpleDateFormat("h:mm:ss a")
 		tf.setTimeZone(getTimeZone())
 		def logSz = logData?.size() ?: 0
+		// def navMap = [:]
+		// navMap = ["key":cApp?.getLabel(), "items":["Settings", "State", "MetaData"]]
+		// def navItems = navHtmlBuilder(navMap, appNum)
+		// if(navItems?.html) { navHtml += navItems?.html }
+		// if(navItems?.js) { scrStr += navItems?.js }
 		if(logSz > 0) {
 			def cnt = 1
 			logData?.sort { it?.dt }.reverse()?.each { logItem ->
@@ -7557,7 +7565,7 @@ def getRemLogData() {
 				<meta name="HandheldFriendly" content="True">
 				<meta name="apple-mobile-web-app-capable" content="yes">
 
-				<title>NST - Logs</title>
+				<title>NST Diagnostics - Logs</title>
 
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
@@ -7566,86 +7574,67 @@ def getRemLogData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages-new.min.css">
-
+				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
+ 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
+				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.container {
-						width: 100%;
-						margin: auto;
-					}
-					.left-head-col {
-						padding: 32px 0 0 50px;
-					}
-
-					.right-head-col {
-						padding: 32px 40px 0 0;
-					}
-					body {
-						padding-top: 90px;
-						width: 100%;
-						height: 100%;
-					}
 				</style>
 			</head>
 			<body>
-				<button onclick="topFunction()" id="scrollTopBtn" title="Go to top">Back to Top</button>
+				<button onclick="topFunction()" id="scrollTopBtn" title="Go to Top"><i class="fa fa-arrow-up centerText" aria-hidden="true"></i> Back to Top</button>
 				<nav>
+					<div class="nav-home-btn centerText"><button id="goHomeBtn" class="btn-link" title="Go Back to Home Page"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></div>
 					<ul class="list-unstyled main-menu">
 						<!--Include your navigation here-->
-						<li class="centerText"><button id="goHomeBtn" class="btn-link nav-home-btn"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></li>
+						${navHtml}
 					</ul>
 				</nav>
 				<!--Page Header Section -->
-				 <div class="navbar navbar-default navbar-fixed-top">
-
-				  <div class="centerText">
-				   <div class="row">
-				    <div class="col-xs-2 left-head-col">
-				     <div class="navbar-header pull-left">
-
-				      <div id="hamb-icon" class="nav-expander">
-				       <span></span>
-				       <span></span>
-				       <span></span>
-				       <span></span>
-				      </div>
-				     </div>
-				    </div>
-				    <div class="col-xs-8 centerText">
-				     <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
-				     <h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
-				    </div>
-				    <div class="col-xs-2 right-head-col">
-				     <button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
-				    </div>
+				<div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
+				 <div class="centerText">
+				  <div class="row">
+				   <div class="col-xs-2">
+					<div class="left-head-col pull-left">
+					 <button id="hamb-icon" class="btn btn-link nav-expander" title="Menu"><span></span><span></span><span></span><span></span></button>
+					</div>
+				   </div>
+				   <div class="col-xs-8 centerText">
+					<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
+					<h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
+				   </div>
+				   <div class="col-xs-2 right-head-col">
+					<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right" title="Refresh Page Content"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i></button>
 				   </div>
 				  </div>
 				 </div>
+				</div>
 				 <!-- Page Content -->
 				 <div id="page-content-wrapper">
 				  <div class="container">
 				   <!--First Panel Section -->
 				   <div id="main" class="panel-body">
 				    <div class="panel panel-primary">
-				     <div class="panel-heading">
-				      <div class="row">
-				       <div class="col-12" style="padding-left: 25px;">
-				        <div class="row">
-				         <h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
-				        </div>
-				        <div class="row">
-				         <small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
-				        </div>
-				       </div>
-				      </div>
-				     </div>
-
+					<div class="panel-heading">
+					 	<div class="row">
+							<div class="col-xs-10" style="padding-left: 25px;">
+						   		<div class="row">
+							   		<h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
+						   		</div>
+						   		<div class="row">
+							   		<small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
+						   		</div>
+					   		</div>
+							<div class="col-xs-2" style="padding: 10px;">
+							   	<button id="exportLogPdfBtn" type="button" title="Export Content as PDF" class="btn export-pdf-btn pull-right"><i id="exportPdfBtnIcn" class="fa fa-file-pdf-o" aria-hidden="true"></i> PDF</button>
+					  		</div>
+					 	</div>
+					</div>
 					 <div class="panel-body" style="background-color: #DEDEDE;">
-				      <div id="logBody" class="logs">
+				      <div id="logBody" class="logs-div">
 				       <div>${resultStr}</div>
 				      </div>
 				     </div>
-
 				    </div>
 				   </div>
 				  </div>
@@ -7653,12 +7642,44 @@ def getRemLogData() {
 				 </div>
 
 				 </div>
-				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
+				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
 /* "" */
 	}  catch (ex) { log.error "renderLogData Exception:", ex }
 	return null
+}
+
+def navHtmlBuilder(navMap, idNum) {
+	def res = [:]
+	def htmlStr = ""
+	def jsStr = ""
+	if(navMap?.key) {
+		htmlStr += """\n<li><a id="nav-key-item${idNum}">${navMap?.key}<span class="icon"></span></a></li>"""
+		jsStr += navJsBuilder("nav-key-item${idNum}", "key-item${idNum}")
+	}
+	if(navMap?.items) {
+		def nItems = navMap?.items
+		htmlStr += """\n<ul style="list-style-type: disc;">"""
+		nItems?.each {
+			htmlStr += """\n<li><a id="nav-subitem${idNum}-${it?.toString().toLowerCase()}">${it}<span class="icon"></span></a></li>"""
+			jsStr += navJsBuilder("nav-subitem${idNum}-${it?.toString().toLowerCase()}", "item${idNum}-${it?.toString().toLowerCase()}")
+		}
+		htmlStr += """\n</ul>"""
+	}
+	htmlStr += """\n</br>"""
+	res["html"] = htmlStr
+	res["js"] = jsStr
+	return res
+}
+
+def navJsBuilder(btnId, divId) {
+	def res = """
+		\$("#${btnId}").click(function() {
+			\$('html, body').animate({ scrollTop: \$("#${divId}").offset().top - hdrHeight-20 }, 500);
+		});
+	"""
+	return "\n${res}"
 }
 
 def clearRemDiagData(force=false) {

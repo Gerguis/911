@@ -7866,107 +7866,108 @@ def renderManagerData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages-new.min.css">
+				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
+ 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
+				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.container {
-						width: 100%;
-						margin: auto;
-					}
-					.left-head-col {
-						padding: 32px 0 0 50px;
-					}
-
-					.right-head-col {
-						padding: 32px 40px 0 0;
-					}
-					body {
-						padding-top: 75px;
-						width: 100%;
-						height: 100%;
-					}
+				@media screen and (max-width: 520px) {
+				    #rfrshBtn:after {
+				        content: '';
+				    }
+				    #rfrshBtn {
+				        font-size: 1.1em;
+				    }
+				    /*.left-head-col {
+				        padding: 25px 0 0 50px;
+				    }
+				    .right-head-col {
+				        padding: 25px 40px 0 0;
+				    }*/
+				}
 				</style>
 			</head>
 			<body>
-			<button onclick="topFunction()" id="scrollTopBtn" title="Go to top">Back to Top</button>
-			<nav>
-				<ul class="list-unstyled main-menu">
-					<!--Include your navigation here-->
-					<li class="centerText"><button id="goHomeBtn" class="btn-link nav-home-btn"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></li>
-					${navHtml}
-				</ul>
-			</nav>
-			<!--Page Header Section -->
-			 <div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
-
-			  <div class="centerText">
-			   <div class="row">
-				<div class="col-xs-2 left-head-col">
-				 <div class="navbar-header pull-left">
-
-				  <div id="hamb-icon" class="nav-expander">
-				   <span></span>
-				   <span></span>
-				   <span></span>
-				   <span></span>
-				  </div>
-				 </div>
+				<button onclick="topFunction()" id="scrollTopBtn" title="Go to top"><i class="fa fa-arrow-up centerText" aria-hidden="true"></i> Back to Top</button>
+				<nav>
+				  	<div class="nav-home-btn centerText"><button id="goHomeBtn" class="btn-link" title="Go Back to Home Page"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></div>
+					<ul class="list-unstyled main-menu">
+						<!--Include your navigation here-->
+						<li class="centerText"><button id="goHomeBtn" class="btn-link nav-home-btn"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></li>
+						${navHtml}
+					</ul>
+				</nav>
+				<div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
+				  	<div class="centerText">
+				   		<div class="row">
+				    		<div class="col-xs-2">
+				     			<div class="left-head-col pull-left">
+				      				<button id="hamb-icon" class="btn btn-link nav-expander" title="Menu"><span></span><span></span><span></span><span></span></button>
+				     			</div>
+				    		</div>
+				    		<div class="col-xs-8 centerText">
+				     			<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h3>
+				    		</div>
+				    		<div class="col-xs-2 right-head-col">
+				     			<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right" title="Refresh Page Content"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i></button>
+				    		</div>
+				   		</div>
+				  	</div>
 				</div>
-				<div class="col-xs-8 centerText">
-				 <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h3>
-				</div>
-				<div class="col-xs-2 right-head-col">
-				 <button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
-				</div>
-			   </div>
-			  </div>
-			 </div>
-			 <!-- Page Content -->
-			 <div id="page-content-wrapper">
-			  <div class="container">
-			   <!--First Panel Section -->
-			   	<div id="main" class="panel-body">
-					<div id="key-item${appNum}" class="panel panel-primary">
-		  			   	<div class="panel-heading">
-		  					<h1 class="panel-title panel-title-text">NST Manager:</h1>
-		  			   	</div>
-		  		   	  	<div class="panel-body">
-		  					<div style="padding: 5px;">
-							  	<div class="panel panel-default">
-							   		<div id="item${appNum}-settings" class="panel-heading">
-							    		<h1 class="panel-title panel-title-text">Setting Data:</h1>
-							   		</div>
-							   		<div class="panel-body">
-							    		<div><pre class="mapDataFmt">${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
-							   		</div>
-							  	</div>
+			 	<!-- Page Content -->
+			 	<div id="page-content-wrapper">
+			  		<div class="container">
+			   			<!--First Panel Section -->
+			   				<div id="main" class="panel-body">
+								<div id="key-item${appNum}" class="panel panel-primary">
+					  			   	<div class="panel-heading">
+										<div class="row">
+											<div class="col-xs-10" style="padding-left: 25px;">
+												<h1 class="panel-title panel-title-text">NST Manager:</h1>
+											</div>
+											<div class="col-xs-2" style="padding: 10px;">
+												<button id="exportPdfBtn" type="button" title="Export Content as PDF" class="btn export-pdf-btn pull-right"><i id="exportPdfBtnIcn" class="fa fa-file-pdf-o" aria-hidden="true"></i> PDF</button>
+								   			</div>
+								  		</div>
+					  			   	</div>
+					  		   	  	<div class="panel-body">
+					  					<div style="padding: 5px;">
+										  	<div class="panel panel-default">
+										   		<div id="item${appNum}-settings" class="panel-heading">
+										    		<h1 class="panel-title panel-title-text">Setting Data:</h1>
+										   		</div>
+										   		<div class="panel-body">
+										    		<div><pre class="mapDataFmt">${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+										   		</div>
+										  	</div>
 
-							  	<div class="panel panel-default">
-							   		<div id="item${appNum}-state" class="panel-heading">
-							    		<h1 class="panel-title panel-title-text">State Data:</h1>
-							   		</div>
-							   		<div class="panel-body">
-							    		<div><pre class="mapDataFmt">${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
-							   		</div>
-							  	</div>
+										  	<div class="panel panel-default">
+										   		<div id="item${appNum}-state" class="panel-heading">
+										    		<h1 class="panel-title panel-title-text">State Data:</h1>
+										   		</div>
+										   		<div class="panel-body">
+										    		<div><pre class="mapDataFmt">${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+										   		</div>
+										  	</div>
 
-							  	<div class="panel panel-default">
-							   		<div id="item${appNum}-metadata" class="panel-heading">
-							    		<h1 class="panel-title panel-title-text">Meta Data:</h1>
-							   		</div>
-							   		<div class="panel-body">
-							    		<div><pre class="mapDataFmt">${metaDesc.toString().replaceAll("\n", "<br>")}</pre></div>
-							   		</div>
-							   	</div>
+										  	<div class="panel panel-default">
+										   		<div id="item${appNum}-metadata" class="panel-heading">
+										    		<h1 class="panel-title panel-title-text">Meta Data:</h1>
+										   		</div>
+										   		<div class="panel-body">
+										    		<div><pre class="mapDataFmt">${metaDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+										   		</div>
+										   	</div>
+										</div>
+									</div>
+
+					  			</div>
 							</div>
-						</div>
+				   		</div>
+				  	</div>
+				</div>
 
-					  </div>
-					</div>
-				   </div>
-				  </div>
-				 </div>
-
- 			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
+ 			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
  			   	<script>
  				   	\$(document).ready(function() {
  				   		${scrStr}
@@ -8053,57 +8054,34 @@ def renderAutomationData() {
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages-new.min.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-					.container {
-						width: 100%;
-						margin: auto;
-					}
-					.left-head-col {
-						padding: 32px 0 0 50px;
-					}
 
-					.right-head-col {
-						padding: 32px 40px 0 0;
-					}
-					body {
-						padding-top: 75px;
-						width: 100%;
-						height: 100%;
-					}
 				</style>
 			</head>
 			<body>
-				<button onclick="topFunction()" id="scrollTopBtn" title="Go to top">Back to Top</button>
+				<button onclick="topFunction()" id="scrollTopBtn" title="Go to top"><i class="fa fa-arrow-up centerText" aria-hidden="true"></i> Back to Top</button>
 				<nav>
+					<div class="nav-home-btn centerText"><button id="goHomeBtn" class="btn-link" title="Go Back to Home Page"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></div>
 					<ul class="list-unstyled main-menu">
-					<!--Include your navigation here-->
-
-						<li class="centerText"><button id="goHomeBtn" class="btn-link nav-home-btn"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></li>
+						<!--Include your navigation here-->
 						${navHtml}
 					</ul>
 				</nav>
 				<!--Page Header Section -->
-				 <div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
-
+				<div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
 				  <div class="centerText">
 				   <div class="row">
 					<div class="col-xs-2 left-head-col">
 					 <div class="navbar-header pull-left">
-
-					  <div id="hamb-icon" class="nav-expander">
-					   <span></span>
-					   <span></span>
-					   <span></span>
-					   <span></span>
-					  </div>
+						<button id="hamb-icon" class="btn btn-link nav-expander" title="Menu"><span></span><span></span><span></span><span></span></button>
 					 </div>
 					</div>
 					<div class="col-xs-8 centerText">
 					 <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Automation Data</img></h3>
 					</div>
 					<div class="col-xs-2 right-head-col">
-					 <button id="rfrshBtn" type="button" class="btn refresh-btn pull-right"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+					 <button id="rfrshBtn" type="button" class="btn refresh-btn pull-right" title="Refresh Page Content"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i></button>
 					</div>
 				   </div>
 				  </div>
@@ -8138,20 +8116,20 @@ def navHtmlBuilder(navMap, idNum) {
 	def htmlStr = ""
 	def jsStr = ""
 	if(navMap?.key) {
-
-		htmlStr += htmlStr != "" ? "\n" : ""
-		htmlStr += """<li><a id="nav-key-item${idNum}">${navMap?.key}<span class="icon"></span></a></li>"""
+		htmlStr += """
+			<div class="nav-cont-bord-div">
+			  <div class="nav-cont-div">
+				<li class="nav-key-item"><a id="nav-key-item${idNum}">${navMap?.key}<span class="icon"></span></a></li>"""
 		jsStr += navJsBuilder("nav-key-item${idNum}", "key-item${idNum}")
 	}
 	if(navMap?.items) {
 		def nItems = navMap?.items
-		htmlStr += """\n<ul style="list-style-type: disc;">"""
 		nItems?.each {
-			htmlStr += """\n<li><a id="nav-subitem${idNum}-${it?.toString().toLowerCase()}">${it}<span class="icon"></span></a></li>"""
+			htmlStr += """\n<li class="nav-subkey-item"><a id="nav-subitem${idNum}-${it?.toString().toLowerCase()}">${it}<span class="icon"></span></a></li>"""
 			jsStr += navJsBuilder("nav-subitem${idNum}-${it?.toString().toLowerCase()}", "item${idNum}-${it?.toString().toLowerCase()}")
 		}
-		htmlStr += """\n</ul>"""
 	}
+	htmlStr += """</div></div>"""
 	res["html"] = htmlStr
 	res["js"] = jsStr
 	return res
@@ -8307,15 +8285,9 @@ def renderDeviceData() {
 				  <div class="centerText">
 				   <div class="row">
 					<div class="col-xs-2 left-head-col">
-					 <div class="navbar-header pull-left">
-
-					  <div id="hamb-icon" class="nav-expander">
-					   <span></span>
-					   <span></span>
-					   <span></span>
-					   <span></span>
-					  </div>
-					 </div>
+						<div class="navbar-header pull-left">
+						   <button id="hamb-icon" class="btn btn-link nav-expander"><span></span><span></span><span></span><span></span></button>
+						</div>
 					</div>
 					<div class="col-xs-8 centerText">
 					 <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Device Data</img></h3>
@@ -8416,15 +8388,9 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				  <div class="centerText">
 				   <div class="row">
 					<div class="col-xs-2 left-head-col">
-					 <div class="navbar-header pull-left">
-
-					  <div id="hamb-icon" class="nav-expander">
-					   <span></span>
-					   <span></span>
-					   <span></span>
-					   <span></span>
-					  </div>
-					 </div>
+						<div class="navbar-header pull-left">
+						   <button id="hamb-icon" class="btn btn-link nav-expander"><span></span><span></span><span></span><span></span></button>
+						</div>
 					</div>
 					<div class="col-xs-8 centerText">
 					 <h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> ${heading}</img></h3>
