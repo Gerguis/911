@@ -33,38 +33,7 @@ body {
     padding: 25px 40px 0 0;
 }
 
-.nav-cont-bord-div {
-    padding: 15px;
-}
 
-.nav-cont-div {
-    padding: 10px;
-    border-radius: 0.6em;
-    border: solid gray 1px;
-    -moz-box-shadow: inset 0px 10px 10px #ccc;
-    -webkit-box-shadow: inset 0px 0px 10px #ccc;
-    box-shadow: inset 0px 10px 10px #ccc;
-}
-
-.nav-key-item {
-    font-weight: bold;
-    list-style: none;
-}
-
-.nav-subkey-item {
-    font-weight: normal;
-    list-style: none;
-}
-
-.nav-subkey-item:before {
-    content: "▶";
-    padding-right: 8px;
-}
-
-.nav #homebtn {
-    padding: 20px;
-    font-size: 40px;
-}
 
 .links {
     padding: 10px;
@@ -125,7 +94,7 @@ nav {
     border: solid 1.2px grey;
     display: block;
     height: 90%;
-    overflow: scroll;
+    overflow: auto;
     position: fixed;
     right: -17em;
     font-size: 15px;
@@ -156,7 +125,8 @@ body.nav-expanded {
 }
 
 .nav-home-btn {
-    font-size: 20px;
+    padding: 20px 10px 0 10px;
+    font-size: 22px;
 }
 
 .main-menu {
@@ -319,6 +289,33 @@ body.nav-expanded {
     left: 50%;
 }
 
+.nav-cont-bord-div {
+    padding: 15px;
+}
+
+.nav-cont-div {
+    padding: 10px;
+    border-radius: 0.6em;
+    border: solid gray 1px;
+    -moz-box-shadow: inset 0px 10px 10px #ccc;
+    -webkit-box-shadow: inset 0px 0px 10px #ccc;
+    box-shadow: inset 0px 10px 10px #ccc;
+}
+
+.nav-key-item {
+    font-weight: bold;
+    list-style: none;
+}
+
+.nav-subkey-item {
+    font-weight: normal;
+    list-style: none;
+}
+
+.nav-subkey-item:before {
+    content: "▶";
+    padding-right: 8px;
+}
 
 /**************************************
     LOG PAGE SECTION CSS
