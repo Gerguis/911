@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.4" }
-def appVerDate() { "7-6-2017" }
+def appVerDate() { "7-8-2017" }
 
 preferences {
 	//startPage
@@ -933,8 +933,6 @@ def subscribeToEvents() {
 			if(settings?.schMotWaterOff) {
 				if(isLeakWatConfigured()) { subscribe(leakWatSensors, "water", leakWatSensorEvt) }
 			}
-//TODO add switches to adjust schedule
-// humCtrl, extTmp, conWat, nMode
 			if(settings?.schMotContactOff) {
 				if(isConWatConfigured()) {
 					subscribe(conWatContacts, "contact", conWatContactEvt)
@@ -5111,7 +5109,7 @@ def schMotModePage() {
 						extDesc += (settings?.extTmpUseWeather || settings?.extTmpTempSensor) ? "Settings:" : ""
 						extDesc += (!settings?.extTmpUseWeather && settings?.extTmpTempSensor) ? "\n • Sensor: (${getExtTmpTemperature()}${tempScaleStr})" : ""
 						extDesc += (settings?.extTmpUseWeather && !settings?.extTmpTempSensor) ? "\n • Weather: (${getExtTmpTemperature()}${tempScaleStr})" : ""
-						//TODO need this in schedule
+					//TODO need this in schedule
 						extDesc += settings?.extTmpDiffVal ? "\n • Outside Threshold: (${settings?.extTmpDiffVal}${tempScaleStr})" : ""
 						extDesc += settings?.extTmpInsideDiffVal ? "\n • Inside Threshold: (${settings?.extTmpInsideDiffVal}${tempScaleStr})" : ""
 						extDesc += settings?.extTmpOffDelay ? "\n • ECO Delay: (${getEnumValue(longTimeSecEnum(), settings?.extTmpOffDelay)})" : ""
@@ -5526,7 +5524,6 @@ this does not work...
 					}
 					section("Indoor Humidity Measurement") {
 						def req = !settings?.humCtrlHumidity ? true : false
-// TODO need new icon
 						input name: "humCtrlHumidity", type: "capability.relativeHumidityMeasurement", title: "Which Humidity Sensor(s)?", multiple: true, submitOnChange: true, required: req,
 								image: getAppImg("humidity_icon.png")
 						if(settings?.humCtrlHumidity) {
@@ -6580,7 +6577,6 @@ def setDayModeTimePage(params) {
 			input "${pName}Days", "enum", title: "${inverted ? "Not": "Only"} These Days", multiple: true, required: false, options: timeDayOfWeekOptions(), image: getAppImg("day_calendar_icon2.png")
 			input "${pName}Modes", "mode", title: "${inverted ? "Not": "Only"} in These Modes", multiple: true, required: false, image: getAppImg("mode_icon.png")
 		}
-//TODO add switches to adjust schedule
 		section("Switches:") {
 			input "${pName}restrictionSwitchOn", "capability.switch", title: "Only execute when these switches are all ON", multiple: true, required: false, image: getAppImg("switch_on_icon.png")
 			input "${pName}restrictionSwitchOff", "capability.switch", title: "Only execute when these switches are all OFF", multiple: true, required: false, image: getAppImg("switch_off_icon.png")
@@ -6607,7 +6603,6 @@ def getDayModeTimeDesc(pName) {
 	str += modes ? "${((startTime && stopTime) || days) ? "\n" : ""}\n • Mode${isPluralString(modeInput)}: ${modes}" : ""
 	str += swOn ? "${((startTime && stopTime) || days || modes) ? "\n" : ""}\n • Switch${isPluralString(swOnInput)} that must be on: ${getRestSwitch(swOnInput)}" : ""
 	str += swOff ? "${((startTime && stopTime) || days || modes || swOn) ? "\n" : ""}\n • Switch${isPluralString(swOffInput)} that must be off: ${getRestSwitch(swOffInput)}" : ""
-//TODO add switches to adjust schedule
 	str += (str != "") ? "\n\nTap to modify" : ""
 	return str
 }
@@ -6653,7 +6648,6 @@ def autoScheduleOk(autoType) {
 			timeOk = ((inTime && !inverted) || (!inTime && inverted)) ? true : false
 		}
 
-//TODO add switches to adjust schedule
 		def soFarOk = (modeOk && dayOk && timeOk) ? true : false
 		def swOk = true
 		if(soFarOk && settings?."${autoType}restrictionSwitchOn") {
