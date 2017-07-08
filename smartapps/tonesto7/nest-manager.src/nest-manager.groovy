@@ -1697,6 +1697,7 @@ void diagLogProcChange(setOn) {
 			state.remove(kitem?.key.toString())
 		}
 		if(diagAllowed && setOn) {
+			atomicState?.remDiagDataSentDt = getDtNow() // allow us some time for child to start
 			atomicState?.enRemDiagLogging = true
 			atomicState?.remDiagLogActivatedDt = getDtNow()
 		}
