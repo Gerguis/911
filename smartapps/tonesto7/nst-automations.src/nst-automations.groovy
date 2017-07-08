@@ -581,9 +581,7 @@ def initAutoApp() {
 	if(settings["watchDogFlag"]) {
 		atomicState?.automationType = "watchDog"
 	} else if(settings["remDiagFlag"]) {
-		// if(!atomicState?.accessToken) { getAccessToken() }
 		atomicState?.automationType = "remDiag"
-		// atomicState?.endpointUrl = getAppEndpointUrl(null)
 	}
 	else if (restoreId != null && restoreComplete == false) {
 		LogAction("Restored AutomationType: (${settings?.automationTypeFlag})", "info", true)
@@ -603,7 +601,7 @@ def initAutoApp() {
 	unsubscribe()
 	def autoDisabled = getIsAutomationDisabled()
 
-	if(!autoDisabled && (restoreId && restComplete == false ? false : true)) {
+	if(!autoDisabled && (restoreId && restoreComplete == false ? false : true)) {
 		automationsInst()
 
 		if(autoType == "schMot" && isSchMotConfigured()) {
@@ -699,26 +697,16 @@ def initAutoApp() {
 	state.remove("schedule{2}TimeActive")
 	state.remove("schedule{3}TimeActive")
 	state.remove("schedule{4}TimeActive")
+	state.remove("schedule{5}TimeActive")
+	state.remove("schedule{6}TimeActive")
+	state.remove("schedule{7}TimeActive")
+	state.remove("schedule{8}TimeActive")
 	state.remove("lastaway")
+
 	state.remove("debugAppendAppName")   // cause Automations to re-check with parent for value
 	state.remove("enRemDiagLogging")   // cause Automations to re-check with parent for value after updated is called
 
 	scheduleAutomationEval(30)
-}
-
-def getAccessToken() {
-	try {
-		if(!atomicState?.accessToken) { atomicState?.accessToken = createAccessToken() }
-		else { return true }
-	}
-	catch (ex) {
-		def msg = "Error: OAuth is not Enabled for ${appName()}!.  Please click remove and Enable Oauth under the SmartApp App Settings in the IDE"
-		sendPush(msg)
-		log.error "getAccessToken Exception", ex
-		LogAction("getAccessToken Exception | $msg", "warn", true)
-		sendExceptionData(ex, "getAccessToken")
-		return false
-	}
 }
 
 def uninstAutomationApp() {
@@ -1476,7 +1464,7 @@ def isWatchdogConfigured() {
 }
 
 /******************************************************************************
-|						WATCHDOG AUTOMATION LOGIC CODE						  |
+|						REMOTE DIAG AUTOMATION LOGIC CODE						  |
 *******************************************************************************/
 def remDiagPrefix() { return "remDiag" }
 
@@ -7501,8 +7489,6 @@ def savetoRemDiagChild(List newdata) {
 	} else { Logger("bad call to savetoRemDiagChild - wrong automation") }
 }
 
-def getDiagHomeUrl() { parent?.getAppEndpointUrl("diagHome") }
-
 def getRemLogData() {
 	try {
 		def appHtml = ""
@@ -7660,10 +7646,11 @@ def getRemLogData() {
 			</body>
 		"""
 /* "" */
-	}  catch (ex) { log.error "renderLogData Exception:", ex }
+	}  catch (ex) { log.error "getRemLogData Exception:", ex }
 	return null
 }
 
+/*
 def navHtmlBuilder(navMap, idNum) {
 	def res = [:]
 	def htmlStr = ""
@@ -7701,6 +7688,7 @@ def clearRemDiagData(force=false) {
 	//atomicState?.remDiagLogActivatedDt = null	// NOT done to have force off then on to re-enable
 	LogAction("Cleared Diag data", "info", true)
 }
+*/
 
 /*
 
@@ -7750,7 +7738,6 @@ def getHelpPageUrl()			{ return "http://thingsthataresmart.wiki/index.php?title=
 def getAutoHelpPageUrl()		{ return "http://thingsthataresmart.wiki/index.php?title=Nest_Manager#Nest_Automations" }
 def getAppImg(imgName, on = null)	{ return (!disAppIcons || on) ? "https://raw.githubusercontent.com/${gitPath()}/Images/App/$imgName" : "" }
 def getDevImg(imgName, on = null)	{ return (!disAppIcons || on) ? "https://raw.githubusercontent.com/${gitPath()}/Images/Devices/$imgName" : "" }
-def getAppEndpointUrl(subPath)	{ return atomicState?.accessToken ? "${apiServerUrl("/api/smartapps/installations/${app.id}${subPath ? "/${subPath}" : ""}?access_token=${atomicState.accessToken}")}" : null }
 def getChildAppVer(appName) { return appName?.appVersion() ? "v${appName?.appVersion()}" : "" }
 def getUse24Time()			{ return useMilitaryTime ? true : false }
 
