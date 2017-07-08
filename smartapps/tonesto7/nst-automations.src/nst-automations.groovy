@@ -645,8 +645,8 @@ def initAutoApp() {
 						mctemp: settings["${sLbl}Motion"] ? roundTemp(settings["${sLbl}MCoolTemp"]) : null,
 						mhtemp: settings["${sLbl}Motion"] ? roundTemp(settings["${sLbl}MHeatTemp"]) : null,
 						mhvacm: settings["${sLbl}Motion"] ? settings["${sLbl}MHvacMode"] : null,
-						mpresHome: settings["${sLbl}Motion"] ? settings["${sLbl}MPresHome"] : null,
-						mpresAway: settings["${sLbl}Motion"] ? settings["${sLbl}MPresAway"] : null,
+//						mpresHome: settings["${sLbl}Motion"] ? settings["${sLbl}MPresHome"] : null,
+//						mpresAway: settings["${sLbl}Motion"] ? settings["${sLbl}MPresAway"] : null,
 						mdelayOn: settings["${sLbl}Motion"] ? settings["${sLbl}MDelayValOn"] : null,
 						mdelayOff: settings["${sLbl}Motion"] ? settings["${sLbl}MDelayValOff"] : null
 					])
@@ -1592,10 +1592,12 @@ def automationMotionEvt(evt) {
 				}
 			}
 		}
+/*
 		if(settings["${sLbl}MPresHome"] || settings["${sLbl}MPresAway"]) {
 			if(settings["${sLbl}MPresHome"]) { if(!isSomebodyHome(settings["${sLbl}MPresHome"])) { dorunIn = false } }
 			if(settings["${sLbl}MPresAway"]) { if(isSomebodyHome(settings["${sLbl}MPresAway"])) { dorunIn = false } }
 		}
+*/
 		if(dorunIn) {
 			LogAction("Automation Schedule Motion | Scheduling Delay Check: ($delay sec) | Schedule: ($mySched - ${getSchedLbl(mySched)})", "trace", true)
 			delay = delay > 20 ? delay : 20
@@ -4415,7 +4417,7 @@ private checkRestriction(cnt) {
 					}
 				}
 			}
-			if (settings["${sLbl}restrictionPresHome"]) {
+			if (!restriction && settings["${sLbl}restrictionPresHome"] && !isSomebodyHome(settings["${sLbl}restrictionPresHome"])) {
 				for(pr in settings["${sLbl}restrictionPresHome"]) {
 					if (!isPresenceHome(pr)) {
 						restriction = "presence ${pr} being ${pr.currentValue("presence")}"
@@ -4423,7 +4425,7 @@ private checkRestriction(cnt) {
 					}
 				}
 			}
-			if (!restriction && settings["${sLbl}restrictionPresAway"]) {
+			if (!restriction && settings["${sLbl}restrictionPresAway"] && isSomebodyHome(settings["${sLbl}restrictionPresAway"])) {
 				for(pr in settings["${sLbl}restrictionPresAway"]) {
 					if (isPresenceHome(pr)) {
 						restriction = "presence ${pr} being ${pr.currentValue("presence")}"
@@ -5785,8 +5787,8 @@ def editSchedule(schedData) {
 				}
 				input "${sLbl}MHvacMode", "enum", title: "Set Hvac Mode with Motion:", required: false, description: "No change set", metadata: [values:tModeHvacEnum(canHeat,canCool,true)], multiple: false, image: getAppImg("hvac_mode_icon.png")
 				//input "${sLbl}MRestrictionMode", "mode", title: "Ignore in these modes", description: "Any location mode", required: false, multiple: true, image: getAppImg("mode_icon.png")
-				input "${sLbl}MPresHome", "capability.presenceSensor", title: "Only act when these people are home", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_pres_icon.png")
-				input "${sLbl}MPresAway", "capability.presenceSensor", title: "Only act when these people are away", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_away_icon.png")
+//				input "${sLbl}MPresHome", "capability.presenceSensor", title: "Only act when these people are home", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_pres_icon.png")
+//				input "${sLbl}MPresAway", "capability.presenceSensor", title: "Only act when these people are away", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_away_icon.png")
 				input "${sLbl}MDelayValOn", "enum", title: "Delay Motion Setting Changes", required: false, defaultValue: 60, metadata: [values:longTimeSecEnum()], multiple: false, image: getAppImg("delay_time_icon.png")
 				input "${sLbl}MDelayValOff", "enum", title: "Delay disabling Motion Settings", required: false, defaultValue: 1800, metadata: [values:longTimeSecEnum()], multiple: false, image: getAppImg("delay_time_icon.png")
 			}
@@ -5814,8 +5816,8 @@ def editSchedule(schedData) {
 					input "${sLbl}restrictionTimeToOffset", "number", title: "Offset (+/- minutes)", range: "*..*", required: true, multiple: false, defaultValue: 0, image: getAppImg("offset_icon.png")
 				}
 			}
-			input "${sLbl}restrictionPresHome", "capability.presenceSensor", title: "Only execute when these People are home", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_pres_icon.png")
-			input "${sLbl}restrictionPresAway", "capability.presenceSensor", title: "Only execute when these People are away", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_away_icon.png")
+			input "${sLbl}restrictionPresHome", "capability.presenceSensor", title: "Only execute when one or more of these People are home", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_pres_icon.png")
+			input "${sLbl}restrictionPresAway", "capability.presenceSensor", title: "Only execute when all these People are away", description: "Always", required: false, multiple: true, image: getAppImg("nest_dev_away_icon.png")
 			input "${sLbl}restrictionSwitchOn", "capability.switch", title: "Only execute when these switches are all on", description: "Always", required: false, multiple: true, image: getAppImg("switch_on_icon.png")
 			input "${sLbl}restrictionSwitchOff", "capability.switch", title: "Only execute when these switches are all off", description: "Always", required: false, multiple: true, image: getAppImg("switch_off_icon.png")
 		}
@@ -6076,8 +6078,8 @@ def updateScheduleStateMap() {
 					mctemp: settings["${sLbl}Motion"] ? roundTemp(settings["${sLbl}MCoolTemp"]) : null,
 					mhtemp: settings["${sLbl}Motion"] ? roundTemp(settings["${sLbl}MHeatTemp"]) : null,
 					mhvacm: settings["${sLbl}Motion"] ? settings["${sLbl}MHvacMode"] : null,
-					mpresHome: settings["${sLbl}Motion"] ? settings["${sLbl}MPresHome"] : null,
-					mpresAway: settings["${sLbl}Motion"] ? settings["${sLbl}MPresAway"] : null,
+//					mpresHome: settings["${sLbl}Motion"] ? settings["${sLbl}MPresHome"] : null,
+//					mpresAway: settings["${sLbl}Motion"] ? settings["${sLbl}MPresAway"] : null,
 					mdelayOn: settings["${sLbl}Motion"] ? settings["${sLbl}MDelayValOn"] : null,
 					mdelayOff: settings["${sLbl}Motion"] ? settings["${sLbl}MDelayValOff"] : null
 				])
