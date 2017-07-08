@@ -84,6 +84,7 @@ metadata {
 		attribute "onlineStatus", "string"
 		attribute "nestPresence", "string"
 		attribute "nestThermostatMode", "string"
+		attribute "supportedNestThermostatModes", "JSON_OBJECT"
 		attribute "nestThermostatOperatingState", "string"
 		attribute "presence", "string"
 		attribute "canHeat", "string"
@@ -1226,9 +1227,13 @@ def autoSchedDataEvent(schedData) {
 }
 
 def canHeatCool(canHeat, canCool) {
+	def supportedThermostatModes = ["off"]
 	state?.can_heat = !canHeat ? false : true
+	if(state.can_heat) { supportedThermostatModes << "heat" }
 	state?.can_cool = !canCool ? false : true
+	if(state.can_cool) { supportedThermostatModes << "cool" }
 	state?.has_auto = (canCool && canHeat) ? true : false
+	if(state.can_heat && state.can_cool) { supportedThermostatModes << "auto" }
 	if(isStateChange(device, "canHeat", state?.can_heat.toString())) {
 		sendEvent(name: "canHeat", value: state?.can_heat.toString())
 	}
@@ -1238,12 +1243,31 @@ def canHeatCool(canHeat, canCool) {
 	if(isStateChange(device, "hasAuto", state?.has_auto.toString())) {
 		sendEvent(name: "hasAuto", value: state?.has_auto.toString())
 	}
+	if(state?.supportedThermostatModes != supportedThermostatModes) {
+		sendEvent(name: "supportedThermostatModes", value: supportedThermostatModes)
+		state.supportedThermostatModes = supportedThermostatModes
+	}
+
+	def nestSupportedThermostatModes = supportedThermostatModes.collect()
+	nestSupportedThermostatModes << "eco"
+	if(state?.supportedNestThermostatModes != nestSupportedThermostatModes) {
+		sendEvent(name: "supportedNestThermostatModes", value: nestSupportedThermostatModes)
+		state.supportedNestThermostatModes = nestSupportedThermostatModes
+	}
 }
 
 def hasFan(hasFan) {
+	def supportedFanModes = []
 	state?.has_fan = (hasFan == "true") ? true : false
 	if(isStateChange(device, "hasFan", hasFan.toString())) {
 		sendEvent(name: "hasFan", value: hasFan.toString())
+	}
+	if(state.has_fan) {
+		supportedFanModes = ["auto","on"] 
+	}
+	if(state?.supportedThermostatFanModes != supportedFanModes) {
+		sendEvent(name: "supportedThermostatFanModes", value: supportedFanModes)
+		state?.supportedThermostatFanModes = supportedFanModes
 	}
 }
 
