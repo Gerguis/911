@@ -1245,14 +1245,14 @@ def canHeatCool(canHeat, canCool) {
 	}
 	if(state?.supportedThermostatModes != supportedThermostatModes) {
 		sendEvent(name: "supportedThermostatModes", value: supportedThermostatModes)
-		state.supportedThermostatModes = supportedThermostatModes
+		state.supportedThermostatModes = supportedThermostatModes.collect()
 	}
 
 	def nestSupportedThermostatModes = supportedThermostatModes.collect()
 	nestSupportedThermostatModes << "eco"
 	if(state?.supportedNestThermostatModes != nestSupportedThermostatModes) {
 		sendEvent(name: "supportedNestThermostatModes", value: nestSupportedThermostatModes)
-		state.supportedNestThermostatModes = nestSupportedThermostatModes
+		state.supportedNestThermostatModes = nestSupportedThermostatModes.collect()
 	}
 }
 
@@ -1267,7 +1267,7 @@ def hasFan(hasFan) {
 	}
 	if(state?.supportedThermostatFanModes != supportedFanModes) {
 		sendEvent(name: "supportedThermostatFanModes", value: supportedFanModes)
-		state?.supportedThermostatFanModes = supportedFanModes
+		state?.supportedThermostatFanModes = supportedFanModes.collect()
 	}
 }
 
