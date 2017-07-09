@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "7-8-2017" }
+def appVerDate() { "7-9-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -6613,10 +6613,15 @@ def clientSecret() {
 |									LOGGING AND Diagnostic										|
 *************************************************************************************************/
 def LogTrace(msg, logSrc=null) {
-	def trOn = (appDebug && advAppDebug && !enRemDiagLogging && !atomicState?.enRemDiagLogging) ? true : false
+	def trOn = (appDebug && advAppDebug) ? true : false
 	if(trOn) {
+		def logOn = (settings?.enRemDiagLogging && atomicState?.enRemDiagLogging) ? true : false
 		def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "Manager") : logSrc
-		Logger(msg, "trace", theLogSrc)
+		if(!logOn) {
+			Logger(msg, "trace", theLogSrc)
+		} else {
+			Logger(msg, "trace", theLogSrc, true)
+		}
 	}
 }
 
@@ -6636,7 +6641,7 @@ def tokenStrScrubber(str) {
 	return newStr
 }
 
-def Logger(msg, type, logSrc=null) {
+def Logger(msg, type, logSrc=null, noSTlogger=false) {
 	if(msg && type) {
 		def labelstr = ""
 		if(atomicState?.debugAppendAppName == null) {
@@ -6646,25 +6651,27 @@ def Logger(msg, type, logSrc=null) {
 		if(atomicState?.debugAppendAppName) { labelstr = "${app.label} | " }
 		def themsg = tokenStrScrubber("${labelstr}${msg}")
 
-		switch(type) {
-			case "debug":
-				log.debug "${themsg}"
-				break
-			case "info":
-				log.info "||| ${themsg}"
-				break
-			case "trace":
-				log.trace "| ${themsg}"
-				break
-			case "error":
-				log.error "| ${themsg}"
-				break
-			case "warn":
-				log.warn "|| ${themsg}"
-				break
-			default:
-				log.debug "${themsg}"
-				break
+		if(!noSTlogger) {
+			switch(type) {
+				case "debug":
+					log.debug "${themsg}"
+					break
+				case "info":
+					log.info "||| ${themsg}"
+					break
+				case "trace":
+					log.trace "| ${themsg}"
+					break
+				case "error":
+					log.error "| ${themsg}"
+					break
+				case "warn":
+					log.warn "|| ${themsg}"
+					break
+				default:
+					log.debug "${themsg}"
+					break
+			}
 		}
 		//log.debug "Logger remDiagTest: $msg | $type | $logSrc"
 		saveLogtoRemDiagStore(themsg, type, logSrc)
