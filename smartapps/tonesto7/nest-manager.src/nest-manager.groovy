@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "7-6-2017" }
+def appVerDate() { "7-8-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -1692,7 +1692,7 @@ void diagLogProcChange(setOn) {
 		}
 	}
 	if(doInit) {
-		def kdata = getState()?.findAll { (it?.key in ["remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt" ]) }
+		def kdata = getState()?.findAll { (it?.key in ["remDiagLogDataStore", "remDiagDataSentDt" ]) }
 		kdata.each { kitem ->
 			state.remove(kitem?.key.toString())
 		}
@@ -1976,7 +1976,6 @@ def nestTokenResetPage() {
 	return dynamicPage(name: "nestTokenResetPage", install: false) {
 		section ("Resetting Nest Token") {
 			revokeNestToken()
-			atomicState.authToken = null
 			paragraph "Token reset\nPress Done to return to Login page"
 		}
 	}
@@ -6444,6 +6443,7 @@ def callback() {
 			httpPost(uri: tokenUrl) { resp ->
 				atomicState.tokenExpires = resp?.data.expires_in
 				atomicState.authToken = resp?.data.access_token
+				atomicState.authTokenNum = atomicState?.appData?.token?.tokenNum
 				if(atomicState?.authToken) { atomicState?.tokenCreatedDt = getDtNow() }
 			}
 
@@ -6472,15 +6472,20 @@ def revokeNestToken() {
 		]
 		try {
 			httpDelete(params) { resp ->
-				atomicState.authToken = null
 				if(resp?.status == 204) {
 					LogAction("Nest Token revoked", "warn", true)
+					atomicState.authToken = null
+					atomicState.tokenCreatedDt = null
+					atomicState.tokenExpires = null
 					return true
 				}
 			}
 		}
 		catch (ex) {
 			if(ex?.message?.toString() == "Not Found") {
+				atomicState.authToken = null
+				atomicState.tokenCreatedDt = null
+				atomicState.tokenExpires = null
 				return true
 			} else {
 				log.error "revokeNestToken Exception:", ex
@@ -6734,7 +6739,7 @@ def fixState() {
 	def before = getStateSizePerc()
 	if(!parent) {
 		if(!atomicState?.resetAllData && resetAllData) {
-			def data = getState()?.findAll { !(it?.key in ["accessToken", "authToken", "tokenExpires", "tokenCreatedDt", "enRemDiagLogging", "installationId", "remDiagLogActivatedDt", "installData", "remDiagLogDataStore", "remDiagDataSentDt", "remDiagLogSentCnt", "resetAllData", "pollingOn", "apiCommandCnt", "autoMigrationComplete" ]) }
+			def data = getState()?.findAll { !(it?.key in ["accessToken", "authToken", "tokenExpires", "tokenCreatedDt", "authTokenNum", "enRemDiagLogging", "installationId", "remDiagLogActivatedDt", "installData", "remDiagLogDataStore", "remDiagDataSentDt", "resetAllData", "pollingOn", "apiCommandCnt", "autoMigrationComplete" ]) }
 			data.each { item ->
 				state.remove(item?.key.toString())
 			}
@@ -7651,7 +7656,7 @@ def renderDiagHome() {
 												<span><b>Install ID:</b></br><small>${atomicState?.installationId}</small></span>
 											</div>
 											<div class="col-xs-12 col-sm-6 install-content">
-									        	<span><b>Token Num:</b></br><small>${atomicState?.appData?.token?.tokenNum}</small></span>
+									        	<span><b>Token Num:</b></br><small>${atomicState?.authTokenNum}</small></span>
 									        </div>
 											<div class="col-xs-12 col-sm-6 install-content">
 									        	<span><b>API Token Ver:</b></br><small>${atomicState?.metaData?.client_version}</small></span>
