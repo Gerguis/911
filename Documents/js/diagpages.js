@@ -14,7 +14,9 @@ $("#rfrshBtn").hover(function(e) {
 });
 
 $("#goHomeBtn").click(function() {
-    window.history.back();
+	closeNavMenu();
+	toggleMenuBtn();
+	window.history.back();
 });
 
 $("body").flowtype({
