@@ -1,7 +1,8 @@
 var hdrHeight = $("#top-hdr").height();
-console.log("hdrHeight:", hdrHeight);
-$("#container").animate({
-    paddingTop: hdrHeight + 10
+var hdrHeightPx = (hdrHeight + 5)+'px';
+
+$("body").animate({
+	paddingTop: hdrHeightPx
 });
 
 $(document).ready(function() {
@@ -64,15 +65,14 @@ $(window).scroll(function() {
 });
 
 function topFunction() {
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
+	console.log("requested height:", hdrHeightPx, "| actual height:", $('body').scrollTop());
+	document.body.scrollTop = hdrHeightPx;
+	document.documentElement.scrollTop = hdrHeightPx;
 }
 
 function toggleMenuBtn() {
-    var menuActiveCls = "is-active",
-        menuButton = $("#menu-button");
-    menuButton.toggleClass(menuActiveCls);
-
+	var menuActiveCls = "is-active", menuButton = $("#menu-button");
+	menuButton.toggleClass(menuActiveCls);
 }
 
 (function($) {
