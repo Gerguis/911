@@ -1,76 +1,75 @@
 html, body {
-	position: relative;
-	height: 100%;
-	width: 100%;
-	min-height: 100%;
-	min-width: 375px;
+    position: relative;
+    height: 100%;
+    min-height: 100%;
+    min-width: 375px;
 }
 
 .container {
-	width: 100%;
-	margin: auto;
+    width: 100%;
+    margin: auto;
 }
+
 
 /**************************************
     PAGE HEADER CSS
 ***************************************/
 
 #top-hdr {
-	height: auto;
-	max-height: 140px;
-	min-width: 375px;
+    height: auto;
+    min-width: 375px;
 }
 
 .in-middle {
-	vertical-align: middle;
+    vertical-align: middle;
 }
 
 .left-head-col {
-	padding: 1.2em 0 0 20px;
+    padding: 1.2em 0 0 20px;
 }
 
 .right-head-col {
-	padding: 2.1em 40px 0 0;
+    padding: 2.1em 40px 0 0;
 }
 
 .links {
-	padding: 10px;
-	font-size: 18px;
+    padding: 10px;
+    font-size: 18px;
 }
 
 .logoIcn {
-	width: 1.7em;
-	height: auto;
-	max-width: 48px;
-	max-height: 48px;
+    width: 1.7em;
+    height: auto;
+    max-width: 48px;
+    max-height: 48px;
 }
 
 .refresh-btn {
-	color: black;
-	width: auto;
-	height: auto;
-	max-width: 90px;
-	max-height: 40px;
-	font-size: 1.0em;
-	border-radius: 0.4em;
-	background-color: white;
-	border-color: gray;
-	border-style: solid;
-	border-width: 1px;
+    color: black;
+    width: auto;
+    height: auto;
+    max-width: 90px;
+    max-height: 40px;
+    font-size: 1.0em;
+    border-radius: 0.4em;
+    background-color: white;
+    border-color: gray;
+    border-style: solid;
+    border-width: 1px;
 }
 
 #rfrshBtn:after {
-	content: ' Refresh';
+    content: ' Refresh';
 }
 
 @media screen and (max-width: 520px) {
-	#rfrshBtn:after {
-		content: '';
-	}
-	#rfrshBtn {
-		font-size: 1.1em;
-	}
-	/*.left-head-col {
+    #rfrshBtn:after {
+        content: '';
+    }
+    #rfrshBtn {
+        font-size: 1.1em;
+    }
+    /*.left-head-col {
         padding: 25px 0 0 50px;
     }
     .right-head-col {
@@ -79,182 +78,173 @@ html, body {
 }
 
 .export-pdf-btn {
-	color: white;
-	width: auto;
-	height: auto;
-	max-width: 90px;
-	max-height: 40px;
-	font-size: 1.0em;
-	border-radius: 0.4em;
-	background-color: transparent;
-	border-color: white;
-	border-style: solid;
-	border-width: 1px;
+    color: white;
+    width: auto;
+    height: auto;
+    max-width: 90px;
+    max-height: 40px;
+    font-size: 1.0em;
+    border-radius: 0.4em;
+    background-color: transparent;
+    border-color: white;
+    border-style: solid;
+    border-width: 1px;
 }
 
-.panel-title-text { padding-top: 0.5em; font-size: 24px; } .subpanel-title-text { font-size: 18px; }
+.panel-title-text {
+    padding-top: 0.5em;
+    font-size: 24px;
+}
+
+.subpanel-title-text {
+    font-size: 18px;
+}
+
 
 /**************************************
     NAV BAR CSS
 ***************************************/
 
 .navMenu {
-	text-align: left;
+    text-align: left;
 }
-
-/*
-nav {
-    background: white;
-    border: none;
-    display: block;
-    height: 92%;
-    overflow: auto;
-    position: fixed;
-    right: -17em;
-    top: 85px;
-    font-size: 15px;
-    width: 16em;
-    z-index: 2000;
-    box-shadow: 4px 4px 10px gray;
-    transition: all 0.3s ease-in-out 0s, visibility 0.3s linear 0.3s, z-index 0s linear 0.01s;
-    -webkit-transition: left 0.3s;
-    -moz-transition: left 0.3s;
-    -o-transition: left 0.3s;
-}
-*/
 
 .nav-home-btn {
-	padding: 20px 10px 0 10px;
-	font-size: 22px;
+    padding: 20px 10px 0 10px;
+    font-size: 22px;
 }
 
 .nav-menu {
-	padding-top: 12px;
+    padding: 12px;
 }
 
 .nav-menu li {
-	border-bottom: 1px solid gray;
-	margin-left: 5px;
-	margin-right: 5px;
-	font-size: 18px;
-	padding: 12px;
+    border-bottom: solid 1px rgba(102, 102, 102, 0.3);
+    margin-left: 5px;
+    margin-right: 5px;
+    font-size: 14px;
+    padding: 12px;
 }
 
 .nav-menu li a {
-	color: black;
-	text-decoration: none;
+    color: black;
+    text-decoration: none;
 }
 
 .nav-menu li a:hover {
-	color: tomato;
-	text-decoration: none;
+    color: tomato;
+    text-decoration: none;
 }
 
 .nav-menu li .sub-nav {
-	border-bottom: 0px;
-	padding: 4px;
+    border-bottom: 0px;
+    padding: 4px;
 }
 
 .nav-menu a .caret {
-	width: 0;
-	height: 0;
-	display: inline-block;
-	vertical-align: top;
-	border-top: 4px solid #4f5963;
-	border-right: 4px solid transparent;
-	border-left: 4px solid transparent;
-	content: "";
-	margin-top: 8px;
+    width: 0;
+    height: 0;
+    display: inline-block;
+    vertical-align: top;
+    border-top: 4px solid #4f5963;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    content: "";
+    margin-top: 8px;
 }
 
 .nav-menu a:hover .caret {
-	border-top-color: #4f5963;
+    border-top-color: #4f5963;
 }
 
-.nav-menu li.open > a > .caret {
-	border-top: none;
-	border-bottom: 4px solid #4f5963;
-	border-right: 4px solid transparent;
-	border-left: 4px solid transparent;
+.nav-menu li.open>a>.caret {
+    border-top: none;
+    border-bottom: 4px solid #4f5963;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
 }
 
-.nav-menu li.open > a:hover > .caret {
-	border-bottom-color: #4f5963;
+.nav-menu li.open>a:hover>.caret {
+    border-bottom-color: #4f5963;
 }
 
 .icon:before {
-	font-family: 'FontAwesome';
-	font-style: normal;
-	font-variant: normal;
-	font-weight: normal;
-	line-height: 1;
-	text-transform: none;
-	content: '\f105';
+    font-family: 'FontAwesome';
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    line-height: 1;
+    text-transform: none;
+    content: '\f105';
 }
 
-.nav-menu li > a > span.icon {
-	float: right;
-	margin: 0.1em 1.7em -0.1em 0;
-	opacity: 0;
-	-webkit-transition: all 0.2s ease-in-out;
-	-moz-transition: all 0.2s ease-in-out;
-	-o-transition: all 0.2s ease-in-out;
-	transition: all 0.2s ease-in-out;
+.nav-menu li>a>span.icon {
+    float: right;
+    margin: 0.1em 1.7em -0.1em 0;
+    opacity: 0;
+    -webkit-transition: all 0.2s ease-in-out;
+    -moz-transition: all 0.2s ease-in-out;
+    -o-transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
 }
 
-.nav-menu li > a:hover > span.icon {
-	float: right;
-	margin: 0.1em 0.8em -0.1em 0;
-	opacity: 1;
+.nav-menu li>a:hover>span.icon {
+    float: right;
+    margin: 0.1em 0.8em -0.1em 0;
+    opacity: 1;
 }
 
 .menu-btn:focus {
-	outline: none;
+    outline: none;
 }
 
 .nav-cont-bord-div {
-	padding: 15px;
+    padding: 15px 15px 25px 15px;
 }
 
 .nav-cont-div {
-	padding: 10px;
-	border-radius: 0.6em;
-	border: solid gray 1px;
-	-moz-box-shadow: inset 0px 10px 10px #ccc;
-	-webkit-box-shadow: inset 0px 0px 10px #ccc;
-	box-shadow: inset 0px 10px 10px #ccc;
-	line-height: 1.5em;
+    padding: 10px;
+    border-radius: 0.6em;
+    background-color: #333333;
+    border: solid lightgray 1px;
+    -moz-box-shadow: 0px 5px 1px #ccc;
+    -webkit-box-shadow: 0px 1px 1px #ccc;
+    box-shadow: 0px 1px 1px #ccc;
 }
 
 .nav-key-item {
-	font-weight: bold;
-	list-style: none;
-	font-size: 1.0em;
+    font-weight: bold;
+    text-decoration: underline;
+    list-style: none;
+    font-size: 1.0em;
 }
 
 .nav-subkey-item {
-	font-weight: normal;
-	list-style: none;
+    font-weight: normal;
+    list-style: none;
 }
 
 .nav-subkey-item:before {
-	content: "▶";
-	padding-right: 8px;
+    color: white;
+    content: "▶";
+    padding-right: 8px;
 }
+
 
 /* Menu Appearance */
 
 .pushy {
-	position: fixed;
-	width: 250px;
-	height: 100%;
-	top: 0;
-	z-index: 9999;
-	background: #191918;
-	overflow: auto;
-	-webkit-overflow-scrolling: touch;
-	/* enables momentum scrolling in iOS overflow elements */
+    position: fixed;
+    width: 250px;
+    height: 100%;
+    top: 0;
+    z-index: 9999;
+    background: #191918;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    /* enables momentum scrolling in iOS overflow elements */
 }
+
 
 /*
 .pushy a {
@@ -274,106 +264,118 @@ nav {
 */
 
 .pushy.pushy-left {
-	left: 0;
+    left: 0;
 }
 
 .pushy.pushy-right {
-	right: 0;
+    right: 0;
 }
 
 .pushy-content {
-	visibility: hidden;
+    visibility: hidden;
 }
+
 
 /* Menu Movement */
 
 .pushy-left {
-	-webkit-transform: translate3d(-250px, 0, 0);
-	-ms-transform: translate3d(-250px, 0, 0);
-	transform: translate3d(-250px, 0, 0);
+    -webkit-transform: translate3d(-250px, 0, 0);
+    -ms-transform: translate3d(-250px, 0, 0);
+    transform: translate3d(-250px, 0, 0);
 }
 
 .pushy-open-left #container, .pushy-open-left .push {
-	-webkit-transform: translate3d(250px, 0, 0);
-	-ms-transform: translate3d(250px, 0, 0);
-	transform: translate3d(250px, 0, 0);
+    -webkit-transform: translate3d(250px, 0, 0);
+    -ms-transform: translate3d(250px, 0, 0);
+    transform: translate3d(250px, 0, 0);
 }
 
 .pushy-right {
-	-webkit-transform: translate3d(250px, 0, 0);
-	-ms-transform: translate3d(250px, 0, 0);
-	transform: translate3d(250px, 0, 0);
+    -webkit-transform: translate3d(250px, 0, 0);
+    -ms-transform: translate3d(250px, 0, 0);
+    transform: translate3d(250px, 0, 0);
 }
 
 .pushy-open-right #container, .pushy-open-right .push {
-	-webkit-transform: translate3d(-250px, 0, 0);
-	-ms-transform: translate3d(-250px, 0, 0);
-	transform: translate3d(-250px, 0, 0);
+    -webkit-transform: translate3d(-250px, 0, 0);
+    -ms-transform: translate3d(-250px, 0, 0);
+    transform: translate3d(-250px, 0, 0);
 }
 
 .pushy-open-left .pushy, .pushy-open-right .pushy {
-	-webkit-transform: translate3d(0, 0, 0);
-	-ms-transform: translate3d(0, 0, 0);
-	transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    -ms-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
 }
 
 .pushy-open-left .pushy-content, .pushy-open-right .pushy-content {
-	visibility: visible;
+    visibility: visible;
 }
+
 
 /* Menu Transitions */
 
 #container, .pushy, .push {
-	transition: transform 0.2s cubic-bezier(0.16, 0.68, 0.43, 0.99);
+    transition: transform 0.2s cubic-bezier(0.16, 0.68, 0.43, 0.99);
 }
 
 .pushy-content {
-	transition: visibility 0.2s cubic-bezier(0.16, 0.68, 0.43, 0.99);
+    transition: visibility 0.2s cubic-bezier(0.16, 0.68, 0.43, 0.99);
 }
+
 
 /* Site Overlay */
 
 .site-overlay {
-	display: none;
+    display: none;
 }
 
 .pushy-open-left .site-overlay, .pushy-open-right .site-overlay {
-	display: block;
-	position: fixed;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	z-index: 9998;
-	background-color: rgba(0, 0, 0, 0.5);
-	-webkit-animation: fade 500ms;
-	animation: fade 500ms;
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 9998;
+    background-color: rgba(0, 0, 0, 0.5);
+    -webkit-animation: fade 500ms;
+    animation: fade 500ms;
 }
 
 @keyframes fade {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: 1;
-	}
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 @-webkit-keyframes fade {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: 1;
-	}
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
+
 
 /* Submenu Appearance */
 
+
 /* .pushy-submenu { */
+
+
 /* Submenu Buttons */
+
+
 /* Submenu Icon */
+
+
 /* } */
+
 
 /* .pushy-submenu ul {
     padding-left: 15px;
@@ -416,7 +418,9 @@ nav {
     transition: transform 0.2s;
 } */
 
+
 /* Submenu Movement */
+
 
 /*
 .pushy-submenu-closed ul {
@@ -431,7 +435,10 @@ nav {
 
 .pushy-submenu-open {
 	/* Submenu Icon */
+
+
 /*}*/
+
 
 /*
 .pushy-submenu-open ul {
@@ -449,139 +456,140 @@ nav {
 	transform: translateY(-50%) rotate(90deg);
 }*/
 
+
 /**************************************
     LOG PAGE SECTION CSS
 ***************************************/
 
 .logs-div {
-	text-align: left;
-	padding: 0, 0;
+    text-align: left;
+    padding: 0, 0;
 }
 
 .label {
-	display: inline;
-	padding: .2em .6em .3em;
-	font-weight: bold;
-	line-height: 1;
-	color: #fff;
-	text-align: center;
-	white-space: nowrap;
-	vertical-align: baseline;
-	border-radius: .25em;
+    display: inline;
+    padding: .2em .6em .3em;
+    font-weight: bold;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25em;
 }
 
 .logSrcFmt {
-	border-radius: 0.3em;
-	border-color: gray;
-	border-style: solid;
-	border-width: 1px;
-	padding: 2px;
-	font-style: italic;
+    border-radius: 0.3em;
+    border-color: gray;
+    border-style: solid;
+    border-width: 1px;
+    padding: 2px;
+    font-style: italic;
 }
 
 .defsrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .mansrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .autosrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .camsrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .protsrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .pressrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .weatsrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .tstatsrc-bg {
-	color: gray;
-	background-color: lightgray;
+    color: gray;
+    background-color: lightgray;
 }
 
 .centerText {
-	text-align: center;
+    text-align: center;
 }
 
 .logEvtDt {
-	font-weight: bold;
+    font-weight: bold;
 }
 
 .panelHeadTxt {
-	font-size: 25px;
+    font-size: 25px;
 }
 
 .pnl-head-title {
-	font-size: 2.0em;
+    font-size: 2.0em;
 }
 
 @media (min-width: 800px) {
-	.pnl-head-title {
-		padding: 3px 0;
-	}
+    .pnl-head-title {
+        padding: 3px 0;
+    }
 }
 
 @media (min-width: 600px) {
-	.pnl-head-title {
-		padding: 5px 0;
-	}
+    .pnl-head-title {
+        padding: 5px 0;
+    }
 }
 
 .title-text {
-	font-size: 2.0em;
+    font-size: 2.0em;
 }
 
 .panel-title-text {
-	padding-top: 0.5em;
-	font-size: 24px;
+    padding-top: 0.5em;
+    font-size: 24px;
 }
+
 .subpanel-title-text {
-	font-size: 18px;
+    font-size: 18px;
 }
 
+.mapDataFmt {}
 
-.mapDataFmt {
-}
 
 /**************************************
     BACK TO TOP CSS BUTTON
 ***************************************/
 
 #scrollTopBtn {
-	display: none;
-	position: fixed;
-	bottom: 20px;
-	right: 30px;
-	z-index: 99;
-	border: none;
-	outline: none;
-	background-color: gray;
-	color: white;
-	cursor: pointer;
-	padding: 15px;
-	border-radius: 10px;
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    z-index: 99;
+    border: none;
+    outline: none;
+    background-color: gray;
+    color: white;
+    cursor: pointer;
+    padding: 15px;
+    border-radius: 10px;
 }
 
 #scrollTopBtn:hover {
-	background-color: #3174AE;
+    background-color: #3174AE;
 }
