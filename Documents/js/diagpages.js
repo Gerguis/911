@@ -1,46 +1,20 @@
 var hdrHeight = $("#top-hdr").height();
-var hdrHeightPx = (hdrHeight + 5)+'px';
+var hdrHeightPx = hdrHeight + 5 + "px";
 
 $("body").animate({
-	paddingTop: hdrHeightPx
+    paddingTop: hdrHeightPx
 });
 
-$(document).ready(function() {
-    $("#rfrshBtn").click(function() {
-        window.location.reload(true);
-    });
-    $("#rfrshBtn").hover(function(e) {
-        $("#rfrshBtnIcn").toggleClass("fa-spin");
-    });
-    $("#goHomeBtn").click(function() {
-        window.history.back();
-    });
-    $('#nav').localScroll({
-        duration: 800,
-        offset: (hdrHeight + 10)
-    });
+$("#rfrshBtn").click(function() {
+    window.location.reload(true);
+});
 
+$("#rfrshBtn").hover(function(e) {
+    $("#rfrshBtnIcn").toggleClass("fa-spin");
+});
 
-    $("#exportLogPdfBtn").click(function() {
-        var element = document.getElementById('#logBody');
-        html2pdf(element, {
-            margin: 1,
-            filename: 'log-data.pdf',
-            image: {
-                type: 'jpeg',
-                quality: 0.98
-            },
-            html2canvas: {
-                dpi: 192,
-                letterRendering: true
-            },
-            jsPDF: {
-                unit: 'in',
-                format: 'letter',
-                orientation: 'portrait'
-            }
-        });
-    });
+$("#goHomeBtn").click(function() {
+    window.history.back();
 });
 
 $("body").flowtype({
@@ -50,10 +24,7 @@ $("body").flowtype({
 });
 
 $(window).scroll(function() {
-    if (
-        $("#container").scrollTop() > 20 ||
-        document.documentElement.scrollTop > 20
-    ) {
+    if ($("body").scrollTop() > 20 || document.documentElement.scrollTop > 20) {
         $("#scrollTopBtn").css({
             display: "block"
         });
@@ -64,15 +35,28 @@ $(window).scroll(function() {
     }
 });
 
+function scrollToId(eId) {
+    var item = $("#" + eId);
+    $("html,body").animate({
+        scrollTop: item.offset().top - hrdHeightPx - 20
+    }, 500);
+}
+
 function topFunction() {
-	console.log("requested height:", hdrHeightPx, "| actual height:", $('body').scrollTop());
-	document.body.scrollTop = hdrHeightPx;
-	document.documentElement.scrollTop = hdrHeightPx;
+    //console.log("requested height:", hdrHeightPx, "| actual height:", $('body').scrollTop());
+    document.body.scrollTop = hdrHeightPx;
+    document.documentElement.scrollTop = hdrHeightPx;
 }
 
 function toggleMenuBtn() {
-	var menuActiveCls = "is-active", menuButton = $("#menu-button");
-	menuButton.toggleClass(menuActiveCls);
+    var menuActiveCls = "is-active",
+        menuButton = $("#menu-button");
+    menuButton.toggleClass(menuActiveCls);
+}
+
+function closeNavMenu() {
+    var body = $('body');
+    body.removeClass("pushy-open-left");
 }
 
 (function($) {
@@ -148,27 +132,39 @@ function toggleMenuBtn() {
         if (pushy.hasClass(pushyLeft)) {
             body.addClass(pushyOpenLeft);
             pushy.animate({
-                left: "0px"
-            }, menuSpeed);
+                    left: "0px"
+                },
+                menuSpeed
+            );
             container.animate({
-                left: menuWidth
-            }, menuSpeed);
+                    left: menuWidth
+                },
+                menuSpeed
+            );
             //css class to add pushy capability
             push.animate({
-                left: menuWidth
-            }, menuSpeed);
+                    left: menuWidth
+                },
+                menuSpeed
+            );
             toggleMenuBtn();
         } else {
             body.addClass(pushyOpenRight);
             pushy.animate({
-                right: "0px"
-            }, menuSpeed);
+                    right: "0px"
+                },
+                menuSpeed
+            );
             container.animate({
-                right: menuWidth
-            }, menuSpeed);
+                    right: menuWidth
+                },
+                menuSpeed
+            );
             push.animate({
-                right: menuWidth
-            }, menuSpeed);
+                    right: menuWidth
+                },
+                menuSpeed
+            );
             toggleMenuBtn();
         }
 
@@ -183,27 +179,39 @@ function toggleMenuBtn() {
         if (pushy.hasClass(pushyLeft)) {
             body.removeClass(pushyOpenLeft);
             pushy.animate({
-                left: "-" + menuWidth
-            }, menuSpeed);
+                    left: "-" + menuWidth
+                },
+                menuSpeed
+            );
             container.animate({
-                left: "0px"
-            }, menuSpeed);
+                    left: "0px"
+                },
+                menuSpeed
+            );
             //css class to add pushy capability
             push.animate({
-                left: "0px"
-            }, menuSpeed);
+                    left: "0px"
+                },
+                menuSpeed
+            );
             toggleMenuBtn();
         } else {
             body.removeClass(pushyOpenRight);
             pushy.animate({
-                right: "-" + menuWidth
-            }, menuSpeed);
+                    right: "-" + menuWidth
+                },
+                menuSpeed
+            );
             container.animate({
-                right: "0px"
-            }, menuSpeed);
+                    right: "0px"
+                },
+                menuSpeed
+            );
             push.animate({
-                right: "0px"
-            }, menuSpeed);
+                    right: "0px"
+                },
+                menuSpeed
+            );
             toggleMenuBtn();
         }
     }
@@ -321,3 +329,24 @@ function toggleMenuBtn() {
         });
     }
 })(jQuery);
+
+$("#exportLogPdfBtn").click(function() {
+    var element = document.getElementById("#logBody");
+    html2pdf(element, {
+        margin: 1,
+        filename: "log-data.pdf",
+        image: {
+            type: "jpeg",
+            quality: 0.98
+        },
+        html2canvas: {
+            dpi: 192,
+            letterRendering: true
+        },
+        jsPDF: {
+            unit: "in",
+            format: "letter",
+            orientation: "portrait"
+        }
+    });
+});
