@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.4" }
-def appVerDate() { "7-8-2017" }
+def appVerDate() { "7-10-2017" }
 
 preferences {
 	//startPage
@@ -7568,80 +7568,93 @@ def getRemLogData() {
 				<title>NST Diagnostics - Logs</title>
 
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+				<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 				<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
 				<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
+				<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 				<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+				<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hamburgers/0.9.1/hamburgers.min.css">
 				<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
- 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
+				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 				</style>
 			</head>
 			<body>
-				<button onclick="topFunction()" id="scrollTopBtn" title="Go to Top"><i class="fa fa-arrow-up centerText" aria-hidden="true"></i> Back to Top</button>
-				<nav>
+				<button onclick="topFunction()" id="scrollTopBtn" title="Go to top"><i class="fa fa-arrow-up centerText" aria-hidden="true"></i> Back to Top</button>
+				<nav id="menu-page" class="pushy pushy-left" data-focus="#nav-key-item1">
 					<div class="nav-home-btn centerText"><button id="goHomeBtn" class="btn-link" title="Go Back to Home Page"><i class="fa fa-home centerText" aria-hidden="true"></i> Go Home</button></div>
-					<ul class="list-unstyled main-menu">
-						<!--Include your navigation here-->
-						${navHtml}
-					</ul>
+					<!--Include your navigation here-->
+					${navHtml}
 				</nav>
-				<!--Page Header Section -->
-				<div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
-				 <div class="centerText">
-				  <div class="row">
-				   <div class="col-xs-2">
-					<div class="left-head-col pull-left">
-					 <button id="hamb-icon" class="btn btn-link nav-expander" title="Menu"><span></span><span></span><span></span><span></span></button>
-					</div>
-				   </div>
-				   <div class="col-xs-8 centerText">
-					<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
-					<h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
-				   </div>
-				   <div class="col-xs-2 right-head-col">
-					<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right" title="Refresh Page Content"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i></button>
-				   </div>
-				  </div>
-				 </div>
-				</div>
-				 <!-- Page Content -->
-				 <div id="page-content-wrapper">
-				  <div class="container">
-				   <!--First Panel Section -->
-				   <div id="main" class="panel-body">
-				    <div class="panel panel-primary">
-					<div class="panel-heading">
-					 	<div class="row">
-							<div class="col-xs-10" style="padding-left: 25px;">
-						   		<div class="row">
-							   		<h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
-						   		</div>
-						   		<div class="row">
-							   		<small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
-						   		</div>
-					   		</div>
-							<div class="col-xs-2" style="padding: 10px;">
-							   	<button id="exportLogPdfBtn" type="button" title="Export Content as PDF" class="btn export-pdf-btn pull-right"><i id="exportPdfBtnIcn" class="fa fa-file-pdf-o" aria-hidden="true"></i> PDF</button>
-					  		</div>
-					 	</div>
-					</div>
-					 <div class="panel-body" style="background-color: #DEDEDE;">
-				      <div id="logBody" class="logs-div">
-				       <div>${resultStr}</div>
-				      </div>
-				     </div>
-				    </div>
-				   </div>
-				  </div>
-				 </div>
-				 </div>
+				<!-- Site Overlay -->
+				<div class="site-overlay"></div>
 
-				 </div>
+				<!-- Your Content -->
+				<div id="container">
+					<!--Page Header Section -->
+					<div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
+						<div class="centerText">
+							<div class="row">
+						  		<div class="col-xs-2">
+							   		<div class="left-head-col pull-left">
+								   		<div class="menu-btn-div">
+									   		<div class="hamburger-wrap">
+										   		<button id="menu-button" class="menu-btn hamburger hamburger--collapse hamburger--accessible" title="Menu" type="button">
+											   		<span class="hamburger-box">
+												   		<span class="hamburger-inner"></span>
+											   		</span>
+											   		<!--<span class="hamburger-label">Menu</span>-->
+										   		</button>
+									   		</div>
+								   		</div>
+							   		</div>
+						   		</div>
+							   	<div class="col-xs-8 centerText">
+									<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Logs</img></h3>
+									<h6 style="font-size: 0.9em;">This Includes Automations, Device, Manager Logs</h6>
+							   	</div>
+						   		<div class="col-xs-2 right-head-col">
+									<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right" title="Refresh Page Content"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i></button>
+						   		</div>
+						  	</div>
+						</div>
+					</div>
+					<!-- Page Content -->
+					<div id="page-content-wrapper">
+						<div class="container">
+						   <!--First Panel Section -->
+						   <div id="main" class="panel-body">
+								<div class="panel panel-primary">
+									<div class="panel-heading">
+									 	<div class="row">
+											<div class="col-xs-10" style="padding-left: 25px;">
+										   		<div class="row">
+											   		<h1 class="panel-title pnl-head-title pull-left">Log Stream</h1>
+										   		</div>
+										   		<div class="row">
+											   		<small class="pull-left" style="text-decoration: underline;">${logSz} Items</small>
+										   		</div>
+									   		</div>
+											<div class="col-xs-2" style="padding: 10px;">
+											   	<button id="exportLogPdfBtn" type="button" title="Export Content as PDF" class="btn export-pdf-btn pull-right"><i id="exportPdfBtnIcn" class="fa fa-file-pdf-o" aria-hidden="true"></i> PDF</button>
+									  		</div>
+									 	</div>
+									</div>
+									<div class="panel-body" style="background-color: #DEDEDE;">
+										<div id="logBody" class="logs-div">
+											<div>${resultStr}</div>
+								      	</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			</body>
 		"""
