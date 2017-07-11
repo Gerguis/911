@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "7-9-2017" }
+def appVerDate() { "7-10-2017" }
 def minVersions() {
 	return [
 		"automation":["val":514, "desc":"5.1.4"],
@@ -63,6 +63,7 @@ preferences {
 	page(name: "changeLogPage")
 	page(name: "prefsPage")
 	page(name: "infoPage")
+	page(name: "helpPage")
 	page(name: "pollPrefPage")
 	page(name: "debugPrefPage")
 	page(name: "notifPrefPage")
@@ -215,9 +216,6 @@ def mainPage() {
 				href "pollPrefPage", title: "", state: ((atomicState?.restStreamingOn && rStrEn) ? "complete" : null), image: getAppImg("two_way_icon.png"),
 						description: "Nest Streaming: (${(!atomicState?.restStreamingOn || !rStrEn) ? "Inactive" : "Active"})"
 			}
-			if(settings?.enDiagWebPage) {
-				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("diagnostic_icon.png")
-			}
 			if(atomicState?.appData && !appDevType()) {
 				if(isAppUpdateAvail()) {
 					href url: stIdeLink(), style:"external", required: false, title:"An Update is Available for ${appName()}!",
@@ -273,11 +271,17 @@ def mainPage() {
 				def prefDesc = (descStr != "") ? "" : "Tap to configure"
 				href "prefsPage", title: "Application\nPreferences", description: prefDesc, state: (descStr ? "complete" : ""), image: getAppImg("settings_icon.png")
 			}
-			section("Diagnostics, Donate, Release and License Info") { //, and Leave Feedback:") {
-				href "infoPage", title: "Help, Info, and More", description: "", image: getAppImg("info.png")
+			section("Donate, Release and License Info") {
+				href "infoPage", title: "Info and More", description: "", image: getAppImg("info_bubble.png")
 			}
 			section("Remove All Apps, Automations, and Devices:") {
 				href "uninstallPage", title: "Uninstall this App", description: "", image: getAppImg("uninstall_icon.png")
+			}
+			section("Having Trouble?:") {
+				href "helpPage", title: "Get Help | Diagnostics", description: "", image: getAppImg("help_ring_icon.png")
+				if(settings?.enDiagWebPage) {
+					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
+				}
 			}
 		}
 		atomicState.ok2InstallAutoFlag = false
@@ -370,10 +374,8 @@ def devicesPage() {
 		if(isInstalled) {
 			if(atomicState?.protects) {
 				section("Nest Protect Alarm Simulation:") {
-					if(atomicState?.protects) {
-						def dt = atomicState?.isAlarmCoTestActiveDt
-						href "alarmTestPage", title: "Test Protect Automations\nBy Simulating Alarm Events", description: "${dt ? "Last Tested:\n$dt\n\n" : ""}Tap to Begin...", image: getAppImg("test_icon.png")
-					}
+					def dt = atomicState?.isAlarmCoTestActiveDt
+					href "alarmTestPage", title: "Test Protect Automations\nBy Simulating Alarm Events", description: "${dt ? "Last Tested:\n$dt\n\n" : ""}Tap to Begin...", image: getAppImg("test_icon.png")
 				}
 			}
 		}
@@ -395,10 +397,10 @@ def devPrefPage() {
 				if(atomicState?.appData?.eventStreaming?.enabled == true || getDevOpt() || betaMarker()) {
 					input "camTakeSnapOnEvt", "bool", title: "Take Snapshot on Motion Events?", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("snapshot_icon.png")
 					input "motionSndChgWaitVal", "enum", title: "Delay before Motion/Sound Events are marked Inactive?", required: false, defaultValue: 60, metadata: [values:waitValAltEnum(true)], submitOnChange: true, image: getAppImg("delay_time_icon.png")
-					input "camEnMotionZoneFltr", "bool", title: "Allow filtering motion events by configured zones?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("motion_icon.png")
-					if(settings?.camEnMotionZoneFltr) {
-						href "camMotionZoneFltrPage", title: "Select the Zones for each camera to be used to trigger Motion?", description: "Tap to modify", image: getAppImg("zone_icon.png")
-					}
+					// input "camEnMotionZoneFltr", "bool", title: "Allow filtering motion events by configured zones?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("motion_icon.png")
+					// if(settings?.camEnMotionZoneFltr) {
+					// 	href "camMotionZoneFltrPage", title: "Select the Zones for each camera to be used to trigger Motion?", description: "Tap to modify", image: getAppImg("zone_icon.png")
+					// }
 					atomicState.needChildUpd = true
 				} else {
 					paragraph "No Camera Device Options Yet..."
@@ -474,7 +476,6 @@ def camMotionZoneFltrPage() {
 							metadata: [values:camZones], image: getAppImg("zone_icon.png"))
 				}
 			}
-
 		}
 
 		atomicState.needChildUpd = true
@@ -572,7 +573,7 @@ def reviewSetupPage() {
 		showDevSharePrefs()
 		if(atomicState?.showHelp) {
 			section("") {
-				href "infoPage", title: "Help and Info", description: "Tap to view", image: getAppImg("info.png")
+				href "infoPage", title: "Donations and Info", description: "Tap to view", image: getAppImg("info.png")
 			}
 		}
 		if(!atomicState?.isInstalled) {
@@ -596,23 +597,34 @@ def showDevSharePrefs() {
 	}
 }
 
+def helpPage () {
+	def execTime = now()
+	dynamicPage(name: "helpPage", title: "Help and Diagnostics", install: false) {
+		section("Help and Feedback:") {
+			href url: getWikiPageUrl(), style:"embedded", required:false, title:"View the Projects Wiki", description:"Tap to open in browser", state: "complete", image: getAppImg("web_icon.png")
+			href url: getIssuePageUrl(), style:"embedded", required:false, title:"Report | View Issues", description:"Tap to open in browser", state: "complete", image: getAppImg("issue_icon.png")
+			href "feedbackPage", title: "Send Developer Feedback", description: "", image: getAppImg("feedback_icon.png")
+		}
+		section("Diagnostic Data:") {
+			href "diagnosticPage", title: "View Diagnostic Info", description: "", image: getAppImg("diagnostic_icon.png")
+			if(settings?.enDiagWebPage) {
+				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
+			}
+		}
+		incHelpLoadCnt()
+		devPageFooter("helpLoadCnt", execTime)
+	}
+}
+
 def infoPage () {
 	def execTime = now()
-	dynamicPage(name: "infoPage", title: "Help, Info and Instructions", install: false) {
+	dynamicPage(name: "infoPage", title: "Info and Instructions", install: false) {
 		section("About this App:") {
 			paragraph appInfoDesc(), image: getAppImg("nst_manager_icon%402x.png", true)
 		}
 		section("Donations:") {
 			href url: textDonateLink(), style:"external", required: false, title:"Donations",
 				description:"Tap to open in browser", state: "complete", image: getAppImg("donate_icon.png")
-		}
-		section("Help and Feedback:") {
-			href url: getHelpPageUrl(), style:"embedded", required:false, title:"View the Projects Wiki",
-				description:"Tap to open in browser", state: "complete", image: getAppImg("info.png")
-			href url: getIssuePageUrl(), style:"embedded", required:false, title:"Report | View Issues",
-				description:"Tap to open in browser", state: "complete", image: getAppImg("issue_icon.png")
-			href "feedbackPage", title: "Send Developer Feedback", description: "", image: getAppImg("feedback_icon.png")
-
 		}
 		section("Credits:") {
 			paragraph title: "Creator:", "Anthony S. (@tonesto7)", state: "complete"
@@ -621,15 +633,6 @@ def infoPage () {
 		}
 		section("App Change Details:") {
 			href "changeLogPage", title: "View App Revision History", description: "Tap to view", image: getAppImg("change_log_icon.png")
-		}
-		section("Diagnostic Data:") {
-			href "diagnosticPage", title: "View Diagnostic Info", description: "", image: getAppImg("diagnostic_icon.png")
-		}
-		if(atomicState?.protects) {
-			section("Perform Nest Protect Device Tests:") {
-				def dt = atomicState?.isAlarmCoTestActiveDt
-				href "alarmTestPage", title: "Test Nest Protect Automations\nBy Simulating Alarm Events", description: "${dt ? "Last Tested:\n$dt\n\n" : ""}Tap to Begin...", image: getAppImg("test_icon.png")
-			}
 		}
 		section("Licensing Info:") {
 			paragraph "${textCopyright()}\n${textLicense()}"
@@ -1624,7 +1627,7 @@ def diagnosticPage () {
 			if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras || atomicState?.weatherDevice)) {
 				input "enDiagWebPage", "bool", title: "Enable Diagnostic Web Page?", description: "", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("diagnostic_icon.png")
 				if(settings?.enDiagWebPage) {
-					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("diagnostic_icon.png")
+					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
 				}
 			}
 		}
@@ -1639,18 +1642,14 @@ def diagnosticPage () {
 				paragraph title: "How will the log collection work?", "Once enabled this SmartApp will create a child app to store your logs in this diagnostic app and you can view the page or share the url with the developer.  Turn off to remove the diag app and all data."
 				paragraph "This will automatically turn off 48 hours"
 				input (name: "enRemDiagLogging", type: "bool", title: "Enable Log Collection?", required: false, defaultValue: (atomicState?.enRemDiagLogging ?: false), submitOnChange: true, image: getAppImg("log.png"))
-			}
-		}
-		diagLogProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
-
-		if(settings?.enDiagWebPage) {
-			section() {
 				if(atomicState?.enRemDiagLogging) {
 					def str = "Press Done all the way back to the main smartapp page to allow the Diagnostic App to Install"
 					paragraph str, required: true, state: "complete"
 				}
 			}
 		}
+		diagLogProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
+
 		section("SmartApp Security") {
 			paragraph title:"What does resetting do?", "If you share your url with someone and want to remove their access you can reset your token and this will invalidate any URL you shared and create a new one for you."
 			input (name: "resetSTAccessToken", type: "bool", title: "Reset Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
@@ -6919,7 +6918,7 @@ def getCallbackUrl()		{ return "https://graph.api.smartthings.com/oauth/callback
 def getBuildRedirectUrl()	{ return "${serverUrl}/oauth/initialize?appId=${app.id}&access_token=${atomicState?.accessToken}&apiServerUrl=${shardUrl}" }
 def getNestApiUrl()			{ return "https://developer-api.nest.com" }
 def getAppEndpointUrl(subPath)	{ return "${apiServerUrl("/api/smartapps/installations/${app.id}${subPath ? "/${subPath}" : ""}?access_token=${atomicState.accessToken}")}" }
-def getHelpPageUrl()		{ return "http://thingsthataresmart.wiki/index.php?title=NST_Manager" }
+def getWikiPageUrl()		{ return "http://thingsthataresmart.wiki/index.php?title=NST_Manager" }
 def getIssuePageUrl()		{ return "https://github.com/tonesto7/nest-manager/issues" }
 def slackMsgWebHookUrl()	{ return "https://hooks.slack.com/services/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" }
 def getAutoHelpPageUrl()	{ return "http://thingsthataresmart.wiki/index.php?title=NST_Manager#Nest_Automations" }
@@ -7583,13 +7582,11 @@ def getStateData() {
 
 def lastCmdDesc() {
 	def cmdDesc = ""
-	cmdDesc += " • DateTime: "
-	cmdDesc += atomicState?.lastCmdSentDt ? "\n └ (${atomicState?.lastCmdSentDt})" : "(Nothing found)"
-	cmdDesc += "\n • Cmd Sent: "
-	cmdDesc += atomicState?.lastCmdSent ? "\n └ (${atomicState?.lastCmdSent})" : "(Nothing found)"
-	cmdDesc += "\n • Cmd Result: (${atomicState?.lastCmdSentStatus ?: "Nothing found"})"
-
-	cmdDesc += "\n\n • Totals Commands Sent: (${!atomicState?.apiCommandCnt ? 0 : atomicState?.apiCommandCnt})"
+	def map = [:]
+	map["DateTime"] = atomicState?.lastCmdSentDt ?: "Nothing found"
+	map["Cmd Sent"] = atomicState?.lastCmdSent ?: "Nothing found"
+	map["Cmd Result"] = atomicState?.lastCmdSentStatus ? "(${atomicState?.lastCmdSentStatus})" : "(Nothing found)"
+	cmdDesc += getMapDescStr(map)
 	return cmdDesc
 }
 
@@ -7615,10 +7612,13 @@ def renderDiagHome() {
 			<title>NST Diagnostics</title>
 
 			<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+			<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 			<script src="https://use.fontawesome.com/fbe6a4efc7.js"></script>
 			<script src="https://fastcdn.org/FlowType.JS/1.1/flowtype.js"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
 			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hamburgers/0.9.1/hamburgers.min.css">
 			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 			<link rel="stylesheet" href="https://cdn.rawgit.com/toubou91/percircle/master/dist/css/percircle.css">
 			<script src="https://cdn.rawgit.com/toubou91/percircle/master/dist/js/percircle.js"></script>
@@ -7628,115 +7628,133 @@ def renderDiagHome() {
 			</style>
 		</head>
 		<body>
-			<div class="container">
-				<div class="page-header centerText" style="margin: 10px;">
-			   		<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"></img>Diagnostics Home</h3>
-			   	</div>
-			   	<!--First Panel Section -->
-			   	<div class="panel panel-primary">
-					<!--First Panel Section Heading-->
-					<div class="panel-heading">
+			<button onclick="topFunction()" id="scrollTopBtn" title="Go to top"><i class="fa fa-arrow-up centerText" aria-hidden="true"></i> Back to Top</button>
+
+			<!-- Your Content -->
+			<div id="container">
+				<div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
+					<div class="centerText">
 						<div class="row">
-							<div class="col-xs-6">
-								<h1 class="panel-title centerText pull-left" style="padding: 7px 0;font-size: 1.6em;" >Install Details</h1>
+							<div class="col-xs-2"></div>
+							<div class="col-xs-8 centerText">
+								<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Diagnostics Home</img></h3>
 							</div>
-							<div class="col-xs-6" style="">
-								<button id="rfrshBtn" type="button" class="btn-link pull-right refresh-btn"><span class="fa fa-refresh refresh-btn" style="font-size: 1.1em;"></span></button>
+							<div class="col-xs-2 right-head-col pull-right">
+								<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right" title="Refresh Page Content"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i></button>
 							</div>
-						</div>
-					</div>
-
-					<!--First Panel Section Body -->
-					<div class="panel-body" style="overflow-y: auto;">
-						<div class="container-fluid">
-							<!--First Panel Section Body Row 1-->
-							<div class="row" style="min-height: 100px;">
-
-								<!--First Panel Section Body Row 1 - Col1 -->
-								<div class=" col-xs-12 col-sm-8">
-									<div id="instContDiv" style="padding: 0 10px;">
-										<div class="row panel-border centerText">
-											<div class="col-xs-12 col-sm-6 install-content">
-												<span><b>Version:</b></br><small>${appVersion()}</small></span>
-											</div>
-											<div class="col-xs-12 col-sm-6 install-content">
-												<span><b>Install ID:</b></br><small>${atomicState?.installationId}</small></span>
-											</div>
-											<div class="col-xs-12 col-sm-6 install-content">
-									        	<span><b>Token Num:</b></br><small>${atomicState?.authTokenNum}</small></span>
-									        </div>
-											<div class="col-xs-12 col-sm-6 install-content">
-									        	<span><b>API Token Ver:</b></br><small>${atomicState?.metaData?.client_version}</small></span>
-									        </div>
-									        <div class="col-xs-12 col-sm-6 install-content">
-									        	<span><b>Install Date:</b></br><small>${instData?.dt}</small></span>
-									        </div>
-									        <div class="col-xs-12 col-sm-6 install-content">
-									        	<span><b>Last Updated:</b></br><small>${instData?.updatedDt}</small></span>
-									        </div>
-									        <div class="col-xs-12 col-sm-6 install-content">
-									        	<span><b>Init. Version:</b></br><small>${instData?.initVer}</small></span>
-									        </div>
-									        <div class="col-xs-12 col-sm-6 install-content">
-									        	<span><b>Fresh Install:</b></br><small>${instData?.freshInstall}</small></span>
-									        </div>
-					        			</div>
-					       			</div>
-					      		</div>
-					      		<!--First Panel Section Body Row 1 - Col2 -->
-					      		<div class="col-xs-12 col-sm-4" style="padding: 25px;">
-					       			<div style="pull-right">
-										<div class="stateUseTitleText">State Usage</div>
-			      						<div id="stateUseCirc" data-percent="${sPerc}" data-text="<p class='stateUseCircText'>${sPerc}%</p>" class="small blue2 center"></div>
-									</div>
-								</div>
-							</div>
-							<hr/>
-							<!--First Panel Section Body Row 2 -->
-							<div class="row" style="min-height: 100px;">
-						      	<!--First Panel Section Body Row 2 - Col 1 -->
-							  	<div id="instContDiv" style="padding: 0 10px;">
-						        	<div class="row panel-border">
-										<div style="font-weight: bold;" class="centerText">Last Command Info
-											<p style="text-align: left; font-weight: normal;">• DateTime: <br> └ (Sun Jul 02 21:53:06 EDT 2017)<br>• Cmd Sent: <br> └ (devices/thermostats: (target_temperature_f: 78))<br> • Cmd Result: (ok)<br><br> • Totals Commands Sent: (4872)</p>
-										</div>
-									</div>
-						    	</div>
-						    </div>
 						</div>
 					</div>
 				</div>
 
-				<!--Second Panel Section -->
-		  		<div class="panel panel-default">
-		   			<div class="panel-heading">
-		    			<h1 class="panel-title" style="font-size: 1.6em;">Shortcuts</h1>
-		   			</div>
-		   			<div class="panel-body">
-						<div class="col-xs-6 centerText">
-				     		<p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
-					     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
-					     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
-						</div>
-						<div class="col-xs-6 centerText">
-					     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
-							<p><a class="btn btn-primary btn-md shortcutBtns" href="${instDataUrl}" role="button">Install Data</a></p>
-							<p><a class="btn btn-primary btn-md shortcutBtns" href="${appDataUrl}" role="button">AppData File</a></p>
-						</div>
-			    	</div>
-			   	</div>
-
-				<footer class="footer">
+				<!-- Page Content -->
+				<div id="page-content-wrapper">
 					<div class="container">
-	   					<div class="well well-sm footerText">
-						<textarea id="siteUrl" style="display: none;">${remDiagUrl}</textarea>
-     					<span>External Access URL: <button id="copyUrlBtn" class="btn" title="Copy URL to Clipboard" type="button" data-clipboard-target="#siteUrl"><i class="fa fa-clipboard" aria-hidden="true"></i></button></span>
-			    		</div>
-					</div>
-			  	</footer>
 
-			  	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
+					   	<!--First Panel Section -->
+					   	<div class="panel panel-primary">
+							<!--First Panel Section Heading-->
+							<div class="panel-heading">
+								<div class="row">
+									<div class="col-xs-12">
+										<h1 class="panel-title panel-title-text">Install Details:</h1>
+									</div>
+								</div>
+						    </div>
+
+							<!--First Panel Section Body -->
+							<div class="panel-body" style="overflow-y: auto;">
+								<div class="container-fluid">
+									<!--First Panel Section Body Row 1-->
+									<div class="row" style="min-height: 100px;">
+
+										<!--First Panel Section Body Row 1 - Col1 -->
+										<div class=" col-xs-12 col-sm-8">
+											<div id="instContDiv" style="padding: 0 10px;">
+												<div class="row panel-border centerText">
+													<div class="col-xs-12 col-sm-6 install-content">
+														<span><b>Version:</b></br><small>${appVersion()}</small></span>
+													</div>
+													<div class="col-xs-12 col-sm-6 install-content">
+														<span><b>Install ID:</b></br><small>${atomicState?.installationId}</small></span>
+													</div>
+													<div class="col-xs-12 col-sm-6 install-content">
+											        	<span><b>Token Num:</b></br><small>${atomicState?.authTokenNum ?: "Not Found"}</small></span>
+											        </div>
+													<div class="col-xs-12 col-sm-6 install-content">
+											        	<span><b>API Token Ver:</b></br><small>${atomicState?.metaData?.client_version}</small></span>
+											        </div>
+											        <div class="col-xs-12 col-sm-6 install-content">
+											        	<span><b>Install Date:</b></br><small>${instData?.dt}</small></span>
+											        </div>
+											        <div class="col-xs-12 col-sm-6 install-content">
+											        	<span><b>Last Updated:</b></br><small>${instData?.updatedDt}</small></span>
+											        </div>
+											        <div class="col-xs-12 col-sm-6 install-content">
+											        	<span><b>Init. Version:</b></br><small>${instData?.initVer}</small></span>
+											        </div>
+											        <div class="col-xs-12 col-sm-6 install-content">
+											        	<span><b>Fresh Install:</b></br><small>${instData?.freshInstall}</small></span>
+											        </div>
+							        			</div>
+							       			</div>
+							      		</div>
+							      		<!--First Panel Section Body Row 1 - Col2 -->
+							      		<div class="col-xs-12 col-sm-4" style="padding: 25px;">
+							       			<div style="pull-right">
+												<div class="stateUseTitleText">State Usage</div>
+					      						<div id="stateUseCirc" data-percent="${sPerc}" data-text="<p class='stateUseCircText'>${sPerc}%</p>" class="small blue2 center"></div>
+											</div>
+										</div>
+									</div>
+									<hr/>
+									<!--First Panel Section Body Row 2 -->
+									<div class="row" style="min-height: 100px;">
+								      	<!--First Panel Section Body Row 2 - Col 1 -->
+									  	<div id="instContDiv" style="padding: 0 10px;">
+											<div class="panel panel-default">
+												<div id="item${appNum}-settings" class="panel-heading">
+													<h1 class="panel-title subpanel-title-text">Last Command Info:</h1>
+												</div>
+												<div class="panel-body">
+													<div><pre class="mapDataFmt">${lastCmdDesc().toString().replaceAll("\n", "<br>")}</pre></div>
+												</div>
+											</div>
+								    	</div>
+								    </div>
+								</div>
+							</div>
+						</div>
+
+						<!--Second Panel Section -->
+				  		<div class="panel panel-info">
+				   			<div class="panel-heading">
+				    			<h1 class="panel-title">Shortcuts</h1>
+				   			</div>
+				   			<div class="panel-body">
+								<div class="col-xs-6 centerText">
+						     		<p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
+							     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
+							     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
+								</div>
+								<div class="col-xs-6 centerText">
+							     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
+									<p><a class="btn btn-primary btn-md shortcutBtns" href="${instDataUrl}" role="button">Install Data</a></p>
+									<p><a class="btn btn-primary btn-md shortcutBtns" href="${appDataUrl}" role="button">AppData File</a></p>
+								</div>
+					    	</div>
+					   	</div>
+						<footer class="footer">
+							<div class="container">
+			   					<div class="well well-sm footerText">
+								<textarea id="siteUrl" style="display: none;">${remDiagUrl}</textarea>
+		     					<span>External Access URL: <button id="copyUrlBtn" class="btn" title="Copy URL to Clipboard" type="button" data-clipboard-target="#siteUrl"><i class="fa fa-clipboard" aria-hidden="true"></i></button></span>
+					    		</div>
+							</div>
+					  	</footer>
+					</div>
+				</div>
 		  	</div>
+			<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
 		</body>
 	"""
 /* "" */
@@ -7886,7 +7904,6 @@ def renderManagerData() {
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
 				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
-
 				</style>
 			</head>
 			<body>
@@ -7952,7 +7969,7 @@ def renderManagerData() {
 										    		<h1 class="panel-title subpanel-title-text">Setting Data:</h1>
 										   		</div>
 										   		<div class="panel-body">
-										    		<div><pre class="mapDataFmt">${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+										    		<div><pre class="pre-scroll mapDataFmt">${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 										   		</div>
 										  	</div>
 
@@ -7961,7 +7978,7 @@ def renderManagerData() {
 										    		<h1 class="panel-title subpanel-title-text">State Data:</h1>
 										   		</div>
 										   		<div class="panel-body">
-										    		<div><pre class="mapDataFmt">${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+										    		<div><pre class="pre-scroll mapDataFmt">${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 										   		</div>
 										  	</div>
 
@@ -7970,7 +7987,7 @@ def renderManagerData() {
 										    		<h1 class="panel-title subpanel-title-text">Meta Data:</h1>
 										   		</div>
 										   		<div class="panel-body">
-										    		<div><pre class="mapDataFmt">${metaDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+										    		<div><pre class="pre-scroll mapDataFmt">${metaDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 										   		</div>
 										   	</div>
 
