@@ -69,12 +69,6 @@ html, body {
     #rfrshBtn {
         font-size: 1.1em;
     }
-    /*.left-head-col {
-        padding: 25px 0 0 50px;
-    }
-    .right-head-col {
-        padding: 25px 40px 0 0;
-    }*/
 }
 
 .export-pdf-btn {
@@ -100,6 +94,37 @@ html, body {
     font-size: 18px;
 }
 
+.panelHeadTxt {
+    font-size: 25px;
+}
+
+.pnl-head-title {
+    font-size: 2.0em;
+}
+
+@media (min-width: 800px) {
+    .pnl-head-title {
+        padding: 3px 0;
+    }
+}
+
+@media (min-width: 600px) {
+    .pnl-head-title {
+        padding: 5px 0;
+    }
+}
+
+.title-text {
+    font-size: 2.0em;
+}
+
+/**************************************
+    PRE CODE CSS
+***************************************/
+pre {
+    overflow-x: auto;
+    overflow-y: auto;
+}
 
 /**************************************
     NAV BAR CSS
@@ -271,9 +296,10 @@ html, body {
     right: 0;
 }
 
-.pushy-content {
+
+/*.pushy-content {
     visibility: hidden;
-}
+}*/
 
 
 /* Menu Movement */
@@ -533,39 +559,6 @@ html, body {
 
 .logEvtDt {
     font-weight: bold;
-}
-
-.panelHeadTxt {
-    font-size: 25px;
-}
-
-.pnl-head-title {
-    font-size: 2.0em;
-}
-
-@media (min-width: 800px) {
-    .pnl-head-title {
-        padding: 3px 0;
-    }
-}
-
-@media (min-width: 600px) {
-    .pnl-head-title {
-        padding: 5px 0;
-    }
-}
-
-.title-text {
-    font-size: 2.0em;
-}
-
-.panel-title-text {
-    padding-top: 0.5em;
-    font-size: 24px;
-}
-
-.subpanel-title-text {
-    font-size: 18px;
 }
 
 .mapDataFmt {}
