@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 
 preferences {  }
 
-def devVer() { return "5.1.1" }
+def devVer() { return "5.1.2" }
 
 metadata {
 	definition (name: "${textDevName()}", namespace: "tonesto7", author: "Anthony S.") {
@@ -234,7 +234,7 @@ def keepAwakeEvent() {
 }
 
 void repairHealthStatus(data) {
-	log.trace "repairHealthStatus($data)"
+	Logger("repairHealthStatus($data)")
 	if(data?.flag) {
 		sendEvent(name: "DeviceWatch-DeviceStatus", value: "online", displayed: false, isStateChange: true)
 		state?.healthInRepair = false
@@ -608,8 +608,8 @@ def getWeatherConditions(Map weatData) {
 				} else {
 					wspeed = Math.round(cur?.current_observation?.wind_mph as float)
 					wgust = Math.round(cur?.current_observation?.wind_gust_mph as float)
-					precip = Math.round(cur?.current_observation?.precip_today_in as float)
-					precip1hr = Math.round(cur?.current_observation?.precip_1hr_in as float)
+					precip = cur?.current_observation?.precip_today_in ? Math.round(cur?.current_observation?.precip_today_in as float) : 0.0
+					precip1hr = cur?.current_observation?.precip_1hr_in ? Math.round(cur?.current_observation?.precip_1hr_in as float) : 0.0
 					sendEvent(name: "visibility", value: cur?.current_observation?.visibility_mi, unit: "miles")
 					sendEvent(name: "wind", value: wspeed as String, unit: "MPH")
 					sendEvent(name: "windgust", value: wgust as String, unit: "MPH")
@@ -1014,7 +1014,7 @@ void Logger(msg, logType = "debug") {
 			break
 	}
 	if(state?.enRemDiagLogging) {
-		parent.saveLogtoRemDiagStore(smsg, logType, "Weather DTH")
+		parent.saveLogtoRemDiagStore(smsg, logType, "Weather")
 	}
 }
 

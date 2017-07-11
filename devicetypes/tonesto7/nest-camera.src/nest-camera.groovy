@@ -13,7 +13,7 @@ import groovy.time.TimeCategory
 
 preferences { }
 
-def devVer() { return "5.1.1" }
+def devVer() { return "5.1.2" }
 
 metadata {
 	definition (name: "${textDevName()}", author: "Anthony S.", namespace: "tonesto7") {
@@ -124,6 +124,9 @@ metadata {
 		//details(["devCamHtml", "isStreaming", "take", "refresh", "motion", "cameraDetails", "sound"])
 		details(["videoPlayer", "isStreaming", "take", "refresh", "devCamHtml", "cameraDetails", "motion", "sound" ])
 	}
+	preferences {
+		input "enableEvtSnapShot", "bool", title: "Take Snapshot on Motion Events", description: "", defaultValue: true, displayDuringSetup: false
+	}
 }
 
 mappings {
@@ -208,7 +211,7 @@ def keepAwakeEvent() {
 }
 
 void repairHealthStatus(data) {
-	log.trace "repairHealthStatus($data)"
+	Logger("repairHealthStatus($data)")
 	if(data?.flag) {
 		sendEvent(name: "DeviceWatch-DeviceStatus", value: "online", displayed: false, isStateChange: true)
 		state?.healthInRepair = false
@@ -267,6 +270,7 @@ def processEvent() {
 			def results = eventData?.data
 			//log.debug "results: $results"
 			state.isBeta = eventData?.isBeta == true ? true : false
+			state.takeSnapOnEvt = eventData?.camTakeSnapOnEvt == true ? true : false
 			state.restStreaming = eventData?.restStreaming == true ? true : false
 			state.showLogNamePrefix = eventData?.logPrefix == true ? true : false
 			state.enRemDiagLogging = eventData?.enRemDiagLogging == true ? true : false
@@ -302,8 +306,9 @@ def processEvent() {
 			if(results?.app_url) { state?.app_url = results?.app_url?.toString() }
 			if(results?.web_url) { state?.web_url = results?.web_url?.toString() }
 			if(results?.last_event) {
-				if(results?.last_event.start_time && results?.last_event.end_time) { lastEventDataEvent(results?.last_event) }
+				state?.animation_url = null
 				if(results?.last_event?.animated_image_url) { state?.animation_url = results?.last_event?.animated_image_url }
+				if(results?.last_event.start_time && results?.last_event.end_time) { lastEventDataEvent(results?.last_event) }
 			}
 			deviceVerEvent(eventData?.latestVer.toString())
 			vidHistoryTimeEvent()
@@ -332,6 +337,11 @@ def getDataByName(String name) {
 
 def getDeviceStateData() {
 	return getState()
+}
+
+def evtSnapShotOk() {
+	if(state?.takeSnapOnEvt != true) { return false }
+	return settings?.enableEvtSnapShot == false ? false : true
 }
 
 def addCheckinReason(str) {
@@ -530,18 +540,22 @@ def lastEventDataEvent(data) {
 	state.lastEventTime = "${formatDt2(Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", data?.start_time.toString()), "h:mm:ssa")} to ${formatDt2(Date.parse("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", data?.end_time.toString()), "h:mm:ssa")}"
 	if(state?.lastEventData) { state.lastEventData == null }
 
+	def tryPic = false
 	if(!state?.lastCamEvtData || (curStartDt != newStartDt || curEndDt != newEndDt) && (hasPerson || hasMotion || hasSound) || isStateChange(device, "lastEventType", evtType.toString())  || isStateChange(device, "lastEventZones", evtZoneNames.toString())) {
 		sendEvent(name: 'lastEventStart', value: newStartDt, descriptionText: "Last Event Start is ${newStartDt}", displayed: false)
 		sendEvent(name: 'lastEventEnd', value: newEndDt, descriptionText: "Last Event End is ${newEndDt}", displayed: false)
 		sendEvent(name: 'lastEventType', value: evtType, descriptionText: "Last Event Type was ${evtType}", displayed: false)
 		sendEvent(name: 'lastEventZones', value: evtZoneNames.toString(), descriptionText: "Last Event Zones: ${evtZoneNames}", displayed: false)
 		state.lastCamEvtData = ["startDt":newStartDt, "endDt":newEndDt, "hasMotion":hasMotion, "hasSound":hasSound, "hasPerson":hasPerson, "actZones":(data?.activity_zone_ids ?: null)]
-		Logger("└────────────────────────────────")
+		tryPic = evtSnapShotOk()
+		Logger(state?.enRemDiagLogging ? "└─────────" : "└────────────────────────────")
+		//Logger("│	URL: ${state?.animation_url ?: "None"}")
+		Logger("│	Took Snapshot: ${tryPic}")
 		Logger("│	Zones: ${evtZoneNames ?: "None"}")
 		Logger("│	End Time: (${newEndDt})")
 		Logger("│	Start Time: (${newStartDt})")
 		Logger("│	Type: ${evtType}")
-		Logger("┌──────────New Camera Event──────────")
+		Logger(state?.enRemDiagLogging ? "┌─New Camera Event─" : "┌────────New Camera Event────────")
 		addCheckinReason("lastEventData")
 	} else {
 		LogAction("Last Event Start Time: (${newStartDt}) - Zones: ${evtZoneNames} | Original State: (${curStartDt})")
@@ -549,6 +563,13 @@ def lastEventDataEvent(data) {
 		LogAction("Last Event Type: (${evtType}) - Zones: ${evtZoneNames}")
 	}
 	motionSoundEvtHandler()
+	if(tryPic) {
+		if(state?.videoHistoryEnabled == "Enabled") {
+			takePicture(state?.animation_url)
+		} else {
+			takePicture(state?.snapshot_url)
+		}
+	}
 }
 
 def motionSoundEvtHandler() {
@@ -561,7 +582,7 @@ def motionSoundEvtHandler() {
 
 def motionEvtHandler(data) {
 	def tf = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
-		tf.setTimeZone(getTimeZone())
+	tf.setTimeZone(getTimeZone())
 	def dtNow = new Date()
 	def curMotion = device.currentState("motion")?.stringValue
 	def motionStat = "inactive"
@@ -816,7 +837,15 @@ void off() {
 }
 
 void take() {
-	takePicture()
+	takePicture(state?.snapshot_url)
+}
+
+void mute() {
+	Logger("Nest API does not allow turning microphone off...")
+}
+
+void unmute() {
+	Logger("Nest API does not allow turning microphone on...")
 }
 
 private getPictureName() {
@@ -828,12 +857,12 @@ private getImageWidth() {
 	return 1280
 }
 
-private takePicture() {
+private takePicture(url) {
 	try {
-		if(state?.isOnline) {
+		if(state?.isOnline && url) {
 			def imageBytes
 			def params = [
-				uri: state?.snapshot_url,
+				uri: url,
 				requestContentType: "application/x-www-form-urlencoded"
 			]
 			httpGet(params) { resp ->
@@ -854,6 +883,9 @@ private takePicture() {
 /************************************************************************************************
 |							EXCEPTION HANDLING & LOGGING FUNCTIONS								|
 *************************************************************************************************/
+def lastN(String input, n) {
+  return n > input?.size() ? null : n ? input[-n..-1] : ''
+}
 
 void Logger(msg, logType = "debug") {
 	def smsg = state?.showLogNamePrefix ? "${device.displayName}: ${msg}" : "${msg}"
@@ -877,8 +909,9 @@ void Logger(msg, logType = "debug") {
 			log.debug "${smsg}"
 			break
 	}
+	def theId = lastN(device.getId().toString(),5)
 	if(state?.enRemDiagLogging) {
-		parent.saveLogtoRemDiagStore(smsg, logType, "Camera DTH")
+		parent.saveLogtoRemDiagStore(smsg, logType, "Camera-${theId}")
 	}
 }
 
@@ -1339,6 +1372,7 @@ def getCamHtml() {
 			</body>
 		</html>
 		"""
+/* """ */
 		incHtmlLoadCnt()
 		render contentType: "text/html", data: mainHtml, status: 200
 	}

@@ -1,3 +1,18 @@
+V5.1.6 (July 9th, 2017):
+▔▔▔▔▔▔▔▔▔▔▔
+Manager App:
+ • FIXED: Version checks for automations
+ • FIXED: Null pointer issue
+ • ADDED: New Diagnostic System for Log Collection with a nice web interface. You can share this with the developer for troubleshooting.
+ • FIXED: Unused code and UI removed.
+
+Automation App 5.1.4:
+ • UPDATED: Fixed weather checks for external temperature automation
+ • UPDATED: External temperature checks if inside is too hot or cold before changing to ECO 2C / 4F
+ • FIXED: Schedule checks for presence updated to Anyone home, or Everyone Away
+ • UPDATED: Schedules can override temperature spread for remote sensor automation
+ • UPDATED: Schedules can set an hvac mode "Return from Eco" to have the schedule exit eco mode when it becomes active
+
 V5.1.5 (June 19th, 2017):
 ▔▔▔▔▔▔▔▔▔▔▔
 Manager App:
@@ -17,7 +32,7 @@ Manager App:
  • UPDATED: Enabled Rest Streaming Functionality for public (Donators Only)
 
 Automation App 5.1.2:
- • FIXED: External Temperature ignores dewpoint for HVAC systems than cannot cool
+ • FIXED: External Temperature ignores dew point for HVAC systems than cannot cool
 
 V5.1.1 (June 8th, 2017):
 ▔▔▔▔▔▔▔▔▔▔▔
@@ -26,7 +41,7 @@ Manager App:
  * FIXED: Code Cleanups
 
 Automation App 5.1.1:
- • FIXED: NMode issue that was turn on thermostats that were turned off
+ • FIXED: nMode issue that was turn on thermostats that were turned off
  • UPDATED: Logging Cleanups
 
 V5.1.0 (June 1st, 2017):
