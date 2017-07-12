@@ -3258,7 +3258,6 @@ def queueGetApiData(type = null, newUrl = null) {
 			result = true
 		}
 		else if(type == "meta") {
-			atomicState.qmetaRequested = true
 			asynchttp_v1.get(procNestResponse, params, [ type: "meta"])
 			result = true
 		}
@@ -3321,7 +3320,6 @@ def procNestResponse(resp, data) {
 				if(chg) {
 					meta = true
 				}
-				atomicState.qmetaRequested = false
 				incApiMetaReqCnt()
 			}
 		} else {
@@ -3338,7 +3336,6 @@ def procNestResponse(resp, data) {
 			atomicState.forceChildUpd = true
 			atomicState.qstrRequested = false
 			atomicState.qdevRequested = false
-			atomicState.qmetaRequested = false
 		}
 		if((atomicState?.qdevRequested == false && atomicState?.qstrRequested == false) && (dev || atomicState?.forceChildUpd || atomicState?.needChildUpd)) {
 			finishPoll(true, true)
@@ -3351,7 +3348,6 @@ def procNestResponse(resp, data) {
 		atomicState.forceChildUpd = true
 		atomicState.qstrRequested = false
 		atomicState.qdevRequested = false
-		atomicState.qmetaRequested = false
 
 		if(type == "str") { atomicState.needStrPoll = true }
 		else if(type == "dev") { atomicState?.needDevPoll = true }
@@ -4923,7 +4919,7 @@ def incAppNotifSentCnt() {
 |								Push Notification Functions										|
 *************************************************************************************************/
 def pushStatus() { return (settings?.recipients || settings?.phone || settings?.usePush) ? (settings?.usePush ? "Push Enabled" : "Enabled") : null }
-def getLastMsgSec() { return !atomicState?.lastMsgDt ? 100000 : GetTimeDiffSeconds(atomicState?.lastMsgDt, null, "getLastMsgSec").toInteger() }
+//def getLastMsgSec() { return !atomicState?.lastMsgDt ? 100000 : GetTimeDiffSeconds(atomicState?.lastMsgDt, null, "getLastMsgSec").toInteger() }
 def getLastUpdMsgSec() { return !atomicState?.lastUpdMsgDt ? 100000 : GetTimeDiffSeconds(atomicState?.lastUpdMsgDt, null, "getLastUpdMsgSec").toInteger() }
 def getLastMissPollMsgSec() { return !atomicState?.lastMisPollMsgDt ? 100000 : GetTimeDiffSeconds(atomicState?.lastMisPollMsgDt, null, "getLastMissPollMsgSec").toInteger() }
 def getLastApiIssueMsgSec() { return !atomicState?.lastApiIssueMsgDt ? 100000 : GetTimeDiffSeconds(atomicState?.lastApiIssueMsgDt, null, "getLastApiIssueMsgSec").toInteger() }
@@ -5112,8 +5108,8 @@ def sendMsg(msgType, msg, showEvt=true, people = null, sms = null, push = null, 
 				sent = true
 			}
 			if(sent) {
-				atomicState?.lastMsg = flatMsg
-				atomicState?.lastMsgDt = getDtNow()
+				//atomicState?.lastMsg = flatMsg
+				//atomicState?.lastMsgDt = getDtNow()
 				LogAction("sendMsg: Sent ${sentstr} Message Sent: ${flatMsg} ${atomicState?.lastMsgDt}", "debug", true)
 				incAppNotifSentCnt()
 			}
@@ -5555,6 +5551,7 @@ def isAppUpdateAvail() {
 
 def isAutoAppUpdateAvail() {
 	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.autoapp?.ver, atomicState?.autoSaVer, "automation")) { return true }
+	if(atomicState?.autoSaVer != "" && (versionStr2Int(atomicState?.autoSaVer) > minVersions()?.automation?.val) && !getDevOpt()) { return true } // check if too high
 	return false
 }
 
@@ -6871,7 +6868,9 @@ def stateCleanup() {
 		"tDevVer", "pDevVer", "camDevVer", "presDevVer", "weatDevVer", "vtDevVer", "streamDevVer", "dashSetup", "dashboardUrl", "apiIssues", "stateSize", "haveRun", "lastStMode", "lastPresSenAway",
 		"automationsActive", "temperatures", "powers", "energies", "use24Time", "useMilitaryTime", "advAppDebug", "appDebug", "awayModes", "homeModes", "childDebug", "updNotifyWaitVal",
 		"appApiIssuesWaitVal", "misPollNotifyWaitVal", "misPollNotifyMsgWaitVal", "devHealthMsgWaitVal", "nestLocAway", "heardFromRestDt", "autoSaVer", "lastAnalyticUpdDt", "lastHeardFromRestDt",
-		"remDiagApp", "remDiagClientId", "restorationInProgress", "diagManagAppStateFilters", "diagChildAppStateFilters", "lastFinishedPoll"
+		"remDiagApp", "remDiagClientId", "restorationInProgress", "diagManagAppStateFilters", "diagChildAppStateFilters", "lastFinishedPoll",
+		"curAlerts", "curAstronomy", "curForecast", "curWeather", "detailEventHistory", "detailExecutionHistory", "evalExecutionHistory", "lastForecastUpdDt", "lastWeatherUpdDt",
+		"lastMsg", "lastMsgDt", "qFirebaseRequested", "qmetaRequested"
  	]
 	data.each { item ->
 		state.remove(item?.toString())
@@ -8585,7 +8584,6 @@ def queueFirebaseData(data, pathVal, cmdType=null, type=null) {
 	def params = [ uri: "${getFirebaseAppUrl()}/${pathVal}", body: json.toString() ]
 	def typeDesc = type ? "${type}" : "Data"
 	try {
-		atomicState.qFirebaseRequested = true
 		if(!cmdType || cmdType == "put") {
 			asynchttp_v1.put(processFirebaseResponse, params, [ type: "${typeDesc}"])
 			result = true
@@ -8605,7 +8603,6 @@ def processFirebaseResponse(resp, data) {
 	LogTrace("processFirebaseResponse(${data?.type})")
 	def result = false
 	def typeDesc = data?.type
-	//log.debug "type: ${typeDesc}"
 	try {
 		if(resp?.status == 200) {
 			LogAction("sendFirebaseData: ${typeDesc} Data Sent SUCCESSFULLY", "info", false)
@@ -8629,7 +8626,6 @@ def processFirebaseResponse(resp, data) {
 		log.error "processFirebaseResponse (type: $typeDesc) Exception:", ex
 		sendExceptionData(ex, "processFirebaseResponse")
 	}
-	atomicState.qFirebaseRequested = false
 }
 
 def syncSendFirebaseData(data, pathVal, cmdType=null, type=null) {
