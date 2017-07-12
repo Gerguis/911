@@ -7746,8 +7746,7 @@ def renderDiagHome() {
 						<footer class="footer">
 							<div class="container">
 			   					<div class="well well-sm footerText">
-								<textarea id="siteUrl" style="display: none;">${remDiagUrl}</textarea>
-		     					<span>External Access URL: <button id="copyUrlBtn" class="btn" title="Copy URL to Clipboard" type="button" data-clipboard-target="#siteUrl"><i class="fa fa-clipboard" aria-hidden="true"></i></button></span>
+		     						<span>External Access URL: <button id="copyUrlBtn" class="btn" title="Copy URL to Clipboard" type="button" data-clipboard-action="copy" data-clipboard-text="${remDiagUrl}"><i class="fa fa-clipboard" aria-hidden="true"></i></button></span>
 					    		</div>
 							</div>
 					  	</footer>
