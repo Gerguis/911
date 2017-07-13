@@ -2028,8 +2028,8 @@ def initialize() {
 	else {
 		if(checkMigrationRequired()) { return true }	// This will call updated later
 		reInitBuiltins()	// These are to have these apps release subscriptions to devices (in case of delete)
-		runIn(14, "initManagerApp", [overwrite: true])	// need to give time for watchdog updates before we try to delete devices.
-		runIn(34, "reInitBuiltins", [overwrite: true])	// need to have watchdog/nestmode check if we created devices
+		runIn(21, "initManagerApp", [overwrite: true])	// need to give time for watchdog updates before we try to delete devices.
+		//runIn(34, "reInitBuiltins", [overwrite: true])	// need to have watchdog/nestmode check if we created devices
 	}
 }
 
@@ -2146,6 +2146,12 @@ def initManagerApp() {
 	if(atomicState?.isInstalled && atomicState?.installData?.usingNewAutoFile) {
 		if(app.label == "Nest Manager") { app.updateLabel("NST Manager") }
 
+		def cApps = getChildApps()
+		if(cApps) {
+			cApps?.sort()?.each { chld ->
+				chld?.update()
+			}
+		}
 		def tstatAutoApp = getChildApps()?.find {
 			try {
 				def aa = it.getAutomationType()
@@ -2515,7 +2521,11 @@ def setPollingState() {
 			def random_dint = random.nextInt(timgcd.toInteger())
 			LogAction("POLL scheduled (${random_int} ${random_dint}/${timgcd} * * * ?)", "info", true)
 			schedule("${random_int} ${random_dint}/${timgcd} * * * ?", poll)	// this runs every timgcd minutes
-			poll(true)
+			if(!atomicState?.lastDevDataUpd || getLastDevicePollSec() > 240) {
+				poll(true)
+			} else {
+				runIn(30, "pollFollow", [overwrite: true])
+			}
 		}
 	}
 }
@@ -2637,12 +2647,14 @@ def checkIfSwupdated() {
 		iData["shownFeedback"] = false
 		iData["shownDonation"] = false
 		atomicState?.installData = iData
+/*  Updated does this
 		def cApps = getChildApps()
 		if(cApps) {
 			cApps?.sort()?.each { chld ->
 				chld?.update()
 			}
 		}
+*/
 		updated()
 		return true
 	}
@@ -8792,7 +8804,7 @@ def remSenUnlock(val, myId) {
 }
 
 def setNModeActive(val=null) {
-	LogAction("setNModeActive: val: $val", "info", false)
+	LogTrace("setNModeActive: val: $val")
 	if(automationNestModeEnabled(null)) {
 		if(val == null) {
 			return atomicState?.automationNestModeEcoActive ?: false
