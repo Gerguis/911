@@ -35,11 +35,11 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.7" }
-def appVerDate() { "7-12-2017" }
+def appVersion() { "5.1.8" }
+def appVerDate() { "7-13-2017" }
 def minVersions() {
 	return [
-		"automation":["val":514, "desc":"5.1.4"],
+		"automation":["val":515, "desc":"5.1.5"],
 		"thermostat":["val":513, "desc":"5.1.3"],
 		"protect":["val":512, "desc":"5.1.2"],
 		"presence":["val":512, "desc":"5.1.2"],
@@ -1595,6 +1595,8 @@ def debugPrefPage() {
 			input (name: "appDebug", type: "bool", title: "Show ${appName()} Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
 			if(appDebug) {
 				input (name: "advAppDebug", type: "bool", title: "Show Verbose Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("list_icon.png"))
+			} else {
+				settingUpdate("advAppDebug", "false", "bool")
 			}
 		}
 		section ("Child Device Logs") {
@@ -2056,6 +2058,57 @@ def initNestModeApp() {
 	}
 }
 
+def initWatchdogApp() {
+	LogTrace("initWatchdogApp")
+	def watDogApp = getChildApps()?.findAll { it?.getAutomationType() == "watchDog" }
+	if(watDogApp?.size() < 1) {
+		LogAction("Installing Watchdog App", "info", true)
+		try {
+			addChildApp(appNamespace(), autoAppName(), getWatDogAppChildName(), [settings:[watchDogFlag:["type":"bool", "value":true]]])
+		} catch (ex) {
+			appUpdateNotify(true)
+		}
+	} else if(watDogApp?.size() >= 1) {
+		def cnt = 1
+		watDogApp?.each { chld ->
+			if(cnt == 1) {
+				LogTrace("initWatchdogApp: Running Update Command on Watchdog")
+				chld.update()
+			} else if(cnt > 1) {
+				LogAction("initWatchdogApp: Deleting Extra Watchdog (${chld?.id})", "warn", true)
+				deleteChildApp(chld)
+			}
+			cnt = cnt+1
+		}
+	}
+}
+
+def initRemDiagApp() {
+	LogTrace("initRemDiagApp")
+	def keepApp = atomicState?.enRemDiagLogging == true ? true : false
+	def remDiagApp = getChildApps()?.findAll { it?.getAutomationType() == "remDiag" }
+	if(keepApp && remDiagApp?.size() < 1) {
+		LogAction("Installing Remote Diag App", "info", true)
+		try {
+			addChildApp(appNamespace(), autoAppName(), getRemDiagAppChildName(), [settings:[remDiagFlag:["type":"bool", "value":true]]])
+		} catch (ex) {
+			appUpdateNotify(true)
+		}
+	} else if(remDiagApp?.size() >= 1) {
+		def cnt = 1
+		remDiagApp?.each { chld ->
+			if(keepApp && cnt == 1) {
+				LogTrace("initRemDiagApp: Running Update Command on Remote Diag")
+				chld.update()
+			} else if(!keepApp || cnt > 1) {
+				LogAction("initRemDiagApp: Deleting Extra Remote Diag (${chld?.id})", "warn", true)
+				deleteChildApp(chld)
+			}
+			cnt = cnt+1
+		}
+	}
+}
+
 def initManagerApp() {
 	setStateVar()
 	restStreamHandler(true)   // stop the rest stream
@@ -2063,6 +2116,8 @@ def initManagerApp() {
 	atomicState.ssdpOn = false
 	unschedule()
 	unsubscribe()
+	stateCleanup()
+
 	atomicState.pollingOn = false
 	atomicState.lastChildUpdDt = null // force child update on next poll
 	atomicState.lastForcePoll = null
@@ -2084,8 +2139,13 @@ def initManagerApp() {
 		iData["usingNewAutoFile"] = true
 		atomicState?.installData = iData
 	}
-	if(atomicState?.installData?.usingNewAutoFile) {
-		stateCleanup()
+	subscriber()
+	setPollingState()
+	startStopStream()
+
+	if(atomicState?.isInstalled && atomicState?.installData?.usingNewAutoFile) {
+		if(app.label == "Nest Manager") { app.updateLabel("NST Manager") }
+
 		def tstatAutoApp = getChildApps()?.find {
 			try {
 				def aa = it.getAutomationType()
@@ -2098,13 +2158,6 @@ def initManagerApp() {
 			}
 		}
 	}
-	subscriber()
-	setPollingState()
-	def appInstData = atomicState?.installData
-	if(atomicState?.isInstalled && appInstData?.usingNewAutoFile) {
-		if(app.label == "Nest Manager") { app.updateLabel("NST Manager") }
-	}
-	startStopStream()
 }
 
 def askAlexaMQHandler(evt) {
@@ -2290,57 +2343,6 @@ def uninstManagerApp() {
 	} catch (ex) {
 		log.error "uninstManagerApp Exception:", ex
 		sendExceptionData(ex, "uninstManagerApp")
-	}
-}
-
-def initWatchdogApp() {
-	LogTrace("initWatchdogApp")
-	def watDogApp = getChildApps()?.findAll { it?.getAutomationType() == "watchDog" }
-	if(watDogApp?.size() < 1) {
-		LogAction("Installing Watchdog App", "info", true)
-		try {
-			addChildApp(appNamespace(), autoAppName(), getWatDogAppChildName(), [settings:[watchDogFlag:["type":"bool", "value":true]]])
-		} catch (ex) {
-			appUpdateNotify(true)
-		}
-	} else if(watDogApp?.size() >= 1) {
-		def cnt = 1
-		watDogApp?.each { chld ->
-			if(cnt == 1) {
-				LogTrace("initWatchdogApp: Running Update Command on Watchdog")
-				chld.update()
-			} else if(cnt > 1) {
-				LogAction("initWatchdogApp: Deleting Extra Watchdog (${chld?.id})", "warn", true)
-				deleteChildApp(chld)
-			}
-			cnt = cnt+1
-		}
-	}
-}
-
-def initRemDiagApp() {
-	LogTrace("initRemDiagApp")
-	def keepApp = atomicState?.enRemDiagLogging == true ? true : false
-	def remDiagApp = getChildApps()?.findAll { it?.getAutomationType() == "remDiag" }
-	if(keepApp && remDiagApp?.size() < 1) {
-		LogAction("Installing Remote Diag App", "info", true)
-		try {
-			addChildApp(appNamespace(), autoAppName(), getRemDiagAppChildName(), [settings:[remDiagFlag:["type":"bool", "value":true]]])
-		} catch (ex) {
-			appUpdateNotify(true)
-		}
-	} else if(remDiagApp?.size() >= 1) {
-		def cnt = 1
-		remDiagApp?.each { chld ->
-			if(keepApp && cnt == 1) {
-				LogTrace("initRemDiagApp: Running Update Command on Remote Diag")
-				chld.update()
-			} else if(!keepApp || cnt > 1) {
-				LogAction("initRemDiagApp: Deleting Extra Remote Diag (${chld?.id})", "warn", true)
-				deleteChildApp(chld)
-			}
-			cnt = cnt+1
-		}
 	}
 }
 
@@ -2534,8 +2536,8 @@ private gcd(input = []) {
 }
 
 def onAppTouch(event) {
-	fixStuckMigration()
 	stateCleanup()
+	fixStuckMigration()
 	poll(true)
 	/*
 		NOTE:
@@ -4934,7 +4936,7 @@ def notificationCheck() {
 	def nPrefs = atomicState?.notificationPrefs
 	if(!getOk2Notify()) { return }
 	apiIssueNotify(nPrefs?.app?.api?.issueMsg, nPrefs?.app?.api?.rateLimitMsg, nPrefs?.app?.api?.issueMsgWait)
-	missPollNotify(nPrefs?.app?.poll?.missPollMsg, nPrefs?.app?.poll?.missPollMsgWait)
+	missPollNotify(nPrefs?.app?.poll?.missPollMsg)
 	loggingRemindNotify(nPrefs?.app?.remind?.logRemindMsg)
 	if(!appDevType()) { appUpdateNotify() }
 }
@@ -4997,22 +4999,33 @@ def failedCmdNotify(failData, tstr) {
 }
 
 def loggingRemindNotify(msgOn) {
-	if(!msgOn || !(getLastLogRemindMsgSec() > 86400)) { return }
+	if(   !(settings?.appDebug || settings?.childDebug) || !msgOn || !(getLastLogRemindMsgSec() > 86400)) { return }
+	if(atomicState?.debugEnableDt == null) { atomicState?.debugEnableDt = getDtNow() }
 	def dbgAlert = (getDebugLogsOnSec() > 86400)
-	if(sendOk && dbgAlert) {
+	if(dbgAlert) {
 		def msg = "Your debug logging has remained enabled for more than 24 hours please disable them to reduce resource usage on ST platform."
 		sendMsg(("${app?.name} Debug Logging Reminder"), msg, true)
 		atomicState?.lastLogRemindMsgDt = getDtNow()
 	}
 }
 
-def missPollNotify(on, wait) {
-	if(!on || !wait || !(getLastDevicePollSec() > atomicState?.notificationPrefs?.msgDefaultWait.toInteger())) { return }
-	if(getLastMissPollMsgSec() > wait.toInteger()) {
+def missPollNotify(on) {
+	def theWait = settings?.misPollNotifyWaitVal ?: 900
+	if(getLastDevicePollSec() < theWait) {
+		if(!atomicState?.lastDevDataUpd) {
+			def now = new Date()
+			def val = new Date(now.time - ( (theWait+1) * 60 * 1000) ) // if uninitialized, set 30 mins in past
+ 			atomicState?.lastDevDataUpd = formatDt(val)
+		}
+		return
+	} else {
 		def msg = "\nThe app has not refreshed data in the last (${getLastDevicePollSec()}) seconds.\nPlease try refreshing data using device refresh button."
-		sendMsg("${app.name} Polling Issue", msg)
 		LogAction(msg, "error", true)
-		atomicState?.lastMisPollMsgDt = getDtNow()
+		def msgWait = atomicState?.notificationPrefs?.msgDefaultWait.toInteger() ?: 900
+		if(on && getLastMissPollMsgSec() > msgWait.toInteger()) {
+			sendMsg("${app.name} Nest Data update Issue", msg)
+			atomicState?.lastMisPollMsgDt = getDtNow()
+		}
 	}
 }
 
@@ -6208,7 +6221,7 @@ def addRemoveDevices(uninst = null) {
 		}
 
 		def delete
-		LogAction("devicesInUse: ${devsInUse}", "debug", false)
+		LogTrace("addRemoveDevices devicesInUse: ${devsInUse}")
 		delete = app.getChildDevices(true).findAll { !devsInUse?.toString()?.contains(it?.deviceNetworkId) }
 
 		if(delete?.size() > 0) {
@@ -6614,16 +6627,12 @@ def LogTrace(msg, logSrc=null) {
 	if(trOn) {
 		def logOn = (settings?.enRemDiagLogging && atomicState?.enRemDiagLogging) ? true : false
 		def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "Manager") : logSrc
-		if(!logOn) {
-			Logger(msg, "trace", theLogSrc)
-		} else {
-			Logger(msg, "trace", theLogSrc, true)
-		}
+		Logger(msg, "trace", theLogSrc, logOn)
 	}
 }
 
 def LogAction(msg, type="debug", showAlways=false, logSrc=null) {
-	def isDbg = parent ? (showDebug  ? true : false) : (appDebug ? true : false)
+	def isDbg = appDebug ? true : false
 	def theLogSrc = (logSrc == null) ? (parent ? "Automation" : "Manager") : logSrc
 	if(showAlways) { Logger(msg, type, theLogSrc) }
 	else if(isDbg && !showAlways) { Logger(msg, type, theLogSrc) }
@@ -7047,9 +7056,12 @@ def GetTimeDiffSeconds(strtDate, stpDate=null, methName=null) {
 		//if(strtDate?.contains("dtNow")) { return 10000 }
 		def now = new Date()
 		def stopVal = stpDate ? stpDate.toString() : formatDt(now)
+/*
 		def startDt = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate)
 		def stopDt = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal)
 		def start = Date.parse("E MMM dd HH:mm:ss z yyyy", formatDt(startDt)).getTime()
+*/
+		def start = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate).getTime()
 		def stop = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal).getTime()
 		def diff = (int) (long) (stop - start) / 1000 //
 		LogTrace("[GetTimeDiffSeconds] Results for '$methName': ($diff seconds)")
@@ -7659,7 +7671,7 @@ def renderDiagHome() {
 										<h1 class="panel-title panel-title-text">Install Details:</h1>
 									</div>
 								</div>
-						    </div>
+						</div>
 
 							<!--First Panel Section Body -->
 							<div class="panel-body" style="overflow-y: auto;">
@@ -7678,38 +7690,38 @@ def renderDiagHome() {
 														<span><b>Install ID:</b></br><small>${atomicState?.installationId}</small></span>
 													</div>
 													<div class="col-xs-12 col-sm-6 install-content">
-											        	<span><b>Token Num:</b></br><small>${atomicState?.authTokenNum ?: "Not Found"}</small></span>
-											        </div>
+													<span><b>Token Num:</b></br><small>${atomicState?.authTokenNum ?: "Not Found"}</small></span>
+												</div>
 													<div class="col-xs-12 col-sm-6 install-content">
-											        	<span><b>API Token Ver:</b></br><small>${atomicState?.metaData?.client_version}</small></span>
-											        </div>
-											        <div class="col-xs-12 col-sm-6 install-content">
-											        	<span><b>Install Date:</b></br><small>${instData?.dt}</small></span>
-											        </div>
-											        <div class="col-xs-12 col-sm-6 install-content">
-											        	<span><b>Last Updated:</b></br><small>${instData?.updatedDt}</small></span>
-											        </div>
-											        <div class="col-xs-12 col-sm-6 install-content">
-											        	<span><b>Init. Version:</b></br><small>${instData?.initVer}</small></span>
-											        </div>
-											        <div class="col-xs-12 col-sm-6 install-content">
-											        	<span><b>Fresh Install:</b></br><small>${instData?.freshInstall}</small></span>
-											        </div>
-							        			</div>
-							       			</div>
-							      		</div>
-							      		<!--First Panel Section Body Row 1 - Col2 -->
-							      		<div class="col-xs-12 col-sm-4" style="padding: 25px;">
-							       			<div style="pull-right">
+													<span><b>API Token Ver:</b></br><small>${atomicState?.metaData?.client_version}</small></span>
+												</div>
+												<div class="col-xs-12 col-sm-6 install-content">
+													<span><b>Install Date:</b></br><small>${instData?.dt}</small></span>
+												</div>
+												<div class="col-xs-12 col-sm-6 install-content">
+													<span><b>Last Updated:</b></br><small>${instData?.updatedDt}</small></span>
+												</div>
+												<div class="col-xs-12 col-sm-6 install-content">
+													<span><b>Init. Version:</b></br><small>${instData?.initVer}</small></span>
+												</div>
+												<div class="col-xs-12 col-sm-6 install-content">
+													<span><b>Fresh Install:</b></br><small>${instData?.freshInstall}</small></span>
+												</div>
+											</div>
+										</div>
+									</div>
+									<!--First Panel Section Body Row 1 - Col2 -->
+									<div class="col-xs-12 col-sm-4" style="padding: 25px;">
+								 			<div style="pull-right">
 												<div class="stateUseTitleText">State Usage</div>
-					      						<div id="stateUseCirc" data-percent="${sPerc}" data-text="<p class='stateUseCircText'>${sPerc}%</p>" class="small blue2 center"></div>
+												<div id="stateUseCirc" data-percent="${sPerc}" data-text="<p class='stateUseCircText'>${sPerc}%</p>" class="small blue2 center"></div>
 											</div>
 										</div>
 									</div>
 									<hr/>
 									<!--First Panel Section Body Row 2 -->
 									<div class="row" style="min-height: 100px;">
-								      	<!--First Panel Section Body Row 2 - Col 1 -->
+										<!--First Panel Section Body Row 2 - Col 1 -->
 									  	<div id="instContDiv" style="padding: 0 10px;">
 											<div class="panel panel-default">
 												<div id="item${appNum}-settings" class="panel-heading">
@@ -7719,8 +7731,8 @@ def renderDiagHome() {
 													<div><pre class="mapDataFmt">${lastCmdDesc().toString().replaceAll("\n", "<br>")}</pre></div>
 												</div>
 											</div>
-								    	</div>
-								    </div>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -7728,26 +7740,26 @@ def renderDiagHome() {
 						<!--Second Panel Section -->
 				  		<div class="panel panel-info">
 				   			<div class="panel-heading">
-				    			<h1 class="panel-title">Shortcuts</h1>
+								<h1 class="panel-title">Shortcuts</h1>
 				   			</div>
 				   			<div class="panel-body">
 								<div class="col-xs-6 centerText">
-						     		<p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
-							     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
-							     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
+							 		<p><a class="btn btn-primary btn-md shortcutBtns" href="${logUrl}" role="button">View Logs</a></p>
+								 	<p><a class="btn btn-primary btn-md shortcutBtns" href="${managerUrl}" role="button">Manager Data</a></p>
+								 	<p><a class="btn btn-primary btn-md shortcutBtns" href="${autoUrl}" role="button">Automation Data</a></p>
 								</div>
 								<div class="col-xs-6 centerText">
-							     	<p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
+								 	<p><a class="btn btn-primary btn-md shortcutBtns" href="${deviceUrl}" role="button">Device Data</a></p>
 									<p><a class="btn btn-primary btn-md shortcutBtns" href="${instDataUrl}" role="button">Install Data</a></p>
 									<p><a class="btn btn-primary btn-md shortcutBtns" href="${appDataUrl}" role="button">AppData File</a></p>
 								</div>
-					    	</div>
+							</div>
 					   	</div>
 						<footer class="footer">
 							<div class="container">
 			   					<div class="well well-sm footerText">
-		     						<span>External Access URL: <button id="copyUrlBtn" class="btn" title="Copy URL to Clipboard" type="button" data-clipboard-action="copy" data-clipboard-text="${remDiagUrl}"><i class="fa fa-clipboard" aria-hidden="true"></i></button></span>
-					    		</div>
+			 						<span>External Access URL: <button id="copyUrlBtn" class="btn" title="Copy URL to Clipboard" type="button" data-clipboard-action="copy" data-clipboard-text="${remDiagUrl}"><i class="fa fa-clipboard" aria-hidden="true"></i></button></span>
+								</div>
 							</div>
 					  	</footer>
 					</div>
@@ -7756,7 +7768,7 @@ def renderDiagHome() {
 			<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diaghome.min.js"></script>
 		</body>
 	"""
-/* "" */
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
 }
@@ -7919,9 +7931,9 @@ def renderManagerData() {
 				<div id="container">
 					<div id="top-hdr" class="navbar navbar-default navbar-fixed-top">
 						<div class="centerText">
-					    	<div class="row">
-					     		<div class="col-xs-2">
-					      			<div class="left-head-col pull-left">
+							<div class="row">
+						 		<div class="col-xs-2">
+									<div class="left-head-col pull-left">
 										<div class="menu-btn-div">
 											<div class="hamburger-wrap">
 												<button id="menu-button" class="menu-btn hamburger hamburger--collapse hamburger--accessible" title="Menu" type="button">
@@ -7932,61 +7944,61 @@ def renderManagerData() {
 												</button>
 											</div>
 										</div>
-					      			</div>
-					     		</div>
-					     		<div class="col-xs-8 centerText">
-					      			<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h3>
-					     		</div>
-					     		<div class="col-xs-2 right-head-col pull-right">
+									</div>
+						 		</div>
+						 		<div class="col-xs-8 centerText">
+									<h3 class="title-text"><img class="logoIcn" src="https://raw.githubusercontent.com/tonesto7/nest-manager/master/Images/App/nst_manager_icon.png"> Manager Data</img></h3>
+						 		</div>
+						 		<div class="col-xs-2 right-head-col pull-right">
 									<button id="rfrshBtn" type="button" class="btn refresh-btn pull-right" title="Refresh Page Content"><i id="rfrshBtnIcn" class="fa fa-refresh" aria-hidden="true"></i></button>
-					     		</div>
-					    	</div>
+						 		</div>
+							</div>
 					   	</div>
 					</div>
 					<!-- Page Content -->
 					<div id="page-content-wrapper">
 				   		<div class="container">
-				    		<!--First Panel Section -->
-						    <div id="main" class="panel-body">
+							<!--First Panel Section -->
+							<div id="main" class="panel-body">
 								<div id="key-item1" class="panel panel-primary">
-						      		<div class="panel-heading">
-						       			<div class="row">
-						        			<div class="col-xs-10">
-						         				<h1 class="panel-title panel-title-text">NST Manager:</h1>
-						        			</div>
-						        			<div class="col-xs-2" style="padding: 10px;">
-						         				<button id="exportPdfBtn" type="button" title="Export Content as PDF" class="btn export-pdf-btn pull-right"><i id="exportPdfBtnIcn" class="fa fa-file-pdf-o" aria-hidden="true"></i> PDF</button>
-						        			</div>
-						       			</div>
-						      		</div>
+									<div class="panel-heading">
+							 			<div class="row">
+										<div class="col-xs-10">
+							 				<h1 class="panel-title panel-title-text">NST Manager:</h1>
+										</div>
+										<div class="col-xs-2" style="padding: 10px;">
+							 				<button id="exportPdfBtn" type="button" title="Export Content as PDF" class="btn export-pdf-btn pull-right"><i id="exportPdfBtnIcn" class="fa fa-file-pdf-o" aria-hidden="true"></i> PDF</button>
+										</div>
+							 			</div>
+									</div>
 
 									<div class="panel-body">
 					  					<div>
 
 										  	<div class="panel panel-default">
 										   		<div id="item${appNum}-settings" class="panel-heading">
-										    		<h1 class="panel-title subpanel-title-text">Setting Data:</h1>
+													<h1 class="panel-title subpanel-title-text">Setting Data:</h1>
 										   		</div>
 										   		<div class="panel-body">
-										    		<div><pre class="pre-scroll mapDataFmt">${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+													<div><pre class="pre-scroll mapDataFmt">${setDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 										   		</div>
 										  	</div>
 
 										  	<div class="panel panel-default">
 										   		<div id="item${appNum}-state" class="panel-heading">
-										    		<h1 class="panel-title subpanel-title-text">State Data:</h1>
+													<h1 class="panel-title subpanel-title-text">State Data:</h1>
 										   		</div>
 										   		<div class="panel-body">
-										    		<div><pre class="pre-scroll mapDataFmt">${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+													<div><pre class="pre-scroll mapDataFmt">${stateDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 										   		</div>
 										  	</div>
 
 										  	<div class="panel panel-default">
 										   		<div id="item${appNum}-metadata" class="panel-heading">
-										    		<h1 class="panel-title subpanel-title-text">Meta Data:</h1>
+													<h1 class="panel-title subpanel-title-text">Meta Data:</h1>
 										   		</div>
 										   		<div class="panel-body">
-										    		<div><pre class="pre-scroll mapDataFmt">${metaDesc.toString().replaceAll("\n", "<br>")}</pre></div>
+													<div><pre class="pre-scroll mapDataFmt">${metaDesc.toString().replaceAll("\n", "<br>")}</pre></div>
 										   		</div>
 										   	</div>
 
@@ -8006,7 +8018,7 @@ def renderManagerData() {
  			   	</script>
 			</body>
 		"""
-/* """ */
+/* "" */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderManagerData Exception:", ex }
 }
@@ -8151,6 +8163,7 @@ def renderAutomationData() {
 				</script>
 		</body>
 		"""
+/* "" */
 
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderAutomationData Exception:", ex }
@@ -8189,6 +8202,7 @@ def navJsBuilder(btnId, divId) {
 				toggleMenuBtn();
 			});
 	"""
+/* """ */
 	return "\n${res}"
 }
 
@@ -8364,6 +8378,7 @@ def renderDeviceData() {
 			  	</script>
 			</body>
 		"""
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDeviceData Exception:", ex }
 }
@@ -8466,7 +8481,7 @@ def renderHtmlMapDesc(title, heading, datamap) {
   			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""
-	/* """ */
+	/* "" */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "getAppDataFile Exception:", ex }
 }
@@ -8740,7 +8755,7 @@ def removeFirebaseData(pathVal) {
 // Calls by Automation children
 // parent only method
 def automationNestModeEnabled(val=null) {
-	LogAction("automationNestModeEnabled: val: $val", "info", false)
+	LogTrace("automationNestModeEnabled: val: $val")
 	if(val == null) {
 		return atomicState?.automationNestModeEnabled ?: false
 	} else {
@@ -8898,6 +8913,7 @@ def getAutoType() { return !parent ? "" : atomicState?.automationType }
 def getAutoIcon(type) {
 	if(type) {
 		switch(type) {
+/*
 			case "remSen":
 				return getAppImg("remote_sensor_icon.png")
 				break
@@ -8913,14 +8929,18 @@ def getAutoIcon(type) {
 			case "extTmp":
 				return getAppImg("external_temp_icon.png")
 				break
+			case "tMode":
+				return getAppImg("mode_setpoints_icon.png")
+				break
+			case "humCtrl":
+				return getAppImg("humidity_automation_icon.png")
+				break
+*/
 			case "nMode":
 				return getAppImg("mode_automation_icon.png")
 				break
 			case "schMot":
 				return getAppImg("thermostat_automation_icon.png")
-				break
-			case "tMode":
-				return getAppImg("mode_setpoints_icon.png")
 				break
 			case "watchDog":
 				return getAppImg("watchdog_icon.png")
@@ -8996,6 +9016,7 @@ private timeDayOfWeekOptions() {
 	return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 }
 
+/*
 private getDayOfWeekName(date = null) {
 	if (!date) {
 		date = adjustTime(now())
@@ -9118,6 +9139,7 @@ def getAbrevDay(vals) {
 	}
 	return list
 }
+*/
 
 def roundTemp(Double temp) {
 	if(temp == null) { return null }
@@ -9143,6 +9165,7 @@ def roundTemp(Double temp) {
 	return newtemp
 }
 
+/*
 def deviceInputToList(items) {
 	def list = []
 	if(items) {
@@ -9164,6 +9187,7 @@ def inputItemsToList(items) {
 	}
 	return null
 }
+*/
 
 def getInputToStringDesc(inpt, addSpace = null) {
 	def cnt = 0
@@ -9184,7 +9208,7 @@ def isPluralString(obj) {
 
 
 /************************************************************************************************
-|					     GLOBAL Code | Logging AND Diagnostic							    |
+|					GLOBAL Code | Logging AND Diagnostic							|
 *************************************************************************************************/
 
 def sendEventPushNotifications(message, type, pName) {
