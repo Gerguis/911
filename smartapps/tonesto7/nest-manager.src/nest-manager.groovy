@@ -1299,7 +1299,7 @@ def notifConfigPage(params) {
 					paragraph "Receive notifications when the App hasn't updated data in a while", state: "complete"
 					input name: "sendMissedPollMsg", type: "bool", title: "Send Missed Poll Messages?", defaultValue: true, submitOnChange: true, image: getAppImg("late_icon.png")
 					if(settings?.sendMissedPollMsg == true || settings?.sendMissedPollMsg == null) {
-						input name: "misPollNotifyWaitVal", type: "enum", title: "Delay After Missed Poll?", required: false, defaultValue: 900,
+						input name: "misPollNotifyWaitVal", type: "enum", title: "Delay After Missed Poll?", required: false, defaultValue: 1200,
 								metadata: [values:notifValEnum()], submitOnChange: true, image: getAppImg("delay_time_icon.png")
 					}
 				}
@@ -5022,11 +5022,11 @@ def loggingRemindNotify(msgOn) {
 }
 
 def missPollNotify(on) {
-	def theWait = settings?.misPollNotifyWaitVal ?: 900
+	def theWait = settings?.misPollNotifyWaitVal ?: 1200
 	if(getLastDevicePollSec() < theWait) {
 		if(!atomicState?.lastDevDataUpd) {
 			def now = new Date()
-			def val = new Date(now.time - ( (theWait+1) * 60 * 1000) ) // if uninitialized, set 30 mins in past
+			def val = new Date(now.time - ( (theWait+1) * 60 * 1000) ) // if uninitialized, set 21 mins in past
  			atomicState?.lastDevDataUpd = formatDt(val)
 		}
 		return
