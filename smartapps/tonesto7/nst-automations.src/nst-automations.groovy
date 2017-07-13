@@ -27,8 +27,8 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.4" }
-def appVerDate() { "7-10-2017" }
+def appVersion() { "5.1.5" }
+def appVerDate() { "7-13-2017" }
 
 preferences {
 	//startPage
@@ -442,6 +442,8 @@ def mainAutoPage(params) {
 				input ("showDebug", "bool", title: "Debug Option", description: "Show Automation Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("debug_icon.png"))
 				if(showDebug) {
 					input (name: "advAppDebug", type: "bool", title: "Show Verbose Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("list_icon.png"))
+				} else {
+					settingUpdate("advAppDebug", "false", "bool")
 				}
 			}
 			section("Automation Name:") {
@@ -778,6 +780,7 @@ def getStateVal(var) {
 	return state[var] ?: null
 }
 
+/*
 def getAutoIcon(type) {
 	if(type) {
 		switch(type) {
@@ -814,11 +817,12 @@ def getAutoIcon(type) {
 		}
 	}
 }
+*/
 
 def automationsInst() {
-	atomicState.isNestModesConfigured = isNestModesConfigured() ? true : false
+	atomicState.isNestModesConfigured = 	isNestModesConfigured() ? true : false
 	atomicState.isWatchdogConfigured = 	isWatchdogConfigured() ? true : false
-	atomicState.isDiagnosticsConfigured = isDiagnosticsConfigured() ? true : false
+	atomicState.isDiagnosticsConfigured = 	isDiagnosticsConfigured() ? true : false
 	atomicState.isSchMotConfigured = 	isSchMotConfigured() ? true : false
 
 	atomicState.isLeakWatConfigured = 	isLeakWatConfigured() ? true : false
@@ -847,12 +851,15 @@ def getAutomationsInstalled() {
 			if(isHumCtrlConfigured()) 		{ tmp[aType].push("humCtrl") }
 			if(isExtTmpConfigured()) 		{ tmp[aType].push("extTmp") }
 			if(isRemSenConfigured())		{ tmp[aType].push("remSen") }
-			if(isTstatSchedConfigured()) 		{ tmp[aType].push("tSched") }  // This is number of schedules active
+			if(isTstatSchedConfigured()) 		{ tmp[aType].push("tSched") }
 			if(isFanCtrlSwConfigured()) 		{ tmp[aType].push("fanCtrl") }
 			if(isFanCircConfigured()) 		{ tmp[aType].push("fanCirc") }
 			if(tmp?.size()) { list.push(tmp) }
 			break
 		case "watchDog":
+			list.push(aType)
+			break
+		case "remDiag":
 			list.push(aType)
 			break
 	}
@@ -3199,7 +3206,7 @@ def extTmpTempCheck(cTimeOut = false) {
 			def safetyOk = getSafetyTempsOk(extTmpTstat)
 			def schedOk = extTmpScheduleOk()
 			def okToRestore = (modeEco && atomicState?.extTmpTstatOffRequested && atomicState?.extTmpRestoreMode) ? true : false
-			def tempWithinThreshold = extTmpTempOk(true, okToRestore)
+			def tempWithinThreshold = extTmpTempOk( ((modeEco && okToRestore) || (!modeEco && !okToRestore)), okToRestore)
 
 			if(!tempWithinThreshold || timeOut || !safetyOk || !schedOk) {
 				if(allowAlarm) { alarmEvtSchedCleanup(extTmpPrefix()) }
@@ -4245,6 +4252,8 @@ private getDayOfWeekName(date = null) {
 	if (!date) {
 		date = adjustTime(now())
 	}
+	return(timeDayOfWeekOptions[(date.day-1)])
+/*
 	switch (date.day) {
 		case 0: return "Sunday"
 		case 1: return "Monday"
@@ -4254,9 +4263,11 @@ private getDayOfWeekName(date = null) {
 		case 5: return "Friday"
 		case 6: return "Saturday"
 	}
+*/
 	return null
 }
 
+/*
 private getDayOfWeekNumber(date = null) {
 	if (!date) {
 		date = adjustTime(now())
@@ -4275,6 +4286,7 @@ private getDayOfWeekNumber(date = null) {
 	}
 	return null
 }
+*/
 
 //adjusts the time to local timezone
 private adjustTime(time = null) {
@@ -6106,6 +6118,7 @@ def deviceInputToList(items) {
 	return null
 }
 
+/*
 def inputItemsToList(items) {
 	def list = []
 	if(items) {
@@ -6116,7 +6129,7 @@ def inputItemsToList(items) {
 	}
 	return null
 }
-
+*/
 
 def isSchMotConfigured() {
 	return settings?.schMotTstat ? true : false
@@ -7847,9 +7860,12 @@ def GetTimeDiffSeconds(strtDate, stpDate=null, methName=null) {
 		//if(strtDate?.contains("dtNow")) { return 10000 }
 		def now = new Date()
 		def stopVal = stpDate ? stpDate.toString() : formatDt(now)
+/*
 		def startDt = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate)
 		def stopDt = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal)
 		def start = Date.parse("E MMM dd HH:mm:ss z yyyy", formatDt(startDt)).getTime()
+*/
+		def start = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate).getTime()
 		def stop = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal).getTime()
 		def diff = (int) (long) (stop - start) / 1000 //
 		LogTrace("[GetTimeDiffSeconds] Results for '$methName': ($diff seconds)")
@@ -7967,19 +7983,19 @@ def LogTrace(msg, logSrc=null) {
 	if(trOn) {
 		def theId = lastN(getId().toString(),5)
 		def theLogSrc = (logSrc == null) ? (parent ? "Automation-${theId}" : "NestManager") : logSrc
-		Logger(msg, "trace", theLogSrc)
+		Logger(msg, "trace", theLogSrc, atomicState?.enRemDiagLogging)
 	}
 }
 
 def LogAction(msg, type="debug", showAlways=false, logSrc=null) {
-	def isDbg = parent ? (showDebug ? true : false) : (appDebug ? true : false)
+	def isDbg = showDebug ? true : false
 	def theId = lastN(app.getId().toString(),5)
 	def theLogSrc = (logSrc == null) ? (parent ? "Automation-${theId}" : "NestManager") : logSrc
 	if(showAlways) { Logger(msg, type, theLogSrc) }
 	else if(isDbg && !showAlways) { Logger(msg, type, theLogSrc) }
 }
 
-def Logger(msg, type, logSrc=null) {
+def Logger(msg, type, logSrc=null, noSTlogger=false) {
 	if(msg && type) {
 		def labelstr = ""
 		if(atomicState?.debugAppendAppName == null) {
@@ -7988,25 +8004,27 @@ def Logger(msg, type, logSrc=null) {
 		}
 		if(atomicState?.debugAppendAppName) { labelstr = "${app.label} | " }
 		def themsg = "${labelstr}${msg}"
-		switch(type) {
-			case "debug":
-				log.debug "${themsg}"
-				break
-			case "info":
-				log.info "||| ${themsg}"
-				break
-			case "trace":
-				log.trace "| ${themsg}"
-				break
-			case "error":
-				log.error "| ${themsg}"
-				break
-			case "warn":
-				log.warn "|| ${themsg}"
-				break
-			default:
-				log.debug "${themsg}"
-				break
+		if(!noSTlogger) {
+			switch(type) {
+				case "debug":
+					log.debug "${themsg}"
+					break
+				case "info":
+					log.info "||| ${themsg}"
+					break
+				case "trace":
+					log.trace "| ${themsg}"
+					break
+				case "error":
+					log.error "| ${themsg}"
+					break
+				case "warn":
+					log.warn "|| ${themsg}"
+					break
+				default:
+					log.debug "${themsg}"
+					break
+			}
 		}
 		//log.debug "Logger remDiagTest: $msg | $type | $logSrc"
 		if(parent) {
