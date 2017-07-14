@@ -3295,6 +3295,7 @@ def queueGetApiData(type = null, newUrl = null) {
 
 def procNestResponse(resp, data) {
 	LogTrace("procNestResponse(${data?.type})")
+	LogAction("procNestResponse | resp: $resp | data: $data")
 	def str = false
 	def dev = false
 	def meta = false
@@ -3367,80 +3368,87 @@ def procNestResponse(resp, data) {
 		}
 
 	} catch (ex) {
-		//log.error "procNestResponse (type: $type) Exception:", ex
+		log.error "procNestResponse (type: $type) Exception:", ex
 		apiIssueEvent(true)
 		atomicState?.apiRateLimited = false
 		atomicState.forceChildUpd = true
 		atomicState.qstrRequested = false
 		atomicState.qdevRequested = false
-
 		if(type == "str") { atomicState.needStrPoll = true }
 		else if(type == "dev") { atomicState?.needDevPoll = true }
 		else if(type == "meta") { atomicState?.needMetaPoll = true }
-		sendExceptionData(ex, "procNestResponse_${type}")
+		sendExceptionData("${ex}", "procNestResponse_${type}")
 	}
 }
 
 def receiveEventData() {
-	def evtData = request?.JSON
-	def devChgd = false
-	def gotSomething = false
-	if(evtData?.data && settings?.restStreaming) {
+	def status = [:]
+	try {
+		def evtData = request?.JSON
+		//LogAction("evtData: $evtData", "trace", true)
+		def devChgd = false
+		def gotSomething = false
+		if(evtData?.data && settings?.restStreaming) {
+			//def t0 = atomicState?.aaOldStreamData
+			//whatChanged(t0, evtData, "/")
+			//atomicState.aaOldStreamData = evtData
+			//state.remove("aaOldStreamData")
 
-		//def t0 = atomicState?.aaOldStreamData
-		//whatChanged(t0, evtData, "/")
-		//atomicState.aaOldStreamData = evtData
-		//state.remove("aaOldStreamData")
-
-		if(evtData?.data?.devices) {
-			//LogTrace("API Device Resp.Data: ${evtData?.data?.devices}")
-			gotSomething = true
-			def chg = didChange(atomicState?.deviceData, evtData?.data?.devices, "dev", "stream")
-			if(chg) {
-				devChgd = true
-			} else {
-				LogTrace("got deviceData")
+			if(evtData?.data?.devices) {
+				//LogTrace("API Device Resp.Data: ${evtData?.data?.devices}")
+				gotSomething = true
+				def chg = didChange(atomicState?.deviceData, evtData?.data?.devices, "dev", "stream")
+				if(chg) {
+					devChgd = true
+				} else {
+					LogTrace("got deviceData")
+				}
 			}
-		}
-		if(evtData?.data?.structures) {
-			//LogTrace("API Structure Resp.Data: ${evtData?.data?.structures}")
-			gotSomething = true
-			def chg = didChange(atomicState?.structData, evtData?.data?.structures, "str", "stream")
-			if(chg) {
-				atomicState.structName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
-				locationPresNotify(getLocationPresence())
-			} else {
-				LogTrace("got structData")
+			if(evtData?.data?.structures) {
+				//LogTrace("API Structure Resp.Data: ${evtData?.data?.structures}")
+				gotSomething = true
+				def chg = didChange(atomicState?.structData, evtData?.data?.structures, "str", "stream")
+				if(chg) {
+					atomicState.structName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
+					locationPresNotify(getLocationPresence())
+				} else {
+					LogTrace("got structData")
+				}
 			}
-		}
-		if(evtData?.data?.metadata) {
-			//LogTrace("API Metadata Resp.Data: ${evtData?.data?.metadata}")
-			gotSomething = true
-			def chg = didChange(atomicState?.metaData, evtData?.data?.metadata, "meta", "stream")
-			if(!chg) {
-				LogTrace("got metaData")
+			if(evtData?.data?.metadata) {
+				//LogTrace("API Metadata Resp.Data: ${evtData?.data?.metadata}")
+				gotSomething = true
+				def chg = didChange(atomicState?.metaData, evtData?.data?.metadata, "meta", "stream")
+				if(!chg) {
+					LogTrace("got metaData")
+				}
 			}
+		} else {
+			LogTrace("receiveEventData: Sending restStreamHandler(Stop)")
+			restStreamHandler(true)
 		}
-	} else {
-		LogTrace("receiveEventData: Sending restStreamHandler(Stop)")
-		restStreamHandler(true)
-	}
-	if(gotSomething) {
-		atomicState?.lastHeardFromNestDt = getDtNow()
-		if(atomicState?.ssdpOn == true) {
-			unsubscribe() //These were causing exceptions
-			atomicState.ssdpOn = false
-			subscriber()
+		if(gotSomething) {
+			atomicState?.lastHeardFromNestDt = getDtNow()
+			if(atomicState?.ssdpOn == true) {
+				unsubscribe() //These were causing exceptions
+				atomicState.ssdpOn = false
+				subscriber()
+			}
+			apiIssueEvent(false)
+			atomicState?.apiRateLimited = false
+			atomicState?.apiCmdFailData = null
+			incRestStrEvtCnt()
 		}
-		apiIssueEvent(false)
-		atomicState?.apiRateLimited = false
-		atomicState?.apiCmdFailData = null
-		incRestStrEvtCnt()
+		if(atomicState?.forceChildUpd || atomicState?.needChildUpd || devChgd) {
+			schedFinishPoll(devChgd)
+		}
+		status = ["data":"status received...ok", "code":200]
+	} catch (ex) {
+		log.error "receiveEventData Exception:", ex
+		LogAction("receiveEventData Exception: ${ex}", "error", true)
+		status = ["data":"${ex.message}", "code":500]
 	}
-	if(atomicState?.forceChildUpd || atomicState?.needChildUpd || devChgd) {
-		schedFinishPoll(devChgd)
-	}
-	render contentType: 'text/html', data: "status received...ok", status: 200
+	render contentType: 'text/html', data: status?.data, status: status?.code
 }
 
 def didChange(old, newer, type, src) {
@@ -6700,7 +6708,6 @@ def Logger(msg, type, logSrc=null, noSTlogger=false) {
 
 def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null, frc=false) {
 	//log.trace "saveLogtoRemDiagStore($msg, $type, $logSrcType)"
-
 	if(atomicState?.enRemDiagLogging && settings?.enRemDiagLogging) {
 		def turnOff = false
 		def reasonStr = ""
@@ -6714,20 +6721,8 @@ def saveLogtoRemDiagStore(String msg, String type, String logSrcType=null, frc=f
 				reasonStr += "appData does not allow"
 			}
 			def remDiagApp = getRemDiagApp()
-/*
-			if(!remDiagApp) {
-				turnOff = true
-				reasonStr += "Child app not found"
-			}
-*/
 		}
 		if(turnOff) {
-/*
-			settingUpdate("enRemDiagLogging", "false", "bool")
-			if(getDevOpt()) {
-				settingUpdate("enDiagWebPage", "false", "bool")
-			}
-*/
 			saveLogtoRemDiagStore("Diagnostics disabled due to ${reasonStr}", "info", "Manager", true)
 			diagLogProcChange(false)
 			LogAction("Remote Diagnostics disabled ${reasonStr}", "info", true)
@@ -8529,47 +8524,41 @@ def sendInstallSlackNotif() {
 def getDbExceptPath() { return atomicState?.appData?.database?.newexceptionPath ?: "newexceptionData" }
 
 def sendExceptionData(ex, methodName, isChild = false, autoType = null) {
-	def labelstr = ""
-	if(atomicState?.debugAppendAppName) { labelstr = "${app.label} | " }
-	log.debug "${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType)"
-	if(atomicState?.appData?.database?.disableExceptions == true) {
-		return
-	} else {
-		def exCnt = 0
-		def exString
-		if(ex instanceof java.lang.NullPointerException || ex instanceof java.lang.SecurityException) {
-			//LogAction("sendExceptionData: NullPointerException was caught successfully", "info", true)
+	try {
+		def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging)
+		def labelstr = atomicState?.debugAppendAppName ? "${app.label} | " : ""
+		//LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType)", "info", false)
+		LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType, ex: ${ex}", "error", showErrLog)
+		if(atomicState?.appData?.database?.disableExceptions == true) {
 			return
 		} else {
-			//log.debug "ex: $ex"
-			exString = ex?.message?.toString()
-			//log.debug "sendExceptionData: Exception Message (${exString})"
-		}
-		exCnt = atomicState?.appExceptionCnt ? atomicState?.appExceptionCnt + 1 : 1
-		atomicState?.appExceptionCnt = exCnt ?: 1
-		if(settings?.optInSendExceptions || settings?.optInSendExceptions == null) {
-			generateInstallId()
-			def appType = isChild && autoType ? "automationApp/${autoType}" : "managerApp"
-			def exData
-			if(isChild) {
-				exData = ["methodName":methodName, "automationType":autoType, "appVersion":(appVersion() ?: "Not Available"),"errorMsg":exString, "errorDt":getDtNow().toString()]
-			} else {
-				exData = ["methodName":methodName, "appVersion":(appVersion() ?: "Not Available"),"errorMsg":exString, "errorDt":getDtNow().toString()]
+			def exCnt = 0
+			def exString = "${ex}"
+			exCnt = atomicState?.appExceptionCnt ? atomicState?.appExceptionCnt + 1 : 1
+			atomicState?.appExceptionCnt = exCnt ?: 1
+			if(settings?.optInSendExceptions || settings?.optInSendExceptions == null) {
+				generateInstallId()
+				def appType = isChild && autoType ? "automationApp/${autoType}" : "managerApp"
+				def exData
+				if(isChild) {
+					exData = ["methodName":methodName, "automationType":autoType, "appVersion":(appVersion() ?: "Not Available"),"errorMsg":exString, "errorDt":getDtNow().toString()]
+				} else {
+					exData = ["methodName":methodName, "appVersion":(appVersion() ?: "Not Available"),"errorMsg":exString, "errorDt":getDtNow().toString()]
+				}
+				def results = new groovy.json.JsonOutput().toJson(exData)
+				sendFirebaseData(results, "${getDbExceptPath()}/${appType}/${methodName}/${atomicState?.installationId}.json", "post", "Exception")
 			}
-			def results = new groovy.json.JsonOutput().toJson(exData)
-			sendFirebaseData(results, "${getDbExceptPath()}/${appType}/${methodName}/${atomicState?.installationId}.json", "post", "Exception")
 		}
-	}
+	} catch (e) {
+		log.debug "other exception caught"
+		return }
 }
 
 def sendChildExceptionData(devType, devVer, ex, methodName) {
+	def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging)
 	def exCnt = 0
-	def exString
-	if(ex instanceof java.lang.NullPointerException) {// || ex instanceof java.lang.SecurityException) {
-		return
-	} else {
-		exString = ex?.message?.toString()
-	}
+	def exString = "${ex}"
+	LogAction("sendChildExceptionData(device: $deviceType, devVer: $devVer, method: $methodName, ex: ${ex}", "error", showErrLog)
 	exCnt = atomicState?.childExceptionCnt ? atomicState?.childExceptionCnt + 1 : 1
 	atomicState?.childExceptionCnt = exCnt ?: 1
 	if(settings?.optInSendExceptions || settings?.optInSendExceptions == null) {

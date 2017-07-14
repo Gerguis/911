@@ -519,6 +519,7 @@ pre {
     vertical-align: middle;
     border-radius: .25em;
     min-width: 44px;
+    font-size: 0.75em;
 }
 
 .log-source {
