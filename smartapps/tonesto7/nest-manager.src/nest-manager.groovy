@@ -41,9 +41,9 @@ def minVersions() {
 	return [
 		"automation":["val":515, "desc":"5.1.5"],
 		"thermostat":["val":513, "desc":"5.1.3"],
-		"protect":["val":512, "desc":"5.1.2"],
+		"protect":["val":513, "desc":"5.1.3"],
 		"presence":["val":512, "desc":"5.1.2"],
-		"weather":["val":512, "desc":"5.1.2"],
+		"weather":["val":513, "desc":"5.1.3"],
 		"camera":["val":512, "desc":"5.1.2"],
 		"stream":["val":100, "desc":"1.0.0"]
 	]
@@ -1219,9 +1219,10 @@ def notifPrefPage() {
 		}
 		if(settings?.recipients || settings?.phone || settings?.usePush) {
 			if(settings?.recipients && !atomicState?.pushTested) {
-				sendMsg("Info", "Push Notification Test Successful. Notifications Enabled for ${appName()}", false)
-				atomicState.pushTested = true
-			} else { atomicState.pushTested = true }
+				if(sendMsg("Info", "Push Notification Test Successful. Notifications Enabled for ${appName()}", false)) {
+					atomicState.pushTested = true
+				}
+			}
 
 			section("Location Notifications:") {
 				paragraph "Get notified when the Location changes from Home/Away", state: "complete"
@@ -1574,8 +1575,8 @@ def setNotificationTimePage() {
 			if(settings?."qStopInput" == "A specific time") {
 				input "qStopTime", "time", title: "Stop time", required: timeReq, image: getAppImg("stop_time_icon.png")
 			}
-			input "quietDays", "enum", title: "Only on these days of the week", multiple: true, required: false, image: getAppImg("day_calendar_icon.png"), options: timeDayOfWeekOptions()
-			input "quietModes", "mode", title: "When these Modes are Active", multiple: true, submitOnChange: true, required: false, image: getAppImg("mode_icon.png")
+			input "quietDays", "enum", title: "Prevent during these days of the week", multiple: true, required: false, image: getAppImg("day_calendar_icon.png"), options: timeDayOfWeekOptions()
+			input "quietModes", "mode", title: "Prevent when these Modes are Active", multiple: true, submitOnChange: true, required: false, image: getAppImg("mode_icon.png")
 		}
 	}
 }
@@ -5011,22 +5012,24 @@ def apiIssueNotify(msgOn, rateOn, wait) {
 		def msg = ""
 		msg += !rateLimit && apiIssue ? "\nThe Nest API appears to be having issues. This will effect the updating of device and location data.\nThe issues started at (${atomicState?.apiIssueDt})" : ""
 		msg += rateLimit ? "${apiIssue ? "\n\n" : "\n"}Your API connection is currently being Rate-limited for excessive commands." : ""
-		sendMsg("${app?.name} API Issue Warning", msg, true)
-		LogAction(msg, (cmdFail ? "error" : "warn"), true)
-		atomicState?.lastApiIssueMsgDt = getDtNow()
+		if(sendMsg("${app?.name} API Issue Warning", msg, true)) {
+			atomicState?.lastApiIssueMsgDt = getDtNow()
+		}
 	}
 }
 
 def failedCmdNotify(failData, tstr) {
-	if(!getOk2Notify() || !(getLastFailedCmdMsgSec() > 300)) { return }
+	if(!(getLastFailedCmdMsgSec() > 300)) { return }
 	def nPrefs = atomicState?.notificationPrefs
 	def cmdFail = (nPrefs?.app?.api?.cmdFailMsg && failData?.msg != null) ? true : false
 	if(cmdFail) {
 		def cmdstr = tstr ?: atomicState?.lastCmdSent
 		def msg = "\nThe (${cmdstr}) CMD sent to the API has failed.\nStatus Code: ${failData?.code}\nErrorMsg: ${failData?.msg}\nDT: ${failData?.dt}"
-		sendMsg("${app?.name} API CMD Failed", msg)
-		atomicState?.lastFailedCmdMsgDt = getDtNow()
+		if(sendMsg("${app?.name} API CMD Failed", msg)) {
+			atomicState?.lastFailedCmdMsgDt = getDtNow()
+		}
 	}
+	LogAction(msg, (cmdFail ? "error" : "warn"), true)
 }
 
 def loggingRemindNotify(msgOn) {
@@ -5035,8 +5038,9 @@ def loggingRemindNotify(msgOn) {
 	def dbgAlert = (getDebugLogsOnSec() > 86400)
 	if(dbgAlert) {
 		def msg = "Your debug logging has remained enabled for more than 24 hours please disable them to reduce resource usage on ST platform."
-		sendMsg(("${app?.name} Debug Logging Reminder"), msg, true)
-		atomicState?.lastLogRemindMsgDt = getDtNow()
+		if(sendMsg(("${app?.name} Debug Logging Reminder"), msg, true)) {
+			atomicState?.lastLogRemindMsgDt = getDtNow()
+		}
 	}
 }
 
@@ -5054,8 +5058,9 @@ def missPollNotify(on) {
 		LogAction(msg, "error", true)
 		def msgWait = atomicState?.notificationPrefs?.msgDefaultWait.toInteger() ?: 900
 		if(on && getLastMissPollMsgSec() > msgWait.toInteger()) {
-			sendMsg("${app.name} Nest Data update Issue", msg)
-			atomicState?.lastMisPollMsgDt = getDtNow()
+			if(sendMsg("${app.name} Nest Data update Issue", msg)) {
+				atomicState?.lastMisPollMsgDt = getDtNow()
+			}
 		}
 	}
 }
@@ -5076,7 +5081,6 @@ def appUpdateNotify(badAuto=false) {
 		def blackListed = (atomicState?.appData && !appDevType() && atomicState?.clientBlacklisted) ? true : false
 		//log.debug "appUpd: $appUpd || protUpd: $protUpd || presUpd: $presUpd || tstatUpd: $tstatUpd || weatherUpd: $weatherUpd || camUpd: $camUpd || blackListed: $blackListed || badAuto: $badAuto"
 		if(appUpd || autoappUpd || protUpd || presUpd || tstatUpd || weatherUpd || camUpd || streamUpd || blackListed || badAuto) {
-			atomicState?.lastUpdMsgDt = getDtNow()
 			def str = ""
 			str += !blackListed ? "" : "\nBlack Listed, please ensure software is up to date then contact developer"
 			str += !badAuto ? "" : "\nInvalid or Missing Automation File, please Reinstall the correct automation file"
@@ -5089,7 +5093,10 @@ def appUpdateNotify(badAuto=false) {
 			// str += !vtstatUpd ? "" : "\nVirtual Thermostat: v${atomicState?.appData?.updater?.versions?.thermostat?.ver?.toString()}"
 			str += !weatherUpd ? "" : "\nWeather App: v${atomicState?.appData?.updater?.versions?.weather?.ver?.toString()}"
 			str += !streamUpd ? "" : "\nStream Service: v${atomicState?.appData?.eventStreaming?.minVersion?.toString()}"
-			sendMsg("Info", "${appName()} Update(s) are Available:${str} \n\nPlease visit the IDE to Update code", true)
+			def t0 = badAuto ? "Warn" : "Info"
+			if(sendMsg(t0, "${appName()} Update(s) are Available:${str} \n\nPlease visit the IDE to Update code", true)) {
+				atomicState?.lastUpdMsgDt = getDtNow()
+			}
 		}
 	}
 }
@@ -5103,9 +5110,10 @@ def updateHandler() {
 		}
 		if(atomicState?.appData?.updater?.updateMsg != null && atomicState?.appData?.updater?.updateMsg != atomicState?.lastUpdateMsg) {
 			if(getLastUpdateMsgSec() > 86400) {
-				sendMsg("Info", "${atomicState?.updater?.updateMsg}")
-				atomicState.lastUpdateMsgDt = getDtNow()
-				atomicState.lastUpdateMsg = atomicState?.appData?.updater?.updateMsg
+				if(sendMsg("Info", "${atomicState?.updater?.updateMsg}")) {
+					atomicState.lastUpdateMsgDt = getDtNow()
+					atomicState.lastUpdateMsg = atomicState?.appData?.updater?.updateMsg
+				}
 			}
 		}
 	}
@@ -5466,8 +5474,9 @@ def broadcastCheck() {
 	def bCastData = atomicState?.appData?.broadcast
 	if(atomicState?.isInstalled && bCastData) {
 		if(bCastData?.msgId != null && atomicState?.lastBroadcastId != bCastData?.msgId) {
-			sendMsg(strCapitalize(bCastData?.type), bCastData?.message.toString(), true, null, null, null, true)
-			atomicState?.lastBroadcastId = bCastData?.msgId
+			if(sendMsg(strCapitalize(bCastData?.type), bCastData?.message.toString(), true, null, null, null, true)) {
+				atomicState?.lastBroadcastId = bCastData?.msgId
+			}
 		}
 		if(bCastData?.devBannerMsg != null && atomicState?.devBannerData?.msgId != bCastData?.devBannerMsg?.msgId) {
 			if(bCastData?.devBannerMsg?.msgId && bCastData?.devBannerMsg?.message && bCastData?.devBannerMsg?.type && bCastData?.devBannerMsg?.expireDt) {
@@ -7923,7 +7932,7 @@ def renderManagerData() {
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 				</style>
 			</head>
@@ -8020,7 +8029,7 @@ def renderManagerData() {
 				   		</div>
 				  	</div>
 				</div>
- 			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
+ 			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
  			   	<script>
 					\$(document).ready(function() {
 						${scrStr}
@@ -8113,7 +8122,7 @@ def renderAutomationData() {
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 
 				</style>
@@ -8165,7 +8174,7 @@ def renderAutomationData() {
 						</div>
 					</div>
 			  	</div>
- 		  		<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
+ 		  		<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
  		  		<script>
 					\$(document).ready(function() {
 						${scrStr}
@@ -8328,7 +8337,7 @@ def renderDeviceData() {
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 
 				</style>
@@ -8380,7 +8389,7 @@ def renderDeviceData() {
 						</div>
 	 			   </div>
 	 			</div>
-			  	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
+			  	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
 			  	<script>
 					\$(document).ready(function() {
 						${scrStr}
@@ -8430,7 +8439,7 @@ def renderHtmlMapDesc(title, heading, datamap) {
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
 				<style>
 				</style>
 			</head>
