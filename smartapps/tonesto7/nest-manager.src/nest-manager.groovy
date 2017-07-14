@@ -2162,12 +2162,12 @@ def finishInitManagerApp() {
 		}
 		def tstatAutoApp = getChildApps()?.find {
 			try {
-				def aa = it.getAutomationType()
-				def bb = it.getCurrentSchedule()
-				def ai = it.getAutomationsInstalled()
+				def aa = it?.getAutomationType()
+				def bb = it?.getCurrentSchedule()
+				def ai = it?.getAutomationsInstalled()
 			}
 			catch (Exception e) {
-				log.error "BAD Automation file ${app?.label?.toString()}, please RE-INSTALL automation file"
+				LogAction("BAD Automation file ${it?.label?.toString()}, please INSTALL proper automation file", "error", true)
 				appUpdateNotify(true)
 			}
 		}
@@ -2398,9 +2398,9 @@ def getInstAutoTypesDesc() {
 			atomicState.autoSaVer = updVer
 		}
 
-		if(versionStr2Int(ver) < minVersions()?.automation?.val) {
-			LogAction("NEED SOFTWARE UPDATE: Automation ${a?.label} (v${ver}) | REQUIRED: (v${minVersions()?.automation?.desc}) | Update the NST automation to latest", "error", true)
-			appUpdateNotify()
+		if(ver==null || (versionStr2Int(ver) < minVersions()?.automation?.val) || (versionStr2Int(ver) > minVersions()?.automation?.val && !getDevOpt() )) {
+			LogAction("NEED SOFTWARE UPDATE: Automation ${a?.label} (v${ver}) | REQUIRED: (v${minVersions()?.automation?.desc}) | Please install the correct  NST Automations", "error", true)
+			appUpdateNotify(true)
 		}
 
 		if(dis) {
@@ -5073,13 +5073,13 @@ def appUpdateNotify(badAuto=false) {
 		def streamUpd = atomicState?.streamDevVer ? isStreamUpdateAvail() : false
 		def blackListed = (atomicState?.appData && !appDevType() && atomicState?.clientBlacklisted) ? true : false
 		//log.debug "appUpd: $appUpd || protUpd: $protUpd || presUpd: $presUpd || tstatUpd: $tstatUpd || weatherUpd: $weatherUpd || camUpd: $camUpd || blackListed: $blackListed || badAuto: $badAuto"
-		if(appUpd || protUpd || presUpd || tstatUpd || weatherUpd || camUpd || blackListed || badAuto) {
+		if(appUpd || autoappUpd || protUpd || presUpd || tstatUpd || weatherUpd || camUpd || streamUpd || blackListed || badAuto) {
 			atomicState?.lastUpdMsgDt = getDtNow()
 			def str = ""
 			str += !blackListed ? "" : "\nBlack Listed, please ensure software is up to date then contact developer"
 			str += !badAuto ? "" : "\nInvalid or Missing Automation File, please Reinstall the correct automation file"
 			str += !appUpd ? "" : "\nManager App: v${atomicState?.appData?.updater?.versions?.app?.ver?.toString()}${betaMarker() ? " Beta" : ""}"
-			str += !autoappUpd ? "" : "\nAutomation App: v${atomicState?.appData?.updater?.versions?.autoapp?.ver?.toString()}${betaMarker() ? " Beta" : ""}"
+			str += (!autoappUpd && !badAuto) ? "" : "\nAutomation App: v${atomicState?.appData?.updater?.versions?.autoapp?.ver?.toString()}${betaMarker() ? " Beta" : ""}"
 			str += !protUpd ? "" : "\nProtect: v${atomicState?.appData?.updater?.versions?.protect?.ver?.toString()}"
 			str += !camUpd ? "" : "\nCamera: v${atomicState?.appData?.updater?.versions?.camera?.ver?.toString()}"
 			str += !presUpd ? "" : "\nPresence: v${atomicState?.appData?.updater?.versions?.presence?.ver?.toString()}"
@@ -5152,7 +5152,7 @@ def sendMsg(msgType, msg, showEvt=true, people = null, sms = null, push = null, 
 			if(sent) {
 				//atomicState?.lastMsg = flatMsg
 				//atomicState?.lastMsgDt = getDtNow()
-				LogAction("sendMsg: Sent ${sentstr} Message Sent: ${flatMsg} ${atomicState?.lastMsgDt}", "debug", true)
+				LogAction("sendMsg: Sent ${sentstr} Message Sent: ${flatMsg}", "debug", true)
 				incAppNotifSentCnt()
 			}
 		}
