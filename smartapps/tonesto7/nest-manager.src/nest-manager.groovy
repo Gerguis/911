@@ -167,8 +167,10 @@ def authPage() {
 			}
 		}
 	}
-	updateWebStuff(true)
-	setStateVar(true)
+	if(getLastWebUpdSec() > 1200) {
+		updateWebStuff(true)
+		setStateVar(true)
+	}
 	if(atomicState?.newSetupComplete && (atomicState?.appData?.updater?.versions?.app?.ver.toString() == appVersion())) {
 		def result = ((atomicState?.appData?.updater?.setupVersion && !atomicState?.setupVersion) || (atomicState?.setupVersion?.toInteger() < atomicState?.appData?.updater?.setupVersion?.toInteger())) ? true : false
 		if (result) { atomicState?.newSetupComplete = null }
@@ -2040,6 +2042,7 @@ def reInitBuiltins() {
 }
 
 def initNestModeApp() {
+	LogTrace("initNestModeApp")
 	if(automationNestModeEnabled()) {
 		def nestModeApp = getChildApps()?.findAll { it?.getAutomationType() == "nMode" }
 		if(nestModeApp?.size() >= 1) {
@@ -2110,6 +2113,7 @@ def initRemDiagApp() {
 }
 
 def initManagerApp() {
+	LogTrace("initManagerApp")
 	setStateVar()
 	restStreamHandler(true)   // stop the rest stream
 	atomicState?.restStreamingOn = false
@@ -2142,7 +2146,11 @@ def initManagerApp() {
 	subscriber()
 	setPollingState()
 	startStopStream()
+	runIn(21, "finishInitManagerApp", [overwrite: true])
+}
 
+def finishInitManagerApp() {
+	LogTrace("finishInitManagerApp")
 	if(atomicState?.isInstalled && atomicState?.installData?.usingNewAutoFile) {
 		if(app.label == "Nest Manager") { app.updateLabel("NST Manager") }
 
@@ -2185,12 +2193,12 @@ def startStopStream() {
 		return
 	}
 	if(strEn && settings?.restStreaming && !atomicState?.restStreamingOn) {
-		LogAction("Sending restStreamHandler(Start) Event to local node service", "debug", true)
+		//LogAction("Sending restStreamHandler(Start) Event to local node service", "debug", true)
 		restStreamHandler()
 		runIn(5, "restStreamCheck", [overwrite: true])
 	}
 	else if ((!settings?.restStreaming || !strEn) && atomicState?.restStreamingOn) {
-		LogAction("Sending restStreamHandler(Stop) Event to local node service", "debug", true)
+		//LogAction("Sending restStreamHandler(Stop) Event to local node service", "debug", true)
 		restStreamHandler(true)
 		atomicState?.restStreamingOn = false
 		runIn(5, "restStreamCheck", [overwrite: true])
@@ -2221,6 +2229,7 @@ def getRestHost() {
 }
 
 def restStreamHandler(close = false) {
+	LogTrace("restStreamHandler: close: ${close}")
 	def toClose = close
 	def host = getRestHost()
 	if(!host) {
@@ -2239,6 +2248,7 @@ def restStreamHandler(close = false) {
 	}
 	LogTrace("restStreamHandler(close: ${close}) host: ${host} lastRestHost: ${atomicState?.lastRestHost}")
 	def connStatus = toClose ? false : true
+	LogAction("restStreamHandler(${connStatus ? "Start" : "Stop"}) Event to local node service", "debug", true)
 	try {
 		def hubAction = new physicalgraph.device.HubAction(
 			method: "POST",
@@ -2301,7 +2311,7 @@ def receiveStreamStatus() {
 		}
 		atomicState?.restStreamingOn = t0
 		if(!settings?.restStreaming && t0) {		// suppose to be off
-			LogAction("Sending restStreamHandler(Stop) Event to local node service", "debug", false)
+			//LogAction("Sending restStreamHandler(Stop) Event to local node service", "debug", false)
 			restStreamHandler(true)
 		} else if (settings?.restStreaming && !atomicState?.restStreamingOn) {		// suppose to be on
 			runIn(21, "startStopStream", [overwrite: true])
@@ -2993,25 +3003,21 @@ def poll(force = false, type = null) {
 
 		if(getLastHeardFromNestSec() > pollTimeout) {
 			if(settings?.restStreaming && atomicState?.restStreamingOn) {
-				LogAction("Have not heard from Rest Stream - Sending restStreamHandler(Stop) Event to local node service", "warn", true)
+				LogAction("Have not heard from Rest Stream", "warn", true)
 				restStreamHandler(true)   // close the stream if we have not heard from it in a while
 				atomicState?.restStreamingOn = false
 			}
 		}
 
 		if(atomicState?.streamPolling && (!settings?.restStreaming || !atomicState?.restStreamingOn)) {	// return to normal polling
-			unschedule("poll")
-			atomicState.pollingOn = false
-			setPollingState()		// will call poll
+			resetPolling()
 			return
 		}
 
 		if(settings?.restStreaming && atomicState?.restStreamingOn) {
 			LogAction("Skipping Poll because Rest Streaming is ON", "info", false)
 			if(!atomicState?.streamPolling) {	// set to stream polling
-				unschedule("poll")
-				atomicState.pollingOn = false
-				setPollingState()		// will call poll
+				resetPolling()
 				return
 			}
 			restStreamCheck()
@@ -3098,10 +3104,20 @@ def finishPoll(str=null, dev=null) {
 	}
 }
 
+def resetPolling() {
+	unschedule("finishPoll")
+	unschedule("postCmd")
+	unschedule("pollFollow")
+	atomicState.pollingOn = false
+	setPollingState()		// will call poll
+}
+
+/*
 def finishPollHandler(data) {
 	def dev = data?.dev
 	finishPoll(false, dev)
 }
+*/
 
 def schedFinishPoll(devChg) {
 	def curNow = now()
@@ -3411,7 +3427,7 @@ def receiveEventData() {
 			}
 		}
 	} else {
-		LogAction("Sending restStreamHandler(Stop) Event to local node service", "debug", true)
+		LogTrace("receiveEventData: Sending restStreamHandler(Stop)")
 		restStreamHandler(true)
 	}
 	if(gotSomething) {
@@ -5310,10 +5326,10 @@ def getWebFileData(now = true) {
 
 		if(now || !allowAsync) {
 			httpGet(params) { resp ->
-				result = webResponse(resp, [type:null])
+				result = webResponse(resp, [type:metstr])
 			}
 		} else {
-			asynchttp_v1.get(webResponse, params, [type:"async"])
+			asynchttp_v1.get(webResponse, params, [type:metstr])
 		}
 	}
 	catch (ex) {
@@ -5372,10 +5388,10 @@ def getFbAppSettings(now = true) {
 
 		if(now || !allowAsync) {
 			httpGet(params) { resp ->
-				result = webFbResponse(resp, [type:null])
+				result = webFbResponse(resp, [type:metstr])
 			}
 		} else {
-			asynchttp_v1.get(webFbResponse, params, [type:"async"])
+			asynchttp_v1.get(webFbResponse, params, [type:metstr])
 		}
 	}
 	catch (ex) {
@@ -5389,7 +5405,7 @@ def getFbAppSettings(now = true) {
 }
 
 def webFbResponse(resp, data) {
-	LogAction("webFbesponse(${data?.type})", "info", false)
+	LogAction("webFbResponse(${data?.type})", "info", false)
 	def result = false
 	if(resp?.status == 200) {
 		def newdata = resp?.data
