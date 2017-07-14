@@ -83,6 +83,7 @@ html, body {
     border-color: white;
     border-style: solid;
     border-width: 1px;
+    display: none;
 }
 
 .panel-title-text {
@@ -118,13 +119,16 @@ html, body {
     font-size: 2.0em;
 }
 
+
 /**************************************
     PRE CODE CSS
 ***************************************/
+
 pre {
     overflow-x: auto;
     overflow-y: auto;
 }
+
 
 /**************************************
     NAV BAR CSS
@@ -489,76 +493,98 @@ pre {
 
 .logs-div {
     text-align: left;
+    vertical-align: middle;
     padding: 0, 0;
 }
 
-.label {
-    display: inline;
+.log-line {
+    display: inline-block;
+    padding-bottom: 8px;
+    vertical-align: middle;
+}
+
+.log-time {
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+.log-label {
+    display: inline-block;
     padding: .2em .6em .3em;
     font-weight: bold;
     line-height: 1;
     color: #fff;
     text-align: center;
     white-space: nowrap;
-    vertical-align: baseline;
+    vertical-align: middle;
     border-radius: .25em;
+    min-width: 44px;
 }
 
-.logSrcFmt {
+.log-source {
     border-radius: 0.3em;
     border-color: gray;
     border-style: solid;
     border-width: 1px;
     padding: 2px;
     font-style: italic;
+    vertical-align: middle;
+}
+
+.log-msg {
+    vertical-align: middle;
 }
 
 .defsrc-bg {
     color: gray;
-    background-color: lightgray;
+    background-color: white;
+    font-size: 0.9em;
 }
 
 .mansrc-bg {
-    color: gray;
-    background-color: lightgray;
+    color: #6b6b6b;
+    background-color: transparent;
+    font-size: 0.9em;
 }
 
 .autosrc-bg {
-    color: gray;
+    color: #6b6b6b;
     background-color: lightgray;
+    font-size: 0.9em;
 }
 
 .camsrc-bg {
-    color: gray;
-    background-color: lightgray;
+    color: #6b6b6b;
+    background-color: lightblue;
+    font-size: 0.9em;
 }
 
 .protsrc-bg {
-    color: gray;
-    background-color: lightgray;
+    color: #6b6b6b;
+    background-color: lightorange;
+    font-size: 0.9em;
 }
 
 .pressrc-bg {
-    color: gray;
-    background-color: lightgray;
+    color: #6b6b6b;
+    background-color: lightyellow;
+    font-size: 0.9em;
 }
 
 .weatsrc-bg {
-    color: gray;
-    background-color: lightgray;
+    color: #6b6b6b;
+    background-color: lightpurple;
+    font-size: 0.9em;
 }
 
 .tstatsrc-bg {
-    color: gray;
-    background-color: lightgray;
+    color: #6b6b6b;
+    background-color: lightgreen;
+    font-size: 0.9em;
 }
 
 .centerText {
     text-align: center;
-}
-
-.logEvtDt {
-    font-weight: bold;
 }
 
 .mapDataFmt {}
