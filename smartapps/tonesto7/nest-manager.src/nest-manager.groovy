@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.8" }
-def appVerDate() { "7-13-2017" }
+def appVerDate() { "7-14-2017" }
 def minVersions() {
 	return [
 		"automation":["val":515, "desc":"5.1.5"],
@@ -5108,10 +5108,10 @@ def getOk2Notify() { return (daysOk(settings?.quietDays) && notificationTimeOk()
 def sendMsg(msgType, msg, showEvt=true, people = null, sms = null, push = null, brdcast = null) {
 	LogTrace("sendMsg")
 	def sentstr = "Push"
+	def sent = false
 	try {
 		def newMsg = "${msgType}: ${msg}" as String
 		def flatMsg = newMsg.toString().replaceAll("\n", " ")
-		def sent = false
 		if(!getOk2Notify()) {
 			LogAction("sendMsg: Skipping Due to Quiet Time ($flatMsg)", "info", true)
 		} else {
@@ -5154,6 +5154,7 @@ def sendMsg(msgType, msg, showEvt=true, people = null, sms = null, push = null, 
 		log.error "sendMsg $sentstr Exception:", ex
 		sendExceptionData(ex, "sendMsg")
 	}
+	return sent
 }
 
 def getLastWebUpdSec() { return !atomicState?.lastWebUpdDt ? 100000 : GetTimeDiffSeconds(atomicState?.lastWebUpdDt, null, "getLastWebUpdSec").toInteger() }
