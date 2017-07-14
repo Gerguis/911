@@ -8534,21 +8534,20 @@ def getDbExceptPath() { return atomicState?.appData?.database?.newexceptionPath 
 
 def sendExceptionData(ex, methodName, isChild = false, autoType = null) {
 	try {
-		def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging)
+		def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging) ? true : false
 		def labelstr = atomicState?.debugAppendAppName ? "${app.label} | " : ""
 		//LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType)", "info", false)
 		LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType, ex: ${ex})", "error", showErrLog)
 		if(atomicState?.appData?.database?.disableExceptions == true) {
 			return
 		} else {
-			def exCnt = 0
+			def exCnt = atomicState?.appExceptionCnt ?: 1
+			atomicState?.appExceptionCnt = exCnt.toInteger() + 1
 			def exString = "${ex}"
-			exCnt = atomicState?.appExceptionCnt ? atomicState?.appExceptionCnt + 1 : 1
-			atomicState?.appExceptionCnt = exCnt ?: 1
 			if(settings?.optInSendExceptions || settings?.optInSendExceptions == null) {
 				generateInstallId()
 				def appType = isChild && autoType ? "automationApp/${autoType}" : "managerApp"
-				def exData
+				def exData =[:]
 				if(isChild) {
 					exData = ["methodName":methodName, "automationType":autoType, "appVersion":(appVersion() ?: "Not Available"),"errorMsg":exString, "errorDt":getDtNow().toString()]
 				} else {
@@ -8560,16 +8559,15 @@ def sendExceptionData(ex, methodName, isChild = false, autoType = null) {
 		}
 	} catch (e) {
 		log.debug "other exception caught"
-		return }
+	}
 }
 
 def sendChildExceptionData(devType, devVer, ex, methodName) {
-	def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging)
-	def exCnt = 0
+	def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging) ? true : false
 	def exString = "${ex}"
 	LogAction("sendChildExceptionData(device: $deviceType, devVer: $devVer, method: $methodName, ex: ${ex}", "error", showErrLog)
-	exCnt = atomicState?.childExceptionCnt ? atomicState?.childExceptionCnt + 1 : 1
-	atomicState?.childExceptionCnt = exCnt ?: 1
+	def exCnt = atomicState?.childExceptionCnt ?: 1
+	atomicState?.childExceptionCnt = exCnt.toInteger() + 1
 	if(settings?.optInSendExceptions || settings?.optInSendExceptions == null) {
 		generateInstallId()
 		def exData = ["deviceType":devType, "devVersion":(devVer ?: "Not Available"), "methodName":methodName, "errorMsg":exString, "errorDt":getDtNow().toString()]
