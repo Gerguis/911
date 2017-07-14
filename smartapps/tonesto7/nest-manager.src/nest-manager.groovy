@@ -8528,7 +8528,7 @@ def sendExceptionData(ex, methodName, isChild = false, autoType = null) {
 		def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging)
 		def labelstr = atomicState?.debugAppendAppName ? "${app.label} | " : ""
 		//LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType)", "info", false)
-		LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType, ex: ${ex}", "error", showErrLog)
+		LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType, ex: ${ex})", "error", showErrLog)
 		if(atomicState?.appData?.database?.disableExceptions == true) {
 			return
 		} else {

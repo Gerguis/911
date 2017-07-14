@@ -7562,8 +7562,8 @@ def getRemLogData() {
 					<div class="log-line">
 						<span class="log-time">${tf?.format(logItem?.dt)}</span>:
 						<span class="log-type $tCls">${logItem?.type}</span> |
-						<span class="log-source ${srcCls}"> ${logItem?.src}</span>
-						<span class="log-msg">: ${logItem?.msg}</span>
+						<span class="log-source ${srcCls}"> ${logItem?.src}</span>:
+						<span class="log-msg"> ${logItem?.msg}</span>
 					</div>
 				"""
 				cnt = cnt+1
