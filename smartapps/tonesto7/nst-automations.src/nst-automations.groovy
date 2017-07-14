@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.5" }
-def appVerDate() { "7-13-2017" }
+def appVerDate() { "7-14-2017" }
 
 preferences {
 	//startPage
@@ -7512,13 +7512,13 @@ def getRemLogData() {
 		def tf = new SimpleDateFormat("h:mm:ss a")
 		tf.setTimeZone(getTimeZone())
 		def logSz = logData?.size() ?: 0
+		def cnt = 1
 		// def navMap = [:]
 		// navMap = ["key":cApp?.getLabel(), "items":["Settings", "State", "MetaData"]]
 		// def navItems = navHtmlBuilder(navMap, appNum)
 		// if(navItems?.html) { navHtml += navItems?.html }
 		// if(navItems?.js) { scrStr += navItems?.js }
 		if(logSz > 0) {
-			def cnt = 1
 			logData?.sort { it?.dt }.reverse()?.each { logItem ->
 				def tCls = ""
 				switch(logItem?.type) {
@@ -7542,7 +7542,9 @@ def getRemLogData() {
 						break
 				}
 				def srcCls = "defsrc-bg"
-				if(logItem?.src.toString().startsWith("Camera")) {
+				if(logItem?.src.toString().startsWith("Manager")) {
+					srcCls = "mansrc-bg"
+				} else if(logItem?.src.toString().startsWith("Camera")) {
 					srcCls = "camsrc-bg"
 				} else if(logItem?.src.toString().startsWith("Protect")) {
 					srcCls = "protsrc-bg"
@@ -7554,12 +7556,15 @@ def getRemLogData() {
 					srcCls = "pressrc-bg"
 				} else if(logItem?.src.toString().startsWith("Automation")) {
 					srcCls = "autosrc-bg"
-				} else if(logItem?.src.toString().startsWith("NestManager")) {
-					srcCls = "mansrc-bg"
 				}
-
 				resultStr += """
-					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logEvtDt">${tf?.format(logItem?.dt)}</span>: <span class="label $tCls">${logItem?.type}</span> | <span class="logSrcFmt ${srcCls}">${logItem?.src}</span>: ${logItem?.msg}</span>
+					${cnt > 1 ? "<br>" : ""}
+					<div class="log-line">
+						<span class="log-time">${tf?.format(logItem?.dt)}</span>:
+						<span class="log-type $tCls">${logItem?.type}</span> |
+						<span class="log-source ${srcCls}"> ${logItem?.src}</span>
+						<span class="log-msg">: ${logItem?.msg}</span>
+					</div>
 				"""
 				cnt = cnt+1
 			}

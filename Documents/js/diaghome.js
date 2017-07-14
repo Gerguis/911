@@ -2,7 +2,8 @@ var hdrHeight = $("#top-hdr").height();
 var hdrHeightPx = hdrHeight + 5 + "px";
 
 $("body").animate({
-    paddingTop: hdrHeightPx
+    paddingTop: hdrHeightPx,
+    duration: fast
 });
 
 $("#rfrshBtn").click(function() {
