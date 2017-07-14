@@ -2505,8 +2505,8 @@ private adj_temp(tempF) {
 def setPollingState() {
 	if(!atomicState?.thermostats && !atomicState?.protects && !atomicState?.weatherDevice && !atomicState?.cameras) {
 		LogAction("No Devices Selected; Polling is OFF", "info", true)
-		unschedule("poll")
 		atomicState.pollingOn = false
+		unschedule("poll")
 		atomicState.streamPolling = false
 	} else {
 		if(!atomicState?.pollingOn) {
@@ -3105,10 +3105,11 @@ def finishPoll(str=null, dev=null) {
 }
 
 def resetPolling() {
+	atomicState.pollingOn = false
+	unschedule("poll")
 	unschedule("finishPoll")
 	unschedule("postCmd")
 	unschedule("pollFollow")
-	atomicState.pollingOn = false
 	setPollingState()		// will call poll
 }
 
