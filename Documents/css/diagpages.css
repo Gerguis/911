@@ -508,7 +508,7 @@ pre {
     vertical-align: middle;
 }
 
-.log-label {
+.log-type {
     display: inline-block;
     padding: .2em .6em .3em;
     font-weight: bold;
