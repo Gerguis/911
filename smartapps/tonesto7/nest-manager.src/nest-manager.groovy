@@ -287,7 +287,6 @@ def mainPage() {
 			}
 		}
 		atomicState.ok2InstallAutoFlag = false
-		incMainLoadCnt()
 		devPageFooter("mainLoadCnt", execTime)
 	}
 }
@@ -315,7 +314,6 @@ def deviceSelectPage() {
 	def execTime = now()
 	return dynamicPage(name: "deviceSelectPage", title: "Device Selection", nextPage: "startPage", install: false, uninstall: false) {
 		devicesPage()
-		incDevLocLoadCnt()
 		devPageFooter("devLocLoadCnt", execTime)
 	}
 }
@@ -440,7 +438,6 @@ def devPrefPage() {
 				//atomicState.needChildUpd = true
 			}
 		}
-		incDevCustLoadCnt()
 		devPageFooter("devCustLoadCnt", execTime)
 	}
 }
@@ -481,7 +478,6 @@ def camMotionZoneFltrPage() {
 		}
 
 		atomicState.needChildUpd = true
-		incCamZoneFltLoadCnt()
 		devPageFooter("camZoneFltLoadCnt", execTime)
 	}
 }
@@ -521,7 +517,6 @@ def custWeatherPage() {
 		}
 		atomicState.lastWeatherUpdDt = 0
 		atomicState?.lastForecastUpdDt = 0
-		incCustWeathLoadCnt()
 		devPageFooter("custWeathLoadCnt", execTime)
 	}
 }
@@ -613,7 +608,6 @@ def helpPage () {
 				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
 			}
 		}
-		incHelpLoadCnt()
 		devPageFooter("helpLoadCnt", execTime)
 	}
 }
@@ -639,7 +633,6 @@ def infoPage () {
 		section("Licensing Info:") {
 			paragraph "${textCopyright()}\n${textLicense()}"
 		}
-		incInfoLoadCnt()
 		devPageFooter("infoLoadCnt", execTime)
 	}
 }
@@ -685,7 +678,6 @@ def prefsPage() {
 			input (name: "resetSTAccessToken", type: "bool", title: "Reset SmartThings Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
 			if(settings?.resetSTAccessToken) { resetSTAccessToken() }
 		}
-		incPrefLoadCnt()
 		devPageFooter("prefLoadCnt", execTime)
 	}
 }
@@ -749,7 +741,6 @@ def pollPrefPage() {
 			input ("pollWaitVal", "enum", title: "Forced Poll Refresh Limit", required: false, defaultValue: 10, metadata: [values:waitValEnum()], submitOnChange: true, image: getAppImg("delay_time_icon.png"))
 		}
 
-		incPollPrefLoadCnt()
 		devPageFooter("pollPrefLoadCnt", execTime)
 	}
 }
@@ -961,7 +952,7 @@ def automationsPage() {
 			}
 		}
 		atomicState.ok2InstallAutoFlag = true
-		incAutoLoadCnt()
+
 		devPageFooter("autoLoadCnt", execTime)
 	}
 }
@@ -1005,7 +996,7 @@ def automationSchedulePage() {
 				paragraph "There is No Schedule Data to Display"
 			}
 		}
-		incViewAutoSchedLoadCnt()
+
 		devPageFooter("viewAutoSchedLoadCnt", execTime)
 	}
 }
@@ -1070,7 +1061,7 @@ def automationStatisticsPage() {
 				paragraph "There is No Statistic Data to Display"
 			}
 		}
-		incViewAutoStatLoadCnt()
+
 		devPageFooter("viewAutoStatLoadCnt", execTime)
 	}
 }
@@ -1188,7 +1179,7 @@ def automationGlobalPrefsPage() {
 				}
 			}
 		}
-		incAutoGlobPrefLoadCnt()
+
 		devPageFooter("autoGlobPrefLoadCnt", execTime)
 	}
 }
@@ -1262,7 +1253,7 @@ def notifPrefPage() {
 			}
 		} else { atomicState.pushTested = false }
 		atomicState?.notificationPrefs = buildNotifPrefMap()
-		incNotifPrefLoadCnt()
+
 		devPageFooter("notifPrefLoadCnt", execTime)
 	}
 }
@@ -1361,7 +1352,7 @@ def notifConfigPage(params) {
 				}
 				break
 		}
-		incAppNotifPrefLoadCnt()
+
 		devPageFooter("appNotifPrefLoadCnt", execTime)
 	}
 }
@@ -1548,7 +1539,7 @@ def devNamePage() {
 			paragraph "No Devices Selected"
 		}
 		atomicState.forceChildUpd = true
-		incDevCustNameLoadCnt()
+
 		devPageFooter("devCustNameLoadCnt", execTime)
 	}
 }
@@ -1617,7 +1608,7 @@ def debugPrefPage() {
 			if(atomicState?.debugEnableDt == null) { atomicState?.debugEnableDt = getDtNow() }
 		} else { atomicState?.debugEnableDt = null }
 		atomicState.needChildUpd = true
-		incLogPrefLoadCnt()
+
 		devPageFooter("logPrefLoadCnt", execTime)
 	}
 }
@@ -1659,7 +1650,7 @@ def diagnosticPage () {
 			input (name: "resetSTAccessToken", type: "bool", title: "Reset Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
 			if(settings?.resetSTAccessToken) { resetSTAccessToken() }
 		}
-		incDiagLoadCnt()
+
 		devPageFooter("diagLoadCnt", execTime)
 	}
 }
@@ -1742,7 +1733,7 @@ def changeLogPage () {
 		def iData = atomicState?.installData
 		iData["shownChgLog"] = true
 		atomicState?.installData = iData
-		incChgLogLoadCnt()
+
 		devPageFooter("chgLogLoadCnt", execTime)
 	}
 }
@@ -1766,6 +1757,9 @@ def getDevOpt() {
 
 def devPageFooter(var, eTime) {
 	def res = []
+	def data = atomicState?.usageMetricsStore ?: [:]
+	data[var] = (data[var] == null) ? 1 : data[var].toInteger()+1
+	atomicState?.usageMetricsStore = data
 	if(getDevOpt()) {
 		res += 	section() {
 			paragraph "       Page Loads: (${atomicState?.usageMetricsStore["${var}"] ?: 0}) | LoadTime: (${eTime ? (now()-eTime) : 0}ms)"
@@ -5525,41 +5519,21 @@ def getAskAlexaMultiQueueEn() {
 }
 
 def initAppMetricStore() {
-	def items = ["mainLoadCnt", "devLocLoadCnt", "diagLoadCnt", "remDiagLoadCnt", "prefLoadCnt", "autoLoadCnt", "protTestLoadCnt", "helpLoadCnt", "infoLoadCnt", "chgLogLoadCnt", "nestLoginLoadCnt", "pollPrefLoadCnt", "devCustLoadCnt",
-		"vRprtPrefLoadCnt", "notifPrefLoadCnt", "logPrefLoadCnt", "camZoneFltLoadCnt", "viewAutoSchedLoadCnt", "viewAutoStatLoadCnt", "autoGlobPrefLoadCnt", "devCustNameLoadCnt", "custWeathLoadCnt"]
+	def items = ["mainLoadCnt", "devLocLoadCnt", "diagLoadCnt", "prefLoadCnt", "autoLoadCnt", "protTestLoadCnt", "helpLoadCnt", "infoLoadCnt", "chgLogLoadCnt", "nestLoginLoadCnt", "pollPrefLoadCnt", "devCustLoadCnt",
+		"vRprtPrefLoadCnt", "notifPrefLoadCnt", "logPrefLoadCnt", "camZoneFltLoadCnt", "viewAutoSchedLoadCnt", "viewAutoStatLoadCnt", "autoGlobPrefLoadCnt", "devCustNameLoadCnt", "custWeathLoadCnt", "appNotifPrefLoadCnt"]
 	def data = atomicState?.usageMetricsStore ?: [:]
 	items?.each { if(!data[it]) { data[it] = 0 } }
 	atomicState?.usageMetricsStore = data
 }
+
 def incMetricCntVal(item) {
 	def data = atomicState?.usageMetricsStore ?: [:]
 	data[item] = (data[item] == null) ? 1 : data[item].toInteger()+1
 	atomicState?.usageMetricsStore = data
 }
 
-def incMainLoadCnt() { incMetricCntVal("mainLoadCnt") }
-def incDevLocLoadCnt() { incMetricCntVal("devLocLoadCnt") }
-def incDiagLoadCnt() { incMetricCntVal("diagLoadCnt") }
-def incRemDiagLoadCnt() { incMetricCntVal("remDiagLoadCnt") }
-def incPrefLoadCnt() { incMetricCntVal("prefLoadCnt") }
-def incInfoLoadCnt() { incMetricCntVal("infoLoadCnt") }
-def incChgLogLoadCnt() { incMetricCntVal("chgLogLoadCnt") }
-def incAutoLoadCnt() { incMetricCntVal("autoLoadCnt") }
-def incProtTestLoadCnt() { incMetricCntVal("protTestLoadCnt") }
-def incHelpLoadCnt() { incMetricCntVal("helpLoadCnt") }
 def incNestLoginLoadCnt() { incMetricCntVal("nestLoginLoadCnt") }
-def incDevCustNameLoadCnt() { incMetricCntVal("devCustNameLoadCnt") }
-def incCustWeathLoadCnt() { incMetricCntVal("custWeathLoadCnt") }
-def incPollPrefLoadCnt() { incMetricCntVal("pollPrefLoadCnt") }
-def incDevCustLoadCnt() { incMetricCntVal("devCustLoadCnt") }
-def incCamZoneFltLoadCnt() { incMetricCntVal("camZoneFltLoadCnt") }
 def incVrprtPrefLoadCnt() { incMetricCntVal("vRprtPrefLoadCnt") }
-def incNotifPrefLoadCnt() { incMetricCntVal("notifPrefLoadCnt") }
-def incAppNotifPrefLoadCnt() { incMetricCntVal("appNotifPrefLoadCnt") }
-def incLogPrefLoadCnt() { incMetricCntVal("logPrefLoadCnt") }
-def incViewAutoSchedLoadCnt() { incMetricCntVal("viewAutoSchedLoadCnt") }
-def incViewAutoStatLoadCnt() { incMetricCntVal("viewAutoStatLoadCnt") }
-def incAutoGlobPrefLoadCnt() { incMetricCntVal("autoGlobPrefLoadCnt") }
 
 def isCodeUpdateAvailable(newVer, curVer, type) {
 	def result = false
@@ -7266,6 +7240,7 @@ def b64Action(String str, dec=false) {
 *					 	DIAGNOSTIC & NEST API INFO PAGES		  	  		  *
 *******************************************************************************/
 def alarmTestPage () {
+	def execTime = now()
 	dynamicPage(name: "alarmTestPage", install: false, uninstall: false) {
 		if(atomicState?.protects) {
 			section("Select Carbon/Smoke Device to Test:") {
@@ -7310,6 +7285,7 @@ def alarmTestPage () {
 			}
 		}
 	}
+	devPageFooter("protTestLoadCnt", execTime)
 }
 
 void resetAlarmTest() {
