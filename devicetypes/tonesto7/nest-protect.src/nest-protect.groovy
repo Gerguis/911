@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 
 preferences { }
 
-def devVer() { return "5.1.2" }
+def devVer() { return "5.1.3" }
 
 metadata {
 	definition (name: "${textDevName()}", author: "Anthony S.", namespace: "tonesto7") {
@@ -20,6 +20,7 @@ metadata {
 		capability "Sensor"
 		capability "Battery"
 		capability "Smoke Detector"
+		capability "Power Source"
 		capability "Carbon Monoxide Detector"
 		capability "Refresh"
 		capability "Health Check"
@@ -48,7 +49,7 @@ metadata {
 		attribute "carbonMonoxide", "string"
 		attribute "smoke", "string"
 		attribute "nestCarbonMonoxide", "string"
-		attribute "powerSource", "string"
+		attribute "powerSourceNest", "string"
 		attribute "nestSmoke", "string"
 	}
 
@@ -174,7 +175,7 @@ def useTrackedHealth() { return state?.useTrackedHealth ?: false }
 def getHcTimeout() {
 	def toBatt = state?.hcBattTimeout
 	def toWire = state?.hcWireTimeout
-	return ((device.currentValue("powerSource") == "wired") ? (toWire instanceof Integer ? toWire : 35) : (toBatt instanceof Integer ? toBatt : 1500))*60
+	return ((device.currentValue("powerSourceNest") == "wired") ? (toWire instanceof Integer ? toWire : 35) : (toBatt instanceof Integer ? toBatt : 1500))*60
 }
 
 void verifyHC() {
@@ -531,12 +532,14 @@ def determinePwrSrc() {
 }
 
 def powerTypeEvent(wired) {
-	def curVal = device.currentState("powerSource")?.value
-	def newVal = wired == true ? "wired" : "battery"
-	state?.powerSource = newVal
-	if(isStateChange(device, "powerSource", newVal)) {
+	def curVal = device.currentState("powerSourceNest")?.value
+	def newValSt = wired == true ? "wired" : "battery"
+	def newVal = wired == true ? "mains" : "battery"
+	state?.powerSource = newValSt
+	if(isStateChange(device, "powerSource", newVal) || isStateChange(device, "powerSourceNest", newValSt)) {
 		Logger("UPDATED | The Device's Power Source is: (${newVal}) | Original State: (${curVal})")
 		sendEvent(name: 'powerSource', value: newVal, displayed: true, isStateChange: true)
+		sendEvent(name: 'powerSourceNest', value: newValSt, displayed: true, isStateChange: true)
 		verifyHC()
 	} else { LogAction("The Device's Power Source is: (${newVal}) | Original State: (${curVal})") }
 }
