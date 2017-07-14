@@ -548,14 +548,14 @@ def lastEventDataEvent(data) {
 		sendEvent(name: 'lastEventZones', value: evtZoneNames.toString(), descriptionText: "Last Event Zones: ${evtZoneNames}", displayed: false)
 		state.lastCamEvtData = ["startDt":newStartDt, "endDt":newEndDt, "hasMotion":hasMotion, "hasSound":hasSound, "hasPerson":hasPerson, "actZones":(data?.activity_zone_ids ?: null)]
 		tryPic = evtSnapShotOk()
-		Logger(state?.enRemDiagLogging ? "└─────────" : "└────────────────────────────")
+		Logger(state?.enRemDiagLogging ? "└──────────────" : "└────────────────────────────")
 		//Logger("│	URL: ${state?.animation_url ?: "None"}")
 		Logger("│	Took Snapshot: ${tryPic}")
 		Logger("│	Zones: ${evtZoneNames ?: "None"}")
 		Logger("│	End Time: (${newEndDt})")
 		Logger("│	Start Time: (${newStartDt})")
 		Logger("│	Type: ${evtType}")
-		Logger(state?.enRemDiagLogging ? "┌─New Camera Event─" : "┌────────New Camera Event────────")
+		Logger(state?.enRemDiagLogging ? "┌───New Camera Event────" : "┌────────New Camera Event────────")
 		addCheckinReason("lastEventData")
 	} else {
 		LogAction("Last Event Start Time: (${newStartDt}) - Zones: ${evtZoneNames} | Original State: (${curStartDt})")
