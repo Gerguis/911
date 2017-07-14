@@ -2,7 +2,8 @@ var hdrHeight = $("#top-hdr").height();
 var hdrHeightPx = hdrHeight + 5 + "px";
 
 $("body").animate({
-    paddingTop: hdrHeightPx
+    paddingTop: hdrHeightPx,
+    duration: fast
 });
 
 $("#rfrshBtn").click(function() {
@@ -14,15 +15,15 @@ $("#rfrshBtn").hover(function(e) {
 });
 
 $("#goHomeBtn").click(function() {
-	closeNavMenu();
-	toggleMenuBtn();
-	window.history.back();
+    closeNavMenu();
+    toggleMenuBtn();
+    window.history.back();
 });
 
 $("body").flowtype({
     minFont: 8,
-    maxFont: 14,
-    fontRatio: 35
+    maxFont: 15,
+    fontRatio: 30
 });
 
 $(window).scroll(function() {
@@ -333,22 +334,22 @@ function closeNavMenu() {
 })(jQuery);
 
 $("#exportLogPdfBtn").click(function() {
-    var element = document.getElementById("#logBody");
-    html2pdf(element, {
-        margin: 1,
-        filename: "log-data.pdf",
-        image: {
-            type: "jpeg",
-            quality: 0.98
-        },
-        html2canvas: {
-            dpi: 192,
-            letterRendering: true
-        },
-        jsPDF: {
-            unit: "in",
-            format: "letter",
-            orientation: "portrait"
-        }
-    });
+    // var element = document.getElementById("#logBody");
+    // html2pdf(element, {
+    //     margin: 1,
+    //     filename: "log-data.pdf",
+    //     image: {
+    //         type: "jpeg",
+    //         quality: 0.98
+    //     },
+    //     html2canvas: {
+    //         dpi: 192,
+    //         letterRendering: true
+    //     },
+    //     jsPDF: {
+    //         unit: "in",
+    //         format: "letter",
+    //         orientation: "portrait"
+    //     }
+    // });
 });
