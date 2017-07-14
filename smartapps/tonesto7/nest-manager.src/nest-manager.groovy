@@ -2132,7 +2132,7 @@ def initManagerApp() {
 			atomicState.structName = "${structs[atomicState?.structures]}"
 		}
 	}
-	if(addRemoveDevices()) { // if we changed devices, reset queues and polling
+	if(!addRemoveDevices()) { // if we changed any devices or had an error trying, reset queues and polling
 		atomicState.cmdQlist = []
 	}
 	if(settings?.thermostats || settings?.protects || settings?.cameras || settings?.presDevice || settings?.weatherDevice) {
@@ -2340,8 +2340,12 @@ def receiveStreamStatus() {
 def uninstManagerApp() {
 	LogTrace("uninstManagerApp")
 	try {
-		if(addRemoveDevices(true)) {
-			restStreamHandler(true)   // stop the rest stream
+		restStreamHandler(true)   // stop the rest stream
+		//Revokes Smartthings endpoint token
+		revokeAccessToken()
+		//Revokes Nest Auth Token
+		revokeNestToken()
+		if(addRemoveDevices(true)) { // if the removes were successful
 			//removes analytic data from the server
 			if(removeInstallData()) {
 				atomicState?.installationId = null
@@ -2349,10 +2353,6 @@ def uninstManagerApp() {
 			//If any client related data exists on firebase it will be removed
 			//clearRemDiagData(true)
 			clearAllAutomationBackupData()
-			//Revokes Smartthings endpoint token
-			revokeAccessToken()
-			//Revokes Nest Auth Token
-			revokeNestToken()
 			//sends notification of uninstall
 			sendNotificationEvent("${appName()} is uninstalled")
 		}
@@ -6111,6 +6111,9 @@ def addRemoveDevices(uninst = null) {
 		def nCameras
 		def nVstats
 		def devsCrt = 0
+		def noCreates = true
+		def noDeletes = true
+
 		if(!uninst) {
 			//LogAction("addRemoveDevices() Nest Thermostats ${atomicState?.thermostats}", "debug", false)
 			if(atomicState?.thermostats) {
@@ -6162,8 +6165,8 @@ def addRemoveDevices(uninst = null) {
 					}
 					devsInUse += dni
 				} catch (ex) {
-					LogAction("Nest Presence Device may not be installed/published", "warn", true)
-					retVal = false
+					LogAction("Nest Presence Device Handler may not be installed/published", "warn", true)
+					noCreates = false
 				}
 			}
 
@@ -6184,8 +6187,8 @@ def addRemoveDevices(uninst = null) {
 					}
 					devsInUse += dni
 				} catch (ex) {
-					LogAction("Nest Weather Device Type may not be installed/published", "warn", true)
-					retVal = false
+					LogAction("Nest Weather Device Handler may not be installed/published", "warn", true)
+					noCreates = false
 				}
 			}
 			if(atomicState?.cameras) {
@@ -6228,6 +6231,7 @@ def addRemoveDevices(uninst = null) {
 			if(atomicState?.presDevice) { presCnt = 1 }
 			if(atomicState?.weatherDevice) { weathCnt = 1 }
 			if(devsCrt > 0) {
+				noCreates = false
 				LogAction("Created Devices;  Current Devices: (${tstats?.size()}) Thermostat(s), (${nVstats?.size() ?: 0}) Virtual Thermostat(s), (${nProtects?.size() ?: 0}) Protect(s), (${nCameras?.size() ?: 0}) Cameras(s), ${presCnt} Presence Device and ${weathCnt} Weather Device", "debug", true)
 			}
 		}
@@ -6248,15 +6252,20 @@ def addRemoveDevices(uninst = null) {
 			atomicState?.curAlerts = null
 		}
 
+		def noDeleteErr = true
 		def delete
 		LogTrace("addRemoveDevices devicesInUse: ${devsInUse}")
 		delete = app.getChildDevices(true).findAll { !devsInUse?.toString()?.contains(it?.deviceNetworkId) }
 
 		if(delete?.size() > 0) {
+			noDeletes = false
+			noDeleteErr = false
 			LogAction("Removing ${delete.size()} devices: ${delete}", "debug", true)
 			delete.each { deleteChildDevice(it.deviceNetworkId) }
+			noDeleteErr = true
 		}
-		retVal = true
+		retVal = ((unist && noDeleteErr) || (!uninst && (noCreates && noDeletes))) ? true : false // it worked = no delete errors on uninstall; or no creates or deletes done
+		//retVal = true
 		//currentDevMap(true)
 	} catch (ex) {
 		if(ex instanceof physicalgraph.exception.ConflictException) {
