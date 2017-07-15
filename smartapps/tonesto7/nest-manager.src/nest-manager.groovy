@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.8" }
-def appVerDate() { "7-14-2017" }
+def appVerDate() { "7-15-2017" }
 def minVersions() {
 	return [
 		"automation":["val":515, "desc":"5.1.5"],
@@ -3116,7 +3116,7 @@ def finishPollHandler(data) {
 */
 
 def schedFinishPoll(devChg) {
-	def curNow = now()
+	//def curNow = now()
 	//atomicState?.lastFinishedPoll = curNow
 	finishPoll(false, devChg)
 	return
@@ -3296,7 +3296,7 @@ def queueGetApiData(type = null, newUrl = null) {
 
 def procNestResponse(resp, data) {
 	LogTrace("procNestResponse(${data?.type})")
-	LogAction("procNestResponse | resp: $resp | data: $data")
+	LogAction("procNestResponse | resp: $resp | data: $data", "info", false)
 	def str = false
 	def dev = false
 	def meta = false
@@ -3447,12 +3447,13 @@ def receiveEventData() {
 	} catch (ex) {
 		log.error "receiveEventData Exception:", ex
 		LogAction("receiveEventData Exception: ${ex}", "error", true)
-		status = ["data":"${ex.message}", "code":500]
+		status = ["data":"${ex?.message}", "code":500]
 	}
 	render contentType: 'text/html', data: status?.data, status: status?.code
 }
 
 def didChange(old, newer, type, src) {
+	//LogTrace("didChange: type: $type  src: $src")
 	def result = false
 	def srcStr = src.toString().toUpperCase()
 	if(newer != null) {
@@ -3569,6 +3570,7 @@ def didChange(old, newer, type, src) {
 			}
 		}
 	}
+	//LogAction("didChange: type: $type  src: $src result: $result", "info", true)
 	return result
 }
 
@@ -5045,8 +5047,8 @@ def loggingRemindNotify(msgOn) {
 }
 
 def missPollNotify(on) {
-	def theWait = settings?.misPollNotifyWaitVal ?: 1800
-	if(getLastDevicePollSec() < theWait) {
+	def theWait = settings?.misPollNotifyWaitVal.toInteger() ?: 1800
+	if(getLastDevicePollSec() < theWait.toInteger()) {
 		if(!atomicState?.lastDevDataUpd) {
 			def now = new Date()
 			def val = new Date(now.time - ( (theWait+1) * 60 * 1000) ) // if uninitialized, set 31 mins in past
@@ -8691,7 +8693,7 @@ def syncSendFirebaseData(data, pathVal, cmdType=null, type=null) {
 	}
 	catch (ex) {
 		if(ex instanceof groovyx.net.http.HttpResponseException) {
-			LogAction("sendFirebaseData: 'HttpResponseException': ${ex.message}", "error", true)
+			LogAction("sendFirebaseData: 'HttpResponseException': ${ex?.message}", "error", true)
 		}
 		else { log.error "sendFirebaseData: ([$data, $pathVal, $cmdType, $type]) Exception:", ex }
 		sendExceptionData(ex, "sendFirebaseData")
@@ -8728,7 +8730,7 @@ def sendDataToSlack(data, pathVal, cmdType=null, type=null) {
 	}
 	catch (ex) {
 		if(ex instanceof groovyx.net.http.HttpResponseException) {
-			LogAction("sendDataToSlack: 'HttpResponseException': ${ex.message}", "error", true)
+			LogAction("sendDataToSlack: 'HttpResponseException': ${ex?.message}", "error", true)
 		}
 		else { log.error "sendDataToSlack: ([$data, $pathVal, $cmdType, $type]) Exception:", ex }
 		sendExceptionData(ex, "sendDataToSlack")
@@ -8746,9 +8748,9 @@ def removeFirebaseData(pathVal) {
 	}
 	catch (ex) {
 		if(ex instanceof groovyx.net.http.ResponseParseException) {
-			LogAction("removeFirebaseData: Response: ${ex.message}", "info", true)
+			LogAction("removeFirebaseData: Response: ${ex?.message}", "info", true)
 		} else {
-			LogAction("removeFirebaseData: Exception: ${ex.message}", "error", true)
+			LogAction("removeFirebaseData: Exception: ${ex?.message}", "error", true)
 			sendExceptionData(ex, "removeFirebaseData")
 			result = false
 		}
