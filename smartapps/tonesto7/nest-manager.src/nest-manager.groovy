@@ -5047,7 +5047,7 @@ def loggingRemindNotify(msgOn) {
 }
 
 def missPollNotify(on) {
-	def theWait = settings?.misPollNotifyWaitVal.toInteger() ?: 1800
+	def theWait = settings?.misPollNotifyWaitVal ?: 1800
 	if(getLastDevicePollSec() < theWait.toInteger()) {
 		if(!atomicState?.lastDevDataUpd) {
 			def now = new Date()
