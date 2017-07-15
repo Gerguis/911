@@ -167,7 +167,8 @@ def authPage() {
 			}
 		}
 	}
-	if(getLastWebUpdSec() > 1200) {
+	def val = atomicState?.authToken ? (3600*4) : 300
+	if(getLastWebUpdSec() > val.toInteger()) {
 		updateWebStuff(true)
 		setStateVar(true)
 	}
