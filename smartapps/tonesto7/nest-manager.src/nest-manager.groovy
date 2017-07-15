@@ -5051,7 +5051,7 @@ def missPollNotify(on) {
 	if(getLastDevicePollSec() < theWait.toInteger()) {
 		if(!atomicState?.lastDevDataUpd) {
 			def now = new Date()
-			def val = new Date(now.time - ( (theWait+1) * 60 * 1000) ) // if uninitialized, set 31 mins in past
+			def val = new Date(now.time - ( (theWait.toInteger()+1) * 60 * 1000) ) // if uninitialized, set 31 mins in past
  			atomicState?.lastDevDataUpd = formatDt(val)
 		}
 		return
