@@ -2526,7 +2526,8 @@ def setPollingState() {
 			def random_dint = random.nextInt(timgcd.toInteger())
 			LogAction("POLL scheduled (${random_int} ${random_dint}/${timgcd} * * * ?)", "info", true)
 			schedule("${random_int} ${random_dint}/${timgcd} * * * ?", poll)	// this runs every timgcd minutes
-			if(!atomicState?.lastDevDataUpd || getLastDevicePollSec() > 240) {
+			def timChk = atomicState?.streamPolling ? 1200 : 240
+			if(!atomicState?.lastDevDataUpd || getLastDevicePollSec() > timChk) {
 				poll(true)
 			} else {
 				runIn(30, "pollFollow", [overwrite: true])
