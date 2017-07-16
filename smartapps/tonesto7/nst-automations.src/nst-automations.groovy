@@ -27,8 +27,8 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.4" }
-def appVerDate() { "7-10-2017" }
+def appVersion() { "5.1.5" }
+def appVerDate() { "7-16-2017" }
 
 preferences {
 	//startPage
@@ -109,7 +109,7 @@ def uninstallPage() {
  *#########################	NATIVE ST APP METHODS ############################*
  ******************************************************************************/
 def installed() {
-	LogAction("Installed with settings: ${settings}", "debug", true)
+	log.debug "${app.label} Installed with settings: ${settings}"		// MUST BE log.debug
 	atomicState?.installData = ["initVer":appVersion(), "dt":getDtNow().toString()]
 	initialize()
 	sendNotificationEvent("${appName()} installed")
@@ -128,7 +128,7 @@ def uninstalled() {
 }
 
 def initialize() {
-	//LogTrace("initialize")
+	//log.debug "${app.label} Initialize..."			// Must be log.debug
 	if(!atomicState?.newAutomationFile) { atomicState?.newAutomationFile = true }
 	if(!atomicState?.installData) { atomicState?.installData = ["initVer":appVersion(), "dt":getDtNow().toString()] }
 	def settingsReset = parent?.settings?.resetAllData
@@ -368,9 +368,9 @@ def mainAutoPage(params) {
 	else { atomicState.automationType = params?.autoType; autoType = params?.autoType }
 
 	// If the selected automation has not been configured take directly to the config page.  Else show main page
-	if(autoType == "nMode" && !isNestModesConfigured())			{ return nestModePresPage() }
+	if(autoType == "nMode" && !isNestModesConfigured())		{ return nestModePresPage() }
 	else if(autoType == "watchDog" && !isWatchdogConfigured())	{ return watchDogPage() }
-	else if(autoType == "remDiag" && !isDiagnosticsConfigured()){ return diagnosticsPage() }
+	else if(autoType == "remDiag" && !isDiagnosticsConfigured())	{ return diagnosticsPage() }
 	else if(autoType == "schMot" && !isSchMotConfigured())		{ return schMotModePage() }
 
 	else {
@@ -442,6 +442,8 @@ def mainAutoPage(params) {
 				input ("showDebug", "bool", title: "Debug Option", description: "Show Automation Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("debug_icon.png"))
 				if(showDebug) {
 					input (name: "advAppDebug", type: "bool", title: "Show Verbose Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("list_icon.png"))
+				} else {
+					settingUpdate("advAppDebug", "false", "bool")
 				}
 			}
 			section("Automation Name:") {
@@ -576,6 +578,7 @@ def stateUpdate(key, value) {
 }
 
 def initAutoApp() {
+	//log.debug "${app.label} initAutoApp..."			// Must be log.debug
 	def restoreId = settings["restoreId"]
 	def restoreComplete = settings["restoreCompleted"] == true ? true : false
 	if(settings["watchDogFlag"]) {
@@ -741,7 +744,7 @@ def getAutoTypeLabel() {
 	def newLbl
 	def dis = (atomicState?.disableAutomation == true) ? "\n(Disabled)" : ""
 
-	if(type == "nMode")	{ typeLabel = "${newName} (NestMode)" }
+	if(type == "nMode")		{ typeLabel = "${newName} (NestMode)" }
 	else if(type == "watchDog")	{ typeLabel = "Nest Location ${location.name} Watchdog"}
 	else if(type == "remDiag")	{ typeLabel = "NST Diagnostics"}
 	else if(type == "schMot")	{ typeLabel = "${newName} (${schMotTstat?.label})" }
@@ -778,6 +781,7 @@ def getStateVal(var) {
 	return state[var] ?: null
 }
 
+/*
 def getAutoIcon(type) {
 	if(type) {
 		switch(type) {
@@ -814,11 +818,12 @@ def getAutoIcon(type) {
 		}
 	}
 }
+*/
 
 def automationsInst() {
-	atomicState.isNestModesConfigured = isNestModesConfigured() ? true : false
+	atomicState.isNestModesConfigured = 	isNestModesConfigured() ? true : false
 	atomicState.isWatchdogConfigured = 	isWatchdogConfigured() ? true : false
-	atomicState.isDiagnosticsConfigured = isDiagnosticsConfigured() ? true : false
+	atomicState.isDiagnosticsConfigured = 	isDiagnosticsConfigured() ? true : false
 	atomicState.isSchMotConfigured = 	isSchMotConfigured() ? true : false
 
 	atomicState.isLeakWatConfigured = 	isLeakWatConfigured() ? true : false
@@ -847,12 +852,15 @@ def getAutomationsInstalled() {
 			if(isHumCtrlConfigured()) 		{ tmp[aType].push("humCtrl") }
 			if(isExtTmpConfigured()) 		{ tmp[aType].push("extTmp") }
 			if(isRemSenConfigured())		{ tmp[aType].push("remSen") }
-			if(isTstatSchedConfigured()) 		{ tmp[aType].push("tSched") }  // This is number of schedules active
+			if(isTstatSchedConfigured()) 		{ tmp[aType].push("tSched") }
 			if(isFanCtrlSwConfigured()) 		{ tmp[aType].push("fanCtrl") }
 			if(isFanCircConfigured()) 		{ tmp[aType].push("fanCirc") }
 			if(tmp?.size()) { list.push(tmp) }
 			break
 		case "watchDog":
+			list.push(aType)
+			break
+		case "remDiag":
 			list.push(aType)
 			break
 	}
@@ -1171,7 +1179,7 @@ def scheduler() {
 	if(autoType == "schMot" && atomicState?.scheduleSchedActiveCount && atomicState?.scheduleTimersActive) {
 		LogAction("${autoType} scheduled (${random_int} ${random_dint}/5 * * * ?)", "info", true)
 		schedule("${random_int} ${random_dint}/5 * * * ?", heartbeatAutomation)
-	} else {
+	} else if(autoType != "remDiag") {
 		LogAction("${autoType} scheduled (${random_int} ${random_dint}/30 * * * ?)", "info", true)
 		schedule("${random_int} ${random_dint}/30 * * * ?", heartbeatAutomation)
 	}
@@ -1252,7 +1260,7 @@ def runAutomationEval() {
 			break
 		case "remDiag":
 			if(isDiagnosticsConfigured()) {
-				//watchDogCheck()
+				//remDiagCheck()
 			}
 			break
 		default:
@@ -3199,7 +3207,7 @@ def extTmpTempCheck(cTimeOut = false) {
 			def safetyOk = getSafetyTempsOk(extTmpTstat)
 			def schedOk = extTmpScheduleOk()
 			def okToRestore = (modeEco && atomicState?.extTmpTstatOffRequested && atomicState?.extTmpRestoreMode) ? true : false
-			def tempWithinThreshold = extTmpTempOk(true, okToRestore)
+			def tempWithinThreshold = extTmpTempOk( ((modeEco && okToRestore) || (!modeEco && !okToRestore)), okToRestore)
 
 			if(!tempWithinThreshold || timeOut || !safetyOk || !schedOk) {
 				if(allowAlarm) { alarmEvtSchedCleanup(extTmpPrefix()) }
@@ -4245,6 +4253,8 @@ private getDayOfWeekName(date = null) {
 	if (!date) {
 		date = adjustTime(now())
 	}
+	return(timeDayOfWeekOptions[(date.day-1)])
+/*
 	switch (date.day) {
 		case 0: return "Sunday"
 		case 1: return "Monday"
@@ -4254,9 +4264,11 @@ private getDayOfWeekName(date = null) {
 		case 5: return "Friday"
 		case 6: return "Saturday"
 	}
+*/
 	return null
 }
 
+/*
 private getDayOfWeekNumber(date = null) {
 	if (!date) {
 		date = adjustTime(now())
@@ -4275,6 +4287,7 @@ private getDayOfWeekNumber(date = null) {
 	}
 	return null
 }
+*/
 
 //adjusts the time to local timezone
 private adjustTime(time = null) {
@@ -6106,6 +6119,7 @@ def deviceInputToList(items) {
 	return null
 }
 
+/*
 def inputItemsToList(items) {
 	def list = []
 	if(items) {
@@ -6116,7 +6130,7 @@ def inputItemsToList(items) {
 	}
 	return null
 }
-
+*/
 
 def isSchMotConfigured() {
 	return settings?.schMotTstat ? true : false
@@ -7499,13 +7513,13 @@ def getRemLogData() {
 		def tf = new SimpleDateFormat("h:mm:ss a")
 		tf.setTimeZone(getTimeZone())
 		def logSz = logData?.size() ?: 0
+		def cnt = 1
 		// def navMap = [:]
 		// navMap = ["key":cApp?.getLabel(), "items":["Settings", "State", "MetaData"]]
 		// def navItems = navHtmlBuilder(navMap, appNum)
 		// if(navItems?.html) { navHtml += navItems?.html }
 		// if(navItems?.js) { scrStr += navItems?.js }
 		if(logSz > 0) {
-			def cnt = 1
 			logData?.sort { it?.dt }.reverse()?.each { logItem ->
 				def tCls = ""
 				switch(logItem?.type) {
@@ -7529,7 +7543,9 @@ def getRemLogData() {
 						break
 				}
 				def srcCls = "defsrc-bg"
-				if(logItem?.src.toString().startsWith("Camera")) {
+				if(logItem?.src.toString().startsWith("Manager")) {
+					srcCls = "mansrc-bg"
+				} else if(logItem?.src.toString().startsWith("Camera")) {
 					srcCls = "camsrc-bg"
 				} else if(logItem?.src.toString().startsWith("Protect")) {
 					srcCls = "protsrc-bg"
@@ -7541,12 +7557,15 @@ def getRemLogData() {
 					srcCls = "pressrc-bg"
 				} else if(logItem?.src.toString().startsWith("Automation")) {
 					srcCls = "autosrc-bg"
-				} else if(logItem?.src.toString().startsWith("NestManager")) {
-					srcCls = "mansrc-bg"
 				}
-
 				resultStr += """
-					${cnt > 1 ? "<br></br>" : ""}<span> <span class="logEvtDt">${tf?.format(logItem?.dt)}</span>: <span class="label $tCls">${logItem?.type}</span> | <span class="logSrcFmt ${srcCls}">${logItem?.src}</span>: ${logItem?.msg}</span>
+					${cnt > 1 ? "<br>" : ""}
+					<div class="log-line">
+						<span class="log-time">${tf?.format(logItem?.dt)}</span>:
+						<span class="log-type $tCls">${logItem?.type}</span> |
+						<span class="log-source ${srcCls}"> ${logItem?.src}</span>:
+						<span class="log-msg"> ${logItem?.msg}</span>
+					</div>
 				"""
 				cnt = cnt+1
 			}
@@ -7580,7 +7599,7 @@ def getRemLogData() {
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/vendor/jspdf.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2canvas/develop/dist/html2canvas.min.js"></script>
 				<script src="https://cdn.rawgit.com/eKoopmans/html2pdf/master/src/html2pdf.js"></script>
-				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.min.css">
+				<link rel="stylesheet" href="https://rawgit.com/tonesto7/nest-manager/master/Documents/css/diagpages.css">
 				<style>
 				</style>
 			</head>
@@ -7655,10 +7674,10 @@ def getRemLogData() {
 						</div>
 					</div>
 				</div>
-				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.min.js"></script>
+				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""
-/* "" */
+/* """ */
 	}  catch (ex) { log.error "getRemLogData Exception:", ex }
 	return null
 }
@@ -7758,11 +7777,6 @@ def getUse24Time()			{ return useMilitaryTime ? true : false }
 def getStateSize()			{ return state?.toString().length() }
 def getStateSizePerc()		{ return (int) ((stateSize / 100000)*100).toDouble().round(0) } //
 
-def debugStatus() { return !appDebug ? "Off" : "On" }
-def deviceDebugStatus() { return !childDebug ? "Off" : "On" }
-def isAppDebug() { return !appDebug ? false : true }
-def isChildDebug() { return !childDebug ? false : true }
-
 def getLocationModes() {
 	def result = []
 	location?.modes.sort().each {
@@ -7847,9 +7861,12 @@ def GetTimeDiffSeconds(strtDate, stpDate=null, methName=null) {
 		//if(strtDate?.contains("dtNow")) { return 10000 }
 		def now = new Date()
 		def stopVal = stpDate ? stpDate.toString() : formatDt(now)
+/*
 		def startDt = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate)
 		def stopDt = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal)
 		def start = Date.parse("E MMM dd HH:mm:ss z yyyy", formatDt(startDt)).getTime()
+*/
+		def start = Date.parse("E MMM dd HH:mm:ss z yyyy", strtDate).getTime()
 		def stop = Date.parse("E MMM dd HH:mm:ss z yyyy", stopVal).getTime()
 		def diff = (int) (long) (stop - start) / 1000 //
 		LogTrace("[GetTimeDiffSeconds] Results for '$methName': ($diff seconds)")
@@ -7967,19 +7984,19 @@ def LogTrace(msg, logSrc=null) {
 	if(trOn) {
 		def theId = lastN(getId().toString(),5)
 		def theLogSrc = (logSrc == null) ? (parent ? "Automation-${theId}" : "NestManager") : logSrc
-		Logger(msg, "trace", theLogSrc)
+		Logger(msg, "trace", theLogSrc, atomicState?.enRemDiagLogging)
 	}
 }
 
 def LogAction(msg, type="debug", showAlways=false, logSrc=null) {
-	def isDbg = parent ? (showDebug ? true : false) : (appDebug ? true : false)
+	def isDbg = showDebug ? true : false
 	def theId = lastN(app.getId().toString(),5)
 	def theLogSrc = (logSrc == null) ? (parent ? "Automation-${theId}" : "NestManager") : logSrc
 	if(showAlways) { Logger(msg, type, theLogSrc) }
 	else if(isDbg && !showAlways) { Logger(msg, type, theLogSrc) }
 }
 
-def Logger(msg, type, logSrc=null) {
+def Logger(msg, type, logSrc=null, noSTlogger=false) {
 	if(msg && type) {
 		def labelstr = ""
 		if(atomicState?.debugAppendAppName == null) {
@@ -7988,25 +8005,27 @@ def Logger(msg, type, logSrc=null) {
 		}
 		if(atomicState?.debugAppendAppName) { labelstr = "${app.label} | " }
 		def themsg = "${labelstr}${msg}"
-		switch(type) {
-			case "debug":
-				log.debug "${themsg}"
-				break
-			case "info":
-				log.info "||| ${themsg}"
-				break
-			case "trace":
-				log.trace "| ${themsg}"
-				break
-			case "error":
-				log.error "| ${themsg}"
-				break
-			case "warn":
-				log.warn "|| ${themsg}"
-				break
-			default:
-				log.debug "${themsg}"
-				break
+		if(!noSTlogger) {
+			switch(type) {
+				case "debug":
+					log.debug "${themsg}"
+					break
+				case "info":
+					log.info "||| ${themsg}"
+					break
+				case "trace":
+					log.trace "| ${themsg}"
+					break
+				case "error":
+					log.error "| ${themsg}"
+					break
+				case "warn":
+					log.warn "|| ${themsg}"
+					break
+				default:
+					log.debug "${themsg}"
+					break
+			}
 		}
 		//log.debug "Logger remDiagTest: $msg | $type | $logSrc"
 		if(parent) {
