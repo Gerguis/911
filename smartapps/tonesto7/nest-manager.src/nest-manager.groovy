@@ -604,7 +604,8 @@ def helpPage () {
 			href "feedbackPage", title: "Send Developer Feedback", description: "", image: getAppImg("feedback_icon.png")
 		}
 		section("Diagnostic Data:") {
-			href "diagnosticPage", title: "View Diagnostic Info", description: "", image: getAppImg("diagnostic_icon.png")
+			def t1 = getRemDiagDesc()
+			href "diagnosticPage", title: "View Diagnostic Info", description: (t1 ? "${t1 ?: ""}\n\nTap to view" : "Tap to view"), state: (t1) ? "complete" : null, image: getAppImg("diagnostic_icon.png")
 		}
 		devPageFooter("helpLoadCnt", execTime)
 	}
@@ -1704,7 +1705,7 @@ void diagLogProcChange(setOn) {
 			}
 		}
 		atomicState.forceChildUpd = true
-		def autoDesc = getInstAutoTypesDesc()			// This is a hack to get installedAutomations data updated without waiting for user to hit done
+		atomicState?.lastAnalyticUpdDt = null		// will force def autoDesc = getInstAutoTypesDesc()	// This is a hack to get installedAutomations data updated without waiting for user to hit done
 	}
 }
 
