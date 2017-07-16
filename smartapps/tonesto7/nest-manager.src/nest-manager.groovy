@@ -134,6 +134,7 @@ def startPage() {
 
 def authPage() {
 	//LogTrace("authPage()")
+	def execTime = now()
 	generateInstallId()
 	if(!atomicState?.accessToken) { getAccessToken() }
 	atomicState.ok2InstallAutoFlag = false
@@ -165,6 +166,7 @@ def authPage() {
 				LogAction("Status Message: $desc", "warn", true)
 				paragraph "$desc", required: true, state: null
 			}
+			devPageFooter("authErrLoadCnt", execTime)
 		}
 	}
 	def val = atomicState?.authToken ? (3600*4) : 300
@@ -199,6 +201,7 @@ def authPage() {
 				paragraph "❖ FYI: Please use the parent Nest account, Nest Family member accounts will not work correctly", state: "complete"
 				href url: redirectUrl, style:"embedded", required: true, title: "Login to Nest", description: description
 			}
+			devPageFooter("authLoadCnt", execTime)
 		}
 	}
 	else if(showChgLogOk()) { return changeLogPage() }
@@ -670,16 +673,12 @@ def prefsPage() {
 		section("Customize Application Label:") {
 			label title:"Application Label (optional)", required:false
 		}
-		section("SmartApp Security") {
-			paragraph title:"What does resetting do?", "If you share your url with someone and want to remove their access you can reset your token and this will invalidate any URL you shared and create a new one for you."
-			input (name: "resetSTAccessToken", type: "bool", title: "Reset SmartThings Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
-			if(settings?.resetSTAccessToken) { resetSTAccessToken() }
-		}
 		devPageFooter("prefLoadCnt", execTime)
 	}
 }
 
 def voiceRprtPrefPage() {
+	def execTime = now()
 	return dynamicPage(name: "voiceRprtPrefPage", title: "Voice Report Preferences", install: false, uninstall: false) {
 		section("Report Customization:") {
 			paragraph "These options allow you to configure how much info is included in the Thermostat voice reporting."
@@ -692,7 +691,7 @@ def voiceRprtPrefPage() {
 				input ("vRprtIncUsageInfo", "bool", title: "Include Usage Info?", required: false, defaultValue: true, submitOnChange: false, image: getAppImg("usage_icon.png"))
 			}
 		}
-		incVrprtPrefLoadCnt()
+		devPageFooter("vRprtPrefLoadCnt", execTime)
 	}
 }
 
@@ -1645,8 +1644,8 @@ def diagnosticPage () {
 		diagLogProcChange((settings?.enDiagWebPage && settings?.enRemDiagLogging))
 
 		section("SmartApp Security") {
-			paragraph title:"What does resetting do?", "If you share your url with someone and want to remove their access you can reset your token and this will invalidate any URL you shared and create a new one for you."
-			input (name: "resetSTAccessToken", type: "bool", title: "Reset Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
+			paragraph title:"What does resetting do?", "If you share a url with someone and want to remove their access you can reset your token and this will invalidate any URL you shared and create a new one for you."
+			input (name: "resetSTAccessToken", type: "bool", title: "Reset SmartThings Access Token?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("reset_icon.png"))
 			if(settings?.resetSTAccessToken) { resetSTAccessToken() }
 		}
 
@@ -1951,6 +1950,7 @@ def nestLoginPrefPage () {
 	if(!atomicState?.authToken) {
 		return authPage()
 	} else {
+		def execTime = now()
 		return dynamicPage(name: "nestLoginPrefPage", nextPage: atomicState?.authToken ? "" : "authPage", install: false) {
 			def formatVal = settings?.useMilitaryTime ? "MMM d, yyyy - HH:mm:ss" : "MMM d, yyyy - h:mm:ss a"
 			def tf = new SimpleDateFormat(formatVal)
@@ -1964,9 +1964,9 @@ def nestLoginPrefPage () {
 				href "nestTokenResetPage", title: "Log Out and Reset Nest Token", description: "Tap to Reset Nest Token", required: true, state: null, image: getAppImg("reset_icon.png")
 
 			}
+			devPageFooter("nestLoginLoadCnt", execTime)
 		}
 	}
-	incNestLoginLoadCnt()
 }
 
 def nestTokenResetPage() {
@@ -5553,9 +5553,6 @@ def incMetricCntVal(item) {
 	atomicState?.usageMetricsStore = data
 }
 
-def incNestLoginLoadCnt() { incMetricCntVal("nestLoginLoadCnt") }
-def incVrprtPrefLoadCnt() { incMetricCntVal("vRprtPrefLoadCnt") }
-
 def isCodeUpdateAvailable(newVer, curVer, type) {
 	def result = false
 	def latestVer
@@ -6438,12 +6435,15 @@ def getAccessToken() {
 
 void resetSTAccessToken() {
 	LogAction("Resetting SmartApp Access Token....", "info", true)
+	restStreamHandler(true)
+	atomicState?.restStreamingOn = false
 	revokeAccessToken()
 	atomicState?.accessToken = null
 	if(getAccessToken()) {
 		LogAction("Reset SmartApp Access Token... Successful", "info", true)
 		settingUpdate("resetSTAccessToken", "false", "bool")
 	}
+	startStopStream()
 }
 
 def generateInstallId() {
