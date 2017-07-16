@@ -6831,15 +6831,16 @@ void finishFixState() {
 				atomicState?.setupVersion = atomicState?.appData?.updater?.setupVersion?.toInteger() ?: 0
 			} else { atomicState.isInstalled = false }
 
-			//updated()
 			initManagerApp()
 
+/* initManagerApp does this
 			def cApps = getChildApps()
 			if(cApps) {
 				cApps?.sort()?.each { chld ->
 					chld?.update()
 				}
 			}
+*/
 		}
 	} else {
 		LogAction("finishFixState called as CHILD", "error", true)
