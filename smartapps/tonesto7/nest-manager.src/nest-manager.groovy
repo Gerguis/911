@@ -2098,7 +2098,7 @@ def initRemDiagApp() {
 				LogTrace("initRemDiagApp: Running Update Command on Remote Diag")
 				chld.update()
 			} else if(!keepApp || cnt > 1) {
-				LogAction("initRemDiagApp: Deleting Extra Remote Diag (${chld?.id})", "warn", true)
+				LogAction("initRemDiagApp: Deleting ${keepApp ? "Extra " : ""}Remote Diag Child (${chld?.id})", "warn", true)
 				deleteChildApp(chld)
 			}
 			cnt = cnt+1
