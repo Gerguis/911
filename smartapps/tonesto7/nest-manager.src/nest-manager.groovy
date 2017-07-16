@@ -6508,6 +6508,8 @@ def callback() {
 
 def revokeNestToken() {
 	if(atomicState?.authToken) {
+		restStreamHandler(true)
+		atomicState?.restStreamingOn = false
 		def params = [
 			uri: "https://api.home.nest.com",
 			path: "/oauth2/access_tokens/${atomicState?.authToken}",
