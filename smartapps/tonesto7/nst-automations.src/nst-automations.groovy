@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.5" }
-def appVerDate() { "7-14-2017" }
+def appVerDate() { "7-16-2017" }
 
 preferences {
 	//startPage
@@ -368,9 +368,9 @@ def mainAutoPage(params) {
 	else { atomicState.automationType = params?.autoType; autoType = params?.autoType }
 
 	// If the selected automation has not been configured take directly to the config page.  Else show main page
-	if(autoType == "nMode" && !isNestModesConfigured())			{ return nestModePresPage() }
+	if(autoType == "nMode" && !isNestModesConfigured())		{ return nestModePresPage() }
 	else if(autoType == "watchDog" && !isWatchdogConfigured())	{ return watchDogPage() }
-	else if(autoType == "remDiag" && !isDiagnosticsConfigured()){ return diagnosticsPage() }
+	else if(autoType == "remDiag" && !isDiagnosticsConfigured())	{ return diagnosticsPage() }
 	else if(autoType == "schMot" && !isSchMotConfigured())		{ return schMotModePage() }
 
 	else {
@@ -743,7 +743,7 @@ def getAutoTypeLabel() {
 	def newLbl
 	def dis = (atomicState?.disableAutomation == true) ? "\n(Disabled)" : ""
 
-	if(type == "nMode")	{ typeLabel = "${newName} (NestMode)" }
+	if(type == "nMode")		{ typeLabel = "${newName} (NestMode)" }
 	else if(type == "watchDog")	{ typeLabel = "Nest Location ${location.name} Watchdog"}
 	else if(type == "remDiag")	{ typeLabel = "NST Diagnostics"}
 	else if(type == "schMot")	{ typeLabel = "${newName} (${schMotTstat?.label})" }
@@ -1178,7 +1178,7 @@ def scheduler() {
 	if(autoType == "schMot" && atomicState?.scheduleSchedActiveCount && atomicState?.scheduleTimersActive) {
 		LogAction("${autoType} scheduled (${random_int} ${random_dint}/5 * * * ?)", "info", true)
 		schedule("${random_int} ${random_dint}/5 * * * ?", heartbeatAutomation)
-	} else {
+	} else if(autoType != "remDiag") {
 		LogAction("${autoType} scheduled (${random_int} ${random_dint}/30 * * * ?)", "info", true)
 		schedule("${random_int} ${random_dint}/30 * * * ?", heartbeatAutomation)
 	}
@@ -1259,7 +1259,7 @@ def runAutomationEval() {
 			break
 		case "remDiag":
 			if(isDiagnosticsConfigured()) {
-				//watchDogCheck()
+				//remDiagCheck()
 			}
 			break
 		default:
@@ -7676,7 +7676,7 @@ def getRemLogData() {
 				<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""
-/* "" */
+/* """ */
 	}  catch (ex) { log.error "getRemLogData Exception:", ex }
 	return null
 }
@@ -7775,11 +7775,6 @@ def getUse24Time()			{ return useMilitaryTime ? true : false }
 //Returns app State Info
 def getStateSize()			{ return state?.toString().length() }
 def getStateSizePerc()		{ return (int) ((stateSize / 100000)*100).toDouble().round(0) } //
-
-def debugStatus() { return !appDebug ? "Off" : "On" }
-def deviceDebugStatus() { return !childDebug ? "Off" : "On" }
-def isAppDebug() { return !appDebug ? false : true }
-def isChildDebug() { return !childDebug ? false : true }
 
 def getLocationModes() {
 	def result = []
