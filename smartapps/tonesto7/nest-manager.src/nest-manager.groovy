@@ -36,7 +36,7 @@ definition(
 }
 
 def appVersion() { "5.1.8" }
-def appVerDate() { "7-15-2017" }
+def appVerDate() { "7-16-2017" }
 def minVersions() {
 	return [
 		"automation":["val":515, "desc":"5.1.5"],
@@ -277,14 +277,14 @@ def mainPage() {
 			section("Donate, Release and License Info") {
 				href "infoPage", title: "Info and More", description: "", image: getAppImg("info_bubble.png")
 			}
-			section("Remove All Apps, Automations, and Devices:") {
-				href "uninstallPage", title: "Uninstall this App", description: "", image: getAppImg("uninstall_icon.png")
-			}
 			section("Having Trouble?:") {
 				href "helpPage", title: "Get Help | Diagnostics", description: "", image: getAppImg("help_ring_icon.png")
 				if(settings?.enDiagWebPage) {
-					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
+					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web Page", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
 				}
+			}
+			section("Remove All Apps, Automations, and Devices:") {
+				href "uninstallPage", title: "Uninstall this App", description: "", image: getAppImg("uninstall_icon.png")
 			}
 		}
 		atomicState.ok2InstallAutoFlag = false
@@ -605,9 +605,6 @@ def helpPage () {
 		}
 		section("Diagnostic Data:") {
 			href "diagnosticPage", title: "View Diagnostic Info", description: "", image: getAppImg("diagnostic_icon.png")
-			if(settings?.enDiagWebPage) {
-				href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
-			}
 		}
 		devPageFooter("helpLoadCnt", execTime)
 	}
@@ -667,8 +664,6 @@ def prefsPage() {
 		section ("Misc. Options:") {
 			input ("useMilitaryTime", "bool", title: "Use Military Time (HH:mm)?", defaultValue: false, submitOnChange: true, required: false, image: getAppImg("military_time_icon.png"))
 			input ("disAppIcons", "bool", title: "Disable App Icons?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("no_icon.png"))
-			input ("debugAppendAppName", "bool", title: "Show App/Device Name on all Log Entries?", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("log.png"))
-			input ("showDataChgdLogs", "bool", title: "Show API Changes in Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("switch_on_icon.png"))
 			atomicState.needChildUpd = true
 		}
 		section("Customize Application Label:") {
@@ -924,7 +919,7 @@ def automationsPage() {
 		}
 		if(autoAppInst) {
 			section("Automation Details:") {
-				def schEn = getChildApps()?.findAll { (!(it.getAutomationType() in ["nMode", "watchDog"]) && it?.getActiveScheduleState()) }
+				def schEn = getChildApps()?.findAll { (!(it.getAutomationType() in ["nMode", "watchDog", "remDiag"]) && it?.getActiveScheduleState()) }
 				if(schEn?.size()) {
 					href "automationSchedulePage", title: "View Automation Schedule(s)", description: "", image: getAppImg("schedule_icon.png")
 				}
@@ -1586,13 +1581,14 @@ def debugPrefPage() {
 	def execTime = now()
 	dynamicPage(name: "debugPrefPage", install: false) {
 		section ("Application Logs") {
-			input ("showDataChgdLogs", "bool", title: "Show API Changes in Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("switch_on_icon.png"))
+			input ("debugAppendAppName", "bool", title: "Show App/Device Name on all Log Entries?", required: false, defaultValue: true, submitOnChange: true, image: getAppImg("log.png"))
 			input (name: "appDebug", type: "bool", title: "Show ${appName()} Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
 			if(appDebug) {
 				input (name: "advAppDebug", type: "bool", title: "Show Verbose Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("list_icon.png"))
 			} else {
 				settingUpdate("advAppDebug", "false", "bool")
 			}
+			input ("showDataChgdLogs", "bool", title: "Show API Changes in Logs?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("switch_on_icon.png"))
 		}
 		section ("Child Device Logs") {
 			input (name: "childDebug", type: "bool", title: "Show Device Logs in the IDE?", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("log.png"))
@@ -1624,7 +1620,7 @@ def diagnosticPage () {
 			if(atomicState?.isInstalled && atomicState?.structures && (atomicState?.thermostats || atomicState?.protects || atomicState?.cameras || atomicState?.weatherDevice)) {
 				input "enDiagWebPage", "bool", title: "Enable Diagnostic Web Page?", description: "", required: false, defaultValue: false, submitOnChange: true, image: getAppImg("diagnostic_icon.png")
 				if(settings?.enDiagWebPage) {
-					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
+					href url: getAppEndpointUrl("diagHome"), style:"external", title:"NST Diagnostic Web Page", description:"Tap to view", required: true,state: "complete", image: getAppImg("web_icon.png")
 				}
 			}
 		}
@@ -1708,6 +1704,7 @@ void diagLogProcChange(setOn) {
 			}
 		}
 		atomicState.forceChildUpd = true
+		def autoDesc = getInstAutoTypesDesc()			// This is a hack to get installedAutomations data updated without waiting for user to hit done
 	}
 }
 
@@ -6683,11 +6680,7 @@ def tokenStrScrubber(str) {
 def Logger(msg, type, logSrc=null, noSTlogger=false) {
 	if(msg && type) {
 		def labelstr = ""
-		if(atomicState?.debugAppendAppName == null) {
-			def tval = parent ? parent?.settings?.debugAppendAppName : settings?.debugAppendAppName
-			atomicState?.debugAppendAppName = (tval || tval == null) ? true : false
-		}
-		if(atomicState?.debugAppendAppName) { labelstr = "${app.label} | " }
+		if(settings?.debugAppendAppName || settings?.debugAppendAppName == null) { labelstr = "${app.label} | " }
 		def themsg = tokenStrScrubber("${labelstr}${msg}")
 
 		if(!noSTlogger) {
@@ -6899,7 +6892,7 @@ def stateCleanup() {
 		"appApiIssuesWaitVal", "misPollNotifyWaitVal", "misPollNotifyMsgWaitVal", "devHealthMsgWaitVal", "nestLocAway", "heardFromRestDt", "autoSaVer", "lastAnalyticUpdDt", "lastHeardFromRestDt",
 		"remDiagApp", "remDiagClientId", "restorationInProgress", "diagManagAppStateFilters", "diagChildAppStateFilters", "lastFinishedPoll",
 		"curAlerts", "curAstronomy", "curForecast", "curWeather", "detailEventHistory", "detailExecutionHistory", "evalExecutionHistory", "lastForecastUpdDt", "lastWeatherUpdDt",
-		"lastMsg", "lastMsgDt", "qFirebaseRequested", "qmetaRequested"
+		"lastMsg", "lastMsgDt", "qFirebaseRequested", "qmetaRequested", "debugAppendAppName"
  	]
 	data.each { item ->
 		state.remove(item?.toString())
@@ -8503,7 +8496,7 @@ def renderHtmlMapDesc(title, heading, datamap) {
   			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""
-	/* "" */
+	/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "getAppDataFile Exception:", ex }
 }
@@ -8538,7 +8531,7 @@ def getDbExceptPath() { return atomicState?.appData?.database?.newexceptionPath 
 def sendExceptionData(ex, methodName, isChild = false, autoType = null) {
 	try {
 		def showErrLog = (atomicState?.enRemDiagLogging && settings?.enRemDiagLogging) ? true : false
-		def labelstr = atomicState?.debugAppendAppName ? "${app.label} | " : ""
+		def labelstr = (settings?.debugAppendAppName || settings?.debugAppendAppName == null) ? "${app.label} | " : ""
 		//LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType)", "info", false)
 		LogAction("${labelstr}sendExceptionData(method: $methodName, isChild: $isChild, autoType: $autoType, ex: ${ex})", "error", showErrLog)
 		if(atomicState?.appData?.database?.disableExceptions == true) {
