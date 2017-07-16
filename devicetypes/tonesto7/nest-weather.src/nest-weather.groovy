@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 
 preferences {  }
 
-def devVer() { return "5.1.2" }
+def devVer() { return "5.1.3" }
 
 metadata {
 	definition (name: "${textDevName()}", namespace: "tonesto7", author: "Anthony S.") {
@@ -657,7 +657,7 @@ def getWeatherConditions(Map weatData) {
 	}
 	catch (ex) {
 		log.error "getWeatherConditions Exception:", ex
-		parent?.sendChildExceptionData("weather", devVer(), ex, "getWeatherConditions")
+		exceptionDataHandler("${ex}", "getWeatherConditions")
 	}
 }
 
@@ -683,7 +683,7 @@ def getWeatherForecast(Map weatData) {
 	}
 	catch (ex) {
 		log.error "getWeatherForecast Exception:", ex
-		parent?.sendChildExceptionData("weather", devVer(), ex, "getWeatherForecast")
+		exceptionDataHandler("${ex}", "getWeatherForecast")
 	}
 }
 
@@ -705,7 +705,7 @@ def getWeatherAstronomy(weatData) {
 	}
 	catch (ex) {
 		log.error "getWeatherAstronomy Exception:", ex
-		parent?.sendChildExceptionData("weather", devVer(), ex, "getWeatherAstronomy")
+		exceptionDataHandler("${ex}", "getWeatherAstronomy")
 	}
 }
 
@@ -831,7 +831,7 @@ def getWeatherAlerts(weatData) {
 	}
 	catch (ex) {
 		log.error "getWeatherAlerts Exception:", ex
-		parent?.sendChildExceptionData("weather", devVer(), ex, "getWeatherAlerts")
+		exceptionDataHandler("${ex}", "getWeatherAlerts")
 	}
 }
 
@@ -953,7 +953,7 @@ private estimateLux(weatherIcon) {
 	}
 	catch (ex) {
 		log.error "estimateLux Exception:", ex
-		parent?.sendChildExceptionData("weather", devVer(), ex, "estimateLux")
+		exceptionDataHandler("${ex}", "estimateLux")
 	}
 	return null
 }
