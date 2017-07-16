@@ -109,7 +109,7 @@ def uninstallPage() {
  *#########################	NATIVE ST APP METHODS ############################*
  ******************************************************************************/
 def installed() {
-	LogAction("Installed with settings: ${settings}", "debug", true)
+	log.debug "${app.label} Installed with settings: ${settings}"		// MUST BE log.debug
 	atomicState?.installData = ["initVer":appVersion(), "dt":getDtNow().toString()]
 	initialize()
 	sendNotificationEvent("${appName()} installed")
@@ -128,7 +128,7 @@ def uninstalled() {
 }
 
 def initialize() {
-	//LogTrace("initialize")
+	//log.debug "${app.label} Initialize..."			// Must be log.debug
 	if(!atomicState?.newAutomationFile) { atomicState?.newAutomationFile = true }
 	if(!atomicState?.installData) { atomicState?.installData = ["initVer":appVersion(), "dt":getDtNow().toString()] }
 	def settingsReset = parent?.settings?.resetAllData
@@ -578,6 +578,7 @@ def stateUpdate(key, value) {
 }
 
 def initAutoApp() {
+	//log.debug "${app.label} initAutoApp..."			// Must be log.debug
 	def restoreId = settings["restoreId"]
 	def restoreComplete = settings["restoreCompleted"] == true ? true : false
 	if(settings["watchDogFlag"]) {
