@@ -4259,14 +4259,18 @@ private timeComparisonOptionValues() {
 }
 
 private timeDayOfWeekOptions() {
-	return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+	return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 }
 
 private getDayOfWeekName(date = null) {
 	if (!date) {
-		date = adjustTime(now())
+		date = adjustTime()
 	}
-	return(timeDayOfWeekOptions[(date.day-1)])
+	def theDay = date.day.toInteger()
+	def list = []
+	list = timeDayOfWeekOptions()
+	//LogAction("theDay: $theDay date.date: ${date.day}")
+	return(list[theDay].toString())
 /*
 	switch (date.day) {
 		case 0: return "Sunday"
