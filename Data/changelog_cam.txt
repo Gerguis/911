@@ -26,4 +26,4 @@
 <hr noshade>
 <ul style="font-size: 12px; padding: 0 10px 0 10px; Margin: 0;">
     <li><strong>UPDATED:</strong> Removed capability that is not available (Notification) & optimizations</li>
-</ul> 
+</ul>
