@@ -3704,7 +3704,7 @@ def updateChildData(force = false) {
 		devices?.each {
 			if(atomicState?.pollBlocked) { return true }
 			def devId = it?.deviceNetworkId
-			if(atomicState?.thermostats && atomicState?.deviceData?.thermostats[devId]) {
+			if(devId && atomicState?.thermostats && atomicState?.deviceData?.thermostats && atomicState?.deviceData?.thermostats[devId]) {
 				def defmin = fixTempSetting(atomicState?."${devId}_safety_temp_min" ?: null)
 				def defmax = fixTempSetting(atomicState?."${devId}_safety_temp_max" ?: null)
 				def safetyTemps = [ "min":defmin, "max":defmax ]
@@ -3745,7 +3745,7 @@ def updateChildData(force = false) {
 				}
 				return true
 			}
-			else if(atomicState?.protects && atomicState?.deviceData?.smoke_co_alarms[devId]) {
+			else if(devId && atomicState?.protects && atomicState?.deviceData?.smoke_co_alarms && atomicState?.deviceData?.smoke_co_alarms[devId]) {
 				def pData = ["data":atomicState?.deviceData?.smoke_co_alarms[devId], "mt":useMt, "debug":dbg, "showProtActEvts":(!showProtActEvts ? false : true), "logPrefix":logNamePrefix,
 						"tz":nestTz, "htmlInfo":htmlInfo, "apiIssues":api, "allowDbException":allowDbException, "latestVer":latestProtVer()?.ver?.toString(), "clientBl":clientBl,
 						"hcWireTimeout":hcProtWireTimeout, "hcBattTimeout":hcProtBattTimeout, "mobileClientType":mobClientType, "enRemDiagLogging":remDiag, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg,
@@ -3775,7 +3775,7 @@ def updateChildData(force = false) {
 				}
 				return true
 			}
-			else if(atomicState?.cameras && atomicState?.deviceData?.cameras[devId]) {
+			else if(devId && atomicState?.cameras && atomicState?.deviceData?.cameras && atomicState?.deviceData?.cameras[devId]) {
 				def camData = ["data":atomicState?.deviceData?.cameras[devId], "mt":useMt, "debug":dbg, "logPrefix":logNamePrefix,
 						"tz":nestTz, "htmlInfo":htmlInfo, "apiIssues":api, "allowDbException":allowDbException, "latestVer":latestCamVer()?.ver?.toString(), "clientBl":clientBl,
 						"hcTimeout":hcCamTimeout, "mobileClientType":mobClientType, "enRemDiagLogging":remDiag, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg,
@@ -3806,7 +3806,7 @@ def updateChildData(force = false) {
 				}
 				return true
 			}
-			else if(atomicState?.presDevice && devId == getNestPresId()) {
+			else if(devId && atomicState?.presDevice && devId == getNestPresId()) {
 				def pData = ["debug":dbg, "logPrefix":logNamePrefix, "tz":nestTz, "mt":useMt, "pres":locPresence, "apiIssues":api, "allowDbException":allowDbException,
 							"latestVer":latestPresVer()?.ver?.toString(), "clientBl":clientBl, "hcTimeout":hcLongTimeout, "mobileClientType":mobClientType,
 							"enRemDiagLogging":remDiag, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg, "lastStrucDataUpd": atomicState?.lastStrucDataUpd, "isBeta":isBeta ]
@@ -3834,7 +3834,7 @@ def updateChildData(force = false) {
 				}
 				return true
 			}
-			else if(atomicState?.weatherDevice && devId == getNestWeatherId()) {
+			else if(devId && atomicState?.weatherDevice && devId == getNestWeatherId()) {
 				def wData1 = ["weatCond":getWData(), "weatForecast":getWForecastData(), "weatAstronomy":getWAstronomyData(), "weatAlerts":getWAlertsData()]
 				def wData = ["data":wData1, "tz":nestTz, "mt":useMt, "debug":dbg, "logPrefix":logNamePrefix, "apiIssues":api, "htmlInfo":htmlInfo,
 							"allowDbException":allowDbException, "weathAlertNotif":settings?.weathAlertNotif, "latestVer":latestWeathVer()?.ver?.toString(),
@@ -3866,10 +3866,10 @@ def updateChildData(force = false) {
 				return true
 			}
 
-			else if(atomicState?.vThermostats && atomicState?."vThermostat${devId}") {
+			else if(devId && atomicState?.vThermostats && atomicState?."vThermostat${devId}") {
 				def physdevId = atomicState?."vThermostatMirrorId${devId}"
 
-				if(atomicState?.thermostats && atomicState?.deviceData?.thermostats[physdevId]) {
+				if(physdevId && atomicState?.thermostats && atomicState?.deviceData?.thermostats && atomicState?.deviceData?.thermostats[physdevId]) {
 					def data = atomicState?.deviceData?.thermostats[physdevId]
 					def defmin = fixTempSetting(atomicState?."${physdevId}_safety_temp_min" ?: null)
 					def defmax = fixTempSetting(atomicState?."${physdevId}_safety_temp_max" ?: null)
@@ -3958,10 +3958,10 @@ def updateChildData(force = false) {
 				}
 			}
 
-			else if(devId == getNestPresId()) {
+			else if(devId && devId == getNestPresId()) {
 				return true
 			}
-			else if(devId == getNestWeatherId()) {
+			else if(devId && devId == getNestWeatherId()) {
 				return true
 			}
 /* This causes NP exceptions depending if child has not finished being deleted or if items are removed from Nest
