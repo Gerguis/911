@@ -5059,7 +5059,7 @@ def missPollNotify(on) {
 	} else {
 		def msg = "\nThe app has not refreshed data in the last (${getLastDevicePollSec()}) seconds.\nPlease try refreshing data using device refresh button."
 		LogAction(msg, "error", true)
-		def msgWait = atomicState?.notificationPrefs?.msgDefaultWait.toInteger() ?: 900
+		def msgWait = atomicState?.notificationPrefs?.msgDefaultWait ?: 900
 		if(on && getLastMissPollMsgSec() > msgWait.toInteger()) {
 			if(sendMsg("${app.name} Nest Data update Issue", msg)) {
 				atomicState?.lastMisPollMsgDt = getDtNow()
