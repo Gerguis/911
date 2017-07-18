@@ -2320,25 +2320,21 @@ def fanCtrlCheck() {
 
 		def reqHeatSetPoint = getRemSenHeatSetTemp()
 		def reqCoolSetPoint = getRemSenCoolSetTemp()
-
 		def curTstatTemp = getRemoteSenTemp().toDouble()
 
-		def curSetPoint = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint).req.toDouble() ?: 0
+		def t0 = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint).req.toDouble()
+		def curSetPoint = t0 ?: 0
 		def tempDiff = Math.abs(curSetPoint - curTstatTemp)
 		LogAction("fanCtrlCheck: Desired Temps - Heat: ${reqHeatSetPoint} | Cool: ${reqCoolSetPoint}", "info", false)
 		LogAction("fanCtrlCheck: Current Thermostat Sensor Temp: ${curTstatTemp} Temp Difference: (${tempDiff})", "info", false)
 
-		if(isFanCtrlSwConfigured()) {
-			doFanOperation(tempDiff)
-		}
-
 		if(isFanCircConfigured()) {
 			def adjust = (getTemperatureScale() == "C") ? 0.5 : 1.0
 			def threshold = !fanCtrlTempDiffDegrees ? adjust : fanCtrlTempDiffDegrees.toDouble()
-			def curTstatFanMode = schMotTstat?.currentThermostatFanMode.toString()
-			def fanOn = (curTstatFanMode == "on" || curTstatFanMode == "circulate") ? true : false
 			def hvacMode = schMotTstat ? schMotTstat?.currentnestThermostatMode.toString() : null
 /*
+			def curTstatFanMode = schMotTstat?.currentThermostatFanMode.toString()
+			def fanOn = (curTstatFanMode == "on" || curTstatFanMode == "circulate") ? true : false
 			if(atomicState?.haveRunFan) {
 				if(schMotFanRuleType in ["Circ", "Cool_Circ", "Heat_Circ", "Heat_Cool_Circ"]) {
 					if(fanOn) {
@@ -2356,9 +2352,14 @@ def fanCtrlCheck() {
 				(hvacMode in ["auto"] && schMotFanRuleType in ["Heat_Cool_Circ"]) ||
 				(hvacMode in ["off", "eco"] && schMotFanRuleType in ["Circ"]) ) {
 				def sTemp = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint)
-				circulateFanControl(sTemp?.type?.toString(), curTstatTemp, sTemp?.req?.toDouble(), threshold, fanOn)
+				circulateFanControl(sTemp?.type?.toString(), curTstatTemp, sTemp?.req?.toDouble(), threshold)
 			}
 		}
+
+		if(isFanCtrlSwConfigured()) {
+			doFanOperation(tempDiff)
+		}
+
 		storeExecutionHistory((now()-execTime), "fanCtrlCheck")
 
 	} catch (ex) {
@@ -2386,7 +2387,6 @@ def getReqSetpointTemp(curTemp, reqHeatSetPoint, reqCoolSetPoint) {
 	}
 	def temp = (opType == "cool") ? reqCoolSetPoint.toDouble() : reqHeatSetPoint.toDouble()
 	return ["req":temp, "type":opType]
-	//return temp
 }
 
 def doFanOperation(tempDiff) {
@@ -2441,13 +2441,17 @@ def doFanOperation(tempDiff) {
 		//if(settings?."${pName}FanSwitchHvacModeFilter" != "any" && (settings?."${pName}FanSwitchHvacModeFilter" != hvacMode)) {
 */
 		if( !( ("any" in settings?."${pName}FanSwitchHvacModeFilter") || (hvacMode in settings?."${pName}FanSwitchHvacModeFilter") ) ){
-			LogAction("doFanOperation: Evaluating turn fans off; Thermostat Mode does not Match the required Mode", "info", true)
+			if(savedHaveRun) {
+				LogAction("doFanOperation: Evaluating turn fans off; Thermostat Mode does not Match the required Mode", "info", true)
+			}
 			hvacFanOn = false  // force off of fans
 		}
 
 		def schedOk = fanCtrlScheduleOk()
 		if(!schedOk) {
-			LogAction("doFanOperation: Evaluating turn fans off; Schedule is restricted", "info", true)
+			if(savedHaveRun) {
+				LogAction("doFanOperation: Evaluating turn fans off; Schedule is restricted", "info", true)
+			}
 			hvacFanOn = false  // force off of fans
 		}
 
@@ -2521,12 +2525,14 @@ def getLastFanCtrlFanOffDtSec() { return !atomicState?.lastfanCtrlFanOffDt ? 100
 
 
 // CONTROLS THE THERMOSTAT FAN
-def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Double threshold, Boolean fanOn) {
+def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Double threshold) {
 	def tstat = schMotTstat
 	def tstatsMir = schMotTstatMir
 
 	def theFanIsOn = false
 	def hvacMode = tstat ? tstat?.currentnestThermostatMode.toString() : null
+	def curTstatFanMode = tstat?.currentThermostatFanMode.toString()
+	def fanOn = (curTstatFanMode == "on" || curTstatFanMode == "circulate") ? true : false
 
 	def returnToAuto = false
 	if(hvacMode in ["off", "eco"]) { returnToAuto = true }
@@ -2547,14 +2553,13 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 	}
 
 	def curOperState = tstat?.currentnestThermostatOperatingState.toString()
-	def curFanMode = tstat?.currentThermostatFanMode.toString()
 
 	def tstatOperStateOk = (curOperState == "idle") ? true : false
 	// if ac or heat is on, we should put fan back to auto
 	if(!tstatOperStateOk) {
-		LogAction("Circulate Fan Run: The Thermostat OperatingState is Currently (${strCapitalize(curOperState)}) Skipping", "info", true)
-
 		if( atomicState?.lastfanCtrlFanOffDt > atomicState?.lastfanCtrlRunDt) { return }
+		LogAction("Circulate Fan Run: The Thermostat OperatingState is Currently (${strCapitalize(curOperState)}) Skipping", "info", true)
+		atomicState?.lastfanCtrlFanOffDt = getDtNow()
 		returnToAuto = true
 	}
 	def fanTempOk = getCirculateFanTempOk(curSenTemp, reqSetpointTemp, threshold, fanOn, operType)
@@ -2582,8 +2587,8 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 				}
 			}
 			atomicState?.lastfanCtrlRunDt = getDtNow()
-			theFanIsOn = true
 		}
+		theFanIsOn = true
 
 	} else {
 		if(returnToAuto || !fanTempOk) {
@@ -2611,9 +2616,9 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 					}
 				}
 				atomicState?.lastfanCtrlFanOffDt = getDtNow()
-				theFanIsOn = false
 			}
 		}
+		theFanIsOn = false
 	}
 	if(theFanIsOn) {
 		scheduleAutomationEval(120)
