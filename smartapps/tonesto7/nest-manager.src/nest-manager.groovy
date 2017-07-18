@@ -2878,7 +2878,12 @@ def automationRestore(data, id=null) {
 				atomicState?.migrationState4 = "Step 4 Automation Restore - Restoring [${setData?.automationTypeFlag?.value}] Automation Named: ($appLbl)...."
 				LogAction("Restoring [${setData?.automationTypeFlag?.value}] Automation Named: ($appLbl)....", "info", true)
 				// log.debug "setData: $setData"
-				addChildApp(appNamespace(), autoAppName(), "${appLbl} (NST)", [settings:setData])
+				try {
+					addChildApp(appNamespace(), autoAppName(), "${appLbl} (NST)", [settings:setData])
+				} catch (ex) {
+					appUpdateNotify(true)
+					return false
+				}
 				postChildRestore(bApp?.key)
 			}
 			atomicState?.migrationState4 = "Step 4 Automation Restore - Finishing"
@@ -6268,6 +6273,7 @@ def addRemoveDevices(uninst = null) {
 		}
 		else if(ex instanceof physicalgraph.app.exception.UnknownDeviceTypeException) {
 			def msg = "Error: Device Handlers are Missing or Not Published.  Please verify all device handlers are present before continuing."
+			appUpdateNotify()
 			sendPush(msg)
 			LogAction("addRemoveDevices Exception | $msg", "warn", true)
 		}
