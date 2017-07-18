@@ -1595,9 +1595,8 @@ def automationMotionEvt(evt) {
 */
 		if(dorunIn) {
 			LogAction("Automation Schedule Motion | Scheduling Delay Check: ($delay sec) | Schedule: ($mySched - ${getSchedLbl(mySched)})", "trace", true)
-			delay = delay > 20 ? delay : 20
-			delay = delay < 60 ? delay : 60
-			scheduleAutomationEval(delay)
+			def val = Math.min( Math.max(delay,20), 60)
+			scheduleAutomationEval(val)
 		} else {
 			def str = "Motion Event | Skipping Motion Check: "
 			if(mySched) {
@@ -2319,11 +2318,16 @@ def fanCtrlCheck() {
 		//atomicState?.lastEvalDt = getDtNow()
 
 		def reqHeatSetPoint = getRemSenHeatSetTemp()
+		reqHeatSetPoint = reqHeatSetPoint ?: 0
+
 		def reqCoolSetPoint = getRemSenCoolSetTemp()
+		reqCoolSetPoint = reqCoolSetPoint ?: 0
+
 		def curTstatTemp = getRemoteSenTemp().toDouble()
 
-		def t0 = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint).req.toDouble()
-		def curSetPoint = t0 ?: 0
+		def t0 = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint).req
+		def curSetPoint = t0 ? t0.toDouble() : 0
+
 		def tempDiff = Math.abs(curSetPoint - curTstatTemp)
 		LogAction("fanCtrlCheck: Desired Temps - Heat: ${reqHeatSetPoint} | Cool: ${reqCoolSetPoint}", "info", false)
 		LogAction("fanCtrlCheck: Current Thermostat Sensor Temp: ${curTstatTemp} Temp Difference: (${tempDiff})", "info", false)
@@ -2357,7 +2361,7 @@ def fanCtrlCheck() {
 		}
 
 		if(isFanCtrlSwConfigured()) {
-			doFanOperation(tempDiff)
+			doFanOperation(tempDiff, curTstatTemp, reqHeatSetPoint, reqCoolSetPoint)
 		}
 
 		storeExecutionHistory((now()-execTime), "fanCtrlCheck")
@@ -2385,20 +2389,20 @@ def getReqSetpointTemp(curTemp, reqHeatSetPoint, reqCoolSetPoint) {
 		def heatDiff = Math.abs(curTemp - reqHeatSetPoint)
 		opType = coolDiff < heatDiff ? "cool" : "heat"
 	}
-	def temp = (opType == "cool") ? reqCoolSetPoint.toDouble() : reqHeatSetPoint.toDouble()
+	def temp = (opType == "cool") ? reqCoolSetPoint?.toDouble() : reqHeatSetPoint?.toDouble()
 	return ["req":temp, "type":opType]
 }
 
-def doFanOperation(tempDiff) {
+def doFanOperation(tempDiff, curTstatTemp, curHeatSetpoint, curCoolSetpoint) {
 	def pName = fanCtrlPrefix()
 	LogAction("doFanOperation: Temp Difference: (${tempDiff})", "info", false)
 	try {
 		def tstat = schMotTstat
 
-		def curTstatTemp = tstat ? getRemoteSenTemp().toDouble() : null
+/*		def curTstatTemp = tstat ? getRemoteSenTemp().toDouble() : null
 		def curCoolSetpoint = getRemSenCoolSetTemp()
 		def curHeatSetpoint = getRemSenHeatSetTemp()
-
+*/
 		def hvacMode = tstat ? tstat?.currentnestThermostatMode.toString() : null
 		def curTstatOperState = tstat?.currentThermostatOperatingState.toString()
 		def curTstatFanMode = tstat?.currentThermostatFanMode.toString()
@@ -2571,9 +2575,8 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 			if(!timeSinceLastOffOk) {
 				def remaining = waitTimeVal - getLastFanCtrlFanOffDtSec()
 				LogAction("Circulate Fan: Want to RUN Fan | Delaying for wait period ${waitTimeVal}, remaining ${remaining} seconds", "info", true)
-				remaining = remaining > 20 ? remaining : 20
-				remaining = remaining < 60 ? remaining : 60
-				scheduleAutomationEval(remaining)
+				def val = Math.min( Math.max(remaining,20), 60)
+				scheduleAutomationEval(val)
 				return
 			}
 			LogAction("Circulate Fan: Activating '${tstat?.displayName}'' Fan for ${strCapitalize(operType)}ING Circulation", "debug", true)
@@ -2593,14 +2596,13 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 	} else {
 		if(returnToAuto || !fanTempOk) {
 			if(fanOn && !returnToAuto) {
-				def fanOnTimeVal = fanCtrlOnTime?.toInteger() ?: 600
+				def fanOnTimeVal = fanCtrlOnTime?.toInteger() ?: 240
 				def timeSinceLastRunOk = (getLastFanCtrlFanRunDtSec() > fanOnTimeVal) ? true : false // fan left on for minimum
 				if(!timeSinceLastRunOk) {
 					def remaining = fanOnTimeVal - getLastFanCtrlFanRunDtSec()
 					LogAction("Circulate Fan Run: Want to STOP Fan | Delaying for run period ${fanOnTimeVal}, remaining ${remaining} seconds", "info", true)
-					remaining = remaining > 20 ? remaining : 20
-					remaining = remaining < 60 ? remaining : 60
-					scheduleAutomationEval(remaining)
+					def val = Math.min( Math.max(remaining,20), 60)
+					scheduleAutomationEval(val)
 					return
 				}
 			}
@@ -2626,7 +2628,6 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 }
 
 def getCirculateFanTempOk(Double senTemp, Double reqsetTemp, Double threshold, Boolean fanOn, operType) {
-	LogAction("RemSenFanTempOk Debug:", "debug", false)
 
 	def turnOn = false
 /*
@@ -2636,14 +2637,21 @@ def getCirculateFanTempOk(Double senTemp, Double reqsetTemp, Double threshold, B
 	}
 
 	if(adjust >= threshold) {
-		LogAction("Circulate Fan Temp: Bad threshold setting ${threshold} <= ${adjust}", "warn", true)
+		LogAction("getCirculateFanTempOk: Bad threshold setting ${threshold} <= ${adjust}", "warn", true)
 		return false
 	}
 
 	LogAction(" ├ adjust: ${adjust}}°${getTemperatureScale()}", "debug", false)
 */
-	LogAction(" ├ operType: (${strCapitalize(operType)})", "debug", false)
+
+	LogAction(" ├ operType: (${strCapitalize(operType)}) | Temp Threshold: ${threshold}°${getTemperatureScale()} |  FanAlreadyOn: (${strCapitalize(fanOn)})", "debug", false)
 	LogAction(" ├ Sensor Temp: ${senTemp}°${getTemperatureScale()} | Requested Setpoint Temp: ${reqsetTemp}°${getTemperatureScale()}", "debug", false)
+
+	if(!reqsetTemp) {
+		LogAction("getCirculateFanTempOk: Bad reqsetTemp ${reqsetTemp}", "warn", false)
+		LogAction("getCirculateFanTempOk:", "debug", false)
+		return false
+	}
 
 //	def ontemp
 	def offtemp
@@ -2661,11 +2669,10 @@ def getCirculateFanTempOk(Double senTemp, Double reqsetTemp, Double threshold, B
 //		if((senTemp < offtemp) && (senTemp >= (ontemp + adjust))) { turnOn = true }
 	}
 
-	//LogAction(" ├ onTemp: ${ontemp} | offTemp: ${offtemp}}°${getTemperatureScale()}", "debug", false)
+//	LogAction(" ├ onTemp: ${ontemp} | offTemp: ${offtemp}}°${getTemperatureScale()}", "debug", false)
 	LogAction(" ├ offTemp: ${offtemp}°${getTemperatureScale()} | Temp Threshold: ${threshold}°${getTemperatureScale()}", "debug", false)
-	LogAction(" ├ FanAlreadyOn: (${strCapitalize(fanOn)})", "debug", false)
 	LogAction(" ┌ Final Result: (${strCapitalize(turnOn)})", "debug", false)
-	LogAction("getCirculateFanTempOk: ", "debug", false)
+//	LogAction("getCirculateFanTempOk: ", "debug", false)
 
 	def resultStr = "getCirculateFanTempOk: The Temperature Difference is "
 	if(turnOn) {
@@ -3292,9 +3299,8 @@ def extTmpTempCheck(cTimeOut = false) {
 						if(safetyOk) {
 							def remaining = getExtTmpOnDelayVal() - getExtTmpWhileOffDtSec()
 							LogAction("extTmpTempCheck: Delaying restore for wait period ${getExtTmpOnDelayVal()}, remaining ${remaining}", "info", true)
-							remaining = remaining > 20 ? remaining : 20
-							remaining = remaining < 60 ? remaining : 60
-							scheduleAutomationEval(remaining)
+							def val = Math.min( Math.max(remaining,20), 60)
+							scheduleAutomationEval(val)
 						}
 					}
 				} else {
@@ -3344,9 +3350,8 @@ def extTmpTempCheck(cTimeOut = false) {
 					} else {
 						def remaining = getExtTmpOffDelayVal() - getExtTmpWhileOnDtSec()
 						LogAction("extTmpTempCheck: Delaying ECO for wait period ${getExtTmpOffDelayVal()} seconds | Wait time remaining: ${remaining} seconds", "info", true)
-						remaining = remaining > 20 ? remaining : 20
-						remaining = remaining < 60 ? remaining : 60
-						scheduleAutomationEval(remaining)
+						def val = Math.min( Math.max(remaining,20), 60)
+						scheduleAutomationEval(val)
 					}
 				} else {
 					LogAction("extTmpTempCheck: | Skipping: Exterior temperatures in range and '${extTmpTstat?.label}' mode is 'OFF or ECO'", "info", true)
@@ -3578,9 +3583,8 @@ def conWatCheck(cTimeOut = false) {
 						if(safetyOk) {
 							def remaining = getConWatOnDelayVal() - getConWatCloseDtSec()
 							LogAction("conWatCheck: Delaying restore for wait period ${getConWatOnDelayVal()}, remaining ${remaining}", "info", true)
-							remaining = remaining > 20 ? remaining : 20
-							remaining = remaining < 60 ? remaining : 60
-							scheduleAutomationEval(remaining)
+							def val = Math.min( Math.max(remaining,20), 60)
+							scheduleAutomationEval(val)
 						}
 					}
 				} else {
@@ -3628,15 +3632,13 @@ def conWatCheck(cTimeOut = false) {
 						if(getConWatRestoreDelayBetweenDtSec() < (getConWatRestoreDelayBetweenVal() - 2)) {
 							def remaining = getConWatRestoreDelayBetweenVal() - getConWatRestoreDelayBetweenDtSec()
 							LogAction("conWatCheck: | Skipping ECO change: delay since last restore not met (${getEnumValue(longTimeSecEnum(), conWatRestoreDelayBetween)})", "info", false)
-							remaining = remaining > 20 ? remaining : 20
-							remaining = remaining < 60 ? remaining : 60
-							scheduleAutomationEval(remaining)
+							def val = Math.min( Math.max(remaining,20), 60)
+							scheduleAutomationEval(val)
 						} else {
 							def remaining = getConWatOffDelayVal() - getConWatOpenDtSec()
 							LogAction("conWatCheck: Delaying ECO for wait period ${getConWatOffDelayVal()} seconds | Wait time remaining: ${remaining} seconds", "info", true)
-							remaining = remaining > 20 ? remaining : 20
-							remaining = remaining < 60 ? remaining : 60
-							scheduleAutomationEval(remaining)
+							def val = Math.min( Math.max(remaining,20), 60)
+							scheduleAutomationEval(val)
 						}
 					}
 				} else {
@@ -3684,8 +3686,7 @@ def conWatContactEvt(evt) {
 		storeLastEventData(evt)
 		if(canSched) {
 			LogAction("conWatContactEvt: Contact Check scheduled for (${timeVal?.valLabel})", "info", false)
-			def val = timeVal?.valNum > 20 ? timeVal?.valNum : 20
-			val = timeVal?.valNum < 60 ? timeVal?.valNum : 60
+			def val = Math.min( Math.max(timeVal?.valNum,20), 60)
 			scheduleAutomationEval(val)
 		} else {
 			LogAction("conWatContactEvt: Skipping Event", "info", false)
@@ -3817,9 +3818,8 @@ def leakWatCheck() {
 						if(safetyOk) {
 							def remaining = getLeakWatOnDelayVal() - getLeakWatDryDtSec()
 							LogAction("leakWatCheck: Delaying restore for wait period ${getLeakWatOnDelayVal()}, remaining ${remaining}", "info", true)
-							remaining = remaining > 20 ? remaining : 20
-							remaining = remaining < 60 ? remaining : 60
-							scheduleAutomationEval(remaining)
+							def val = Math.min( Math.max(remaining,20), 60)
+							scheduleAutomationEval(val)
 						}
 					}
 				} else {
@@ -4844,7 +4844,7 @@ def setTstatTempCheck() {
 				if(!isModeOff && atomicState?.schMotTstatCanHeat) {
 					def oldHeat = getTstatSetpoint(tstat, "heat")
 					heatTemp = getRemSenHeatSetTemp(curMode)
-					if(oldHeat != heatTemp) {
+					if(heatTemp && oldHeat != heatTemp) {
 						needChg = true
 						LogAction("setTstatTempCheck: Schedule Heat Setpoint '${heatTemp}${tUnitStr()}' on (${tstat}) | Old Setpoint: '${oldHeat}${tUnitStr()}'", "info", false)
 						//storeLastAction("Set ${settings?.schMotTstat} Heat Setpoint to ${heatTemp}", getDtNow(), pName, tstat)
@@ -4854,7 +4854,7 @@ def setTstatTempCheck() {
 				if(!isModeOff && atomicState?.schMotTstatCanCool) {
 					def oldCool = getTstatSetpoint(tstat, "cool")
 					coolTemp = getRemSenCoolSetTemp(curMode)
-					if(oldCool != coolTemp) {
+					if(coolTemp && oldCool != coolTemp) {
 						needChg = true
 						LogAction("setTstatTempCheck: Schedule Cool Setpoint '${coolTemp}${tUnitStr()}' on (${tstat}) | Old Setpoint: '${oldCool}${tUnitStr()}'", "info", false)
 						//storeLastAction("Set ${settings?.schMotTstat} Cool Setpoint to ${coolTemp}", getDtNow(), pName, tstat)
@@ -5319,7 +5319,7 @@ def tstatConfigAutoPage(params) {
 							paragraph "Temp difference to trigger Action Type.", title: "What is the Action Threshold Temp?", image: getAppImg("instruct_icon.png")
 							def adjust = (getTemperatureScale() == "C") ? 0.5 : 1.0
 							input "fanCtrlTempDiffDegrees", "decimal", title: "Action Threshold Temp (${tempScaleStr})", required: true, defaultValue: adjust, image: getAppImg("temp_icon.png")
-							input name: "fanCtrlOnTime", type: "enum", title: "Minimum circulate Time\n(Optional)", defaultValue: 600, metadata: [values:fanTimeSecEnum()], required: true, submitOnChange: true, image: getAppImg("timer_icon.png")
+							input name: "fanCtrlOnTime", type: "enum", title: "Minimum circulate Time\n(Optional)", defaultValue: 240, metadata: [values:fanTimeSecEnum()], required: true, submitOnChange: true, image: getAppImg("timer_icon.png")
 							input name: "fanCtrlTimeBetweenRuns", type: "enum", title: "Delay Between On/Off Cycles\n(Optional)", defaultValue: 1200, metadata: [values:longTimeSecEnum()], required: true, submitOnChange: true, image: getAppImg("delay_time_icon.png")
 						}
 					}
