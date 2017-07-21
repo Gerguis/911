@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.6" }
-def appVerDate() { "7-20-2017" }
+def appVerDate() { "7-21-2017" }
 
 preferences {
 	//startPage
