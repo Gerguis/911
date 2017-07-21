@@ -2354,7 +2354,7 @@ def fanCtrlCheck() {
 			def sTemp = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint)
 			def resultMode = sTemp?.type?.toString()
 			def can_Circ = false
-			if( 
+			if(
 				!(hvacMode in ["off"]) && (
 					( hvacMode in ["cool"] && schMotFanRuleType in ["Cool_Circ"]) ||
 					( resultMode in ["cool"] && schMotFanRuleType in ["Cool_Circ", "Heat_Cool_Circ"]) ||
@@ -2932,14 +2932,14 @@ def getExtConditions( doEvent = false ) {
 		try {
 			def cur = parent?.getWData()
 			def weather = parent.getWeatherDevice()
-	
+
 			if(cur && weather && cur?.current_observation) {
 				atomicState?.curWeather = cur?.current_observation
 				atomicState?.curWeatherTemp_f = Math.round(cur?.current_observation?.temp_f) as Integer
 				atomicState?.curWeatherTemp_c = Math.round(cur?.current_observation?.temp_c.toDouble())
 				atomicState?.curWeatherLoc = cur?.current_observation?.display_location?.full.toString()  // This is not available as attribute in dth
 				//atomicState?.curWeatherHum = cur?.current_observation?.relative_humidity?.toString().replaceAll("\\%", "")
-	
+
 				def dp = 0.0
 				if(weather) {  // Dewpoint is calculated in dth
 					dp = weather?.currentValue("dewpoint")?.toString().replaceAll("\\[|\\]", "").toDouble()
@@ -5739,7 +5739,7 @@ def schMotSchedulePage(params) {
 def getScheduleList() {
 	def cnt = parent ? parent?.state?.appData?.schedules?.count : null
 	def maxCnt = cnt ? cnt.toInteger() : 4
-	maxCnt = Math.min( Math.max(remaining,4), 8)
+	//def maxCnt = Math.min( Math.max(remaining,4), 8)
 	if(maxCnt < atomicState?.lastScheduleList?.size()) {
 		maxCnt = atomicState?.lastScheduleList?.size()
 		LogAction("A schedule size issue has occurred. The configured schedule size is smaller than the previous configuration restoring previous schedule size.", "warn", true)
