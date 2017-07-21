@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 
 preferences { }
 
-def devVer() { return "5.1.3" }
+def devVer() { return "5.1.4" }
 
 metadata {
 	definition (name: "${textDevName()}", author: "Anthony S.", namespace: "tonesto7") {
@@ -478,20 +478,18 @@ def lastCheckinEvent(checkin, isOnline) {
 	def curConnSeconds = (checkin && curConnFmt != "Not Available") ? getTimeDiffSeconds(curConnFmt) : 3000
 
 	def onlineStat = isOnline.toString() == "true" ? "online" : "offline"
+	LogAction("lastCheckinEvent($checkin, $isOnline) | onlineStatus: $onlineStat | lastConnSeconds: $lastConnSeconds | hcTimeout: ${hcTimeout} | curConnSeconds: ${curConnSeconds}")
+	if(hcTimeout && isOnline.toString() == "true" && curConnSeconds > hcTimeout && lastConnSeconds > hcTimeout) {
+		onlineStat = "offline"
+		LogAction("lastCheckinEvent: UPDATED onlineStatus: $onlineStat")
+	}
 
 	state?.lastConnection = curConn?.toString()
 	if(isStateChange(device, "lastConnection", curConnFmt.toString())) {
 		LogAction("UPDATED | Last Nest Check-in was: (${curConnFmt}) | Original State: (${lastChk})")
 		sendEvent(name: 'lastConnection', value: curConnFmt?.toString(), displayed: state?.showProtActEvts, isStateChange: true)
-		if(lastConnSeconds >= 0) { addCheckinTime(lastConnSeconds) }
+		if(lastConnSeconds >= 0 && onlineStat == "online") { addCheckinTime(lastConnSeconds) }
 	} else { LogAction("Last Nest Check-in was: (${curConnFmt}) | Original State: (${lastChk})") }
-
-	LogAction("lastCheckinEvent($checkin, $isOnline) | onlineStatus: $onlineStat | lastConnSeconds: $lastConnSeconds | hcTimeout: ${hcTimeout} | curConnSeconds: ${curConnSeconds}")
-
-	if(hcTimeout && isOnline.toString() == "true" && curConnSeconds > hcTimeout && lastConnSeconds > hcTimeout) {
-		onlineStat = "offline"
-		LogAction("lastCheckinEvent: UPDATED onlineStatus: $onlineStat")
-	}
 
 	state?.onlineStatus = onlineStat
 	modifyDeviceStatus(onlineStat)
@@ -525,9 +523,11 @@ def determinePwrSrc() {
 	if(!state?.checkinTimeList) { state?.checkinTimeList = [] }
 	def checkins = state?.checkinTimeList
 	def checkinAvg = checkins?.size() ? (checkins?.sum()/checkins?.size()).toDouble().round(0).toInteger() : null //
-	if(checkinAvg && checkinAvg < 10000) {
-		powerTypeEvent(true)
-	} else { powerTypeEvent(false) }
+	if(checkins?.size() > 7) {
+		if(checkinAvg && checkinAvg < 10000) {
+			powerTypeEvent(true)
+		} else { powerTypeEvent(false) }
+	}
 	//log.debug "checkins: $checkins | Avg: $checkinAvg"
 }
 

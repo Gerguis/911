@@ -35,17 +35,17 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.8" }
-def appVerDate() { "7-16-2017" }
+def appVersion() { "5.1.9" }
+def appVerDate() { "7-21-2017" }
 def minVersions() {
 	return [
-		"automation":["val":515, "desc":"5.1.5"],
-		"thermostat":["val":513, "desc":"5.1.3"],
-		"protect":["val":513, "desc":"5.1.3"],
+		"automation":["val":516, "desc":"5.1.6"],
+		"thermostat":["val":514, "desc":"5.1.4"],
+		"protect":["val":514, "desc":"5.1.4"],
 		"presence":["val":512, "desc":"5.1.2"],
 		"weather":["val":513, "desc":"5.1.3"],
-		"camera":["val":513, "desc":"5.1.2"],
-		"stream":["val":100, "desc":"1.0.0"]
+		"camera":["val":514, "desc":"5.1.4"],
+		"stream":["val":101, "desc":"1.0.1"]
 	]
 }
 
@@ -2120,7 +2120,9 @@ def initManagerApp() {
 	atomicState.pollingOn = false
 	atomicState.lastChildUpdDt = null // force child update on next poll
 	atomicState.lastForcePoll = null
-	atomicState.swVersion = appVersion()
+	def sData = atomicState?.swVer ?: [:]
+	sData["mgrVer"] = appVersion()
+	atomicState?.swVer = sData
 	if(settings?.structures && atomicState?.structures && !atomicState.structName) {
 		def structs = getNestStructures()
 		if(structs) {
@@ -2318,11 +2320,13 @@ def receiveStreamStatus() {
 				atomicState.ssdpOn = false
 				subscriber()
 			}
-			atomicState?.streamDevVer = resp?.version ?: ""
-			if(atomicState?.streamDevVer != "" && (versionStr2Int(atomicState?.streamDevVer) >= minVersions()?.stream?.val)) {
+			def sData = atomicState?.swVer ?: [:]
+			sData["streamDevVer"] = resp?.version ?: ""
+			atomicState?.swVer = sData
+			if(sData.streamDevVer != "" && (versionStr2Int(sData.streamDevVer) >= minVersions()?.stream?.val)) {
 				;
 			} else {
-				LogAction("NEED SOFTWARE UPDATE: Stream service (v${atomicState?.streamDevVer}) | REQUIRED: (v${minVersions()?.stream?.desc}) | Update the Device to latest", "error", true)
+				LogAction("NST STREAM SERVICE UPDATE REQUIRED: Stream service (v${sData.streamDevVer}) | REQUIRED: (v${minVersions()?.stream?.desc}) | Update the Service to latest version", "error", true)
 				appUpdateNotify()
 			}
 		}
@@ -2371,7 +2375,9 @@ def getInstAutoTypesDesc() {
 	def nItems = [:]
 	def schMotItems = []
 	//atomicState?.autoSaVer = minVersions()?.automation?.desc
-	atomicState?.autoSaVer = null
+	def sData = atomicState?.swVer ?: [:]
+	sData["autoSaVer"] = null
+	atomicState?.swVer = sData
 	childApps?.each { a ->
 		def type = a?.getAutomationType()
 		def ver
@@ -2386,15 +2392,16 @@ def getInstAutoTypesDesc() {
 			type = "old"
 		}
 		if(ver) {
-			def updVer = atomicState?.autoSaVer ?: ver
+			def updVer = sData.autoSaVer ?: ver
 			if(versionStr2Int(ver) < versionStr2Int(updVer)) {
 				updVer = ver
 			}
-			atomicState.autoSaVer = updVer
+			sData.autoSaVer = updVer
+			atomicState?.swVer = sData
 		}
 
 		if(ver==null || (versionStr2Int(ver) < minVersions()?.automation?.val) || (versionStr2Int(ver) > minVersions()?.automation?.val && !getDevOpt() )) {
-			LogAction("NEED SOFTWARE UPDATE: Automation ${a?.label} (v${ver}) | REQUIRED: (v${minVersions()?.automation?.desc}) | Please install the correct  NST Automations", "error", true)
+			LogAction("NST AUTOMATIONS UPDATE REQUIRED: Automation ${a?.label} (v${ver}) | REQUIRED: (v${minVersions()?.automation?.desc}) | Please install the current NST Automations software in the IDE", "error", true)
 			appUpdateNotify(true)
 		}
 
@@ -2644,9 +2651,8 @@ def cleanRestAutomationTest() {
 
 def checkIfSwupdated() {
 	if(checkMigrationRequired()) { return true }
-	if(atomicState?.swVersion != appVersion()) {
+	if(atomicState?.swVer?.mgrVer != appVersion()) {
 		LogAction("checkIfSwupdated: new version ${appVersion()}", "info", true)
-		atomicState.swVersion = appVersion()
 		def iData = atomicState?.installData
 		iData["updatedDt"] = getDtNow().toString()
 		iData["shownChgLog"] = false
@@ -2654,6 +2660,9 @@ def checkIfSwupdated() {
 		iData["shownDonation"] = false
 		atomicState?.installData = iData
 /*  Updated does this
+		def sData = atomicState?.swVer ?: [:]
+		sData["mgrVer"] = appVersion()
+		atomicState?.swVer = sData
 		def cApps = getChildApps()
 		if(cApps) {
 			cApps?.sort()?.each { chld ->
@@ -2878,7 +2887,12 @@ def automationRestore(data, id=null) {
 				atomicState?.migrationState4 = "Step 4 Automation Restore - Restoring [${setData?.automationTypeFlag?.value}] Automation Named: ($appLbl)...."
 				LogAction("Restoring [${setData?.automationTypeFlag?.value}] Automation Named: ($appLbl)....", "info", true)
 				// log.debug "setData: $setData"
-				addChildApp(appNamespace(), autoAppName(), "${appLbl} (NST)", [settings:setData])
+				try {
+					addChildApp(appNamespace(), autoAppName(), "${appLbl} (NST)", [settings:setData])
+				} catch (ex) {
+					appUpdateNotify(true)
+					return false
+				}
 				postChildRestore(bApp?.key)
 			}
 			atomicState?.migrationState4 = "Step 4 Automation Restore - Finishing"
@@ -3684,11 +3698,12 @@ def updateChildData(force = false) {
 		def isBeta = betaMarker()
 		def camTakeSnapOnEvt = settings?.camTakeSnapOnEvt == false ? false : true
 
-		def curWeatherTemp
+		def curWeatherData = [:]
 		if(atomicState?.thermostats && getWeatherDeviceInst()) {
 			def cur = getWData()
 			if(cur) {
-				curWeatherTemp = getTemperatureScale() == "C" ? (cur?.current_observation?.temp_c ? Math.round(cur?.current_observation?.temp_c.toDouble()) : null) : (cur?.current_observation?.temp_f ? Math.round(cur?.current_observation?.temp_f).toInteger() : null)
+				curWeatherData["temp"] = getTemperatureScale() == "C" ? (cur?.current_observation?.temp_c ? Math.round(cur?.current_observation?.temp_c.toDouble()) : null) : (cur?.current_observation?.temp_f ? Math.round(cur?.current_observation?.temp_f).toInteger() : null)
+				curWeatherData["hum"] = cur?.current_observation?.relative_humidity ?: 0
 			}
 		}
 		def showGraphs = settings?.tstatShowHistoryGraph == false ? false : true
@@ -3717,7 +3732,7 @@ def updateChildData(force = false) {
 				def autoSchedData = reqSchedInfoRprt(it, false) as Map
 				def tData = ["data":atomicState?.deviceData?.thermostats[devId], "mt":useMt, "debug":dbg, "tz":nestTz, "apiIssues":api, "safetyTemps":safetyTemps, "comfortHumidity":comfortHumidity,
 						"comfortDewpoint":comfortDewpoint, "pres":locPresence, "childWaitVal":getChildWaitVal().toInteger(), "htmlInfo":htmlInfo, "allowDbException":allowDbException,
-						"latestVer":latestTstatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curExtTemp":curWeatherTemp, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
+						"latestVer":latestTstatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curWeatherData":curWeatherData, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
 						"mobileClientType":mobClientType, "enRemDiagLogging":remDiag, "autoSchedData":autoSchedData, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg, "showGraphs":showGraphs,
 						"devBannerData":devBannerData, "restStreaming":streamingActive, "isBeta":isBeta]
 				def oldTstatData = atomicState?."oldTstatData${devId}"
@@ -3727,8 +3742,10 @@ def updateChildData(force = false) {
 				if(force || nforce || (oldTstatData != tDataChecksum)) {
 					physDevLblHandler("thermostat", devId, it?.label, "thermostats", tData?.data?.name.toString(), "tstat", overRideNames)
 					def t1 = it?.currentState("devVer")?.value?.toString()
-					atomicState?.tDevVer = t1 ?: ""
-					if(atomicState?.tDevVer != "" && (versionStr2Int(atomicState?.tDevVer) >= minVersions()?.thermostat?.val)) {
+					def sData = atomicState?.swVer ?: [:]
+					sData["tDevVer"] = t1 ?: ""
+					atomicState?.swVer = sData
+					if(sData?.tDevVer != "" && (versionStr2Int(sData?.tDevVer) >= minVersions()?.thermostat?.val)) {
 						//LogTrace("UpdateChildData >> Thermostat id: ${devId} | data: ${tData}")
 						LogTrace("updateChildData >> Thermostat id: ${devId} | oldTstatData: ${oldTstatData} tDataChecksum: ${tDataChecksum} force: $force  nforce: $nforce")
 						it.generateEvent(tData)
@@ -3737,7 +3754,7 @@ def updateChildData(force = false) {
 						if(atomicState?."lastUpdated${devId}Dt" == null) {
 							atomicState."lastUpdated${devId}Dt" = getDtNow()
 						} else {
-							LogAction("NEED SOFTWARE UPDATE: Thermostat ${devId} (v${atomicState?.tDevVer}) | REQUIRED: (v${minVersions()?.thermostat?.desc}) | Update the Device to latest", "error", true)
+							LogAction("NST THERMOSTAT DEVICE UPDATE REQUIRED: Thermostat ${devId} (v${sData?.tDevVer}) | REQUIRED: (v${minVersions()?.thermostat?.desc}) | Update the Device code to the latest software in the IDE", "error", true)
 							appUpdateNotify()
 						}
 						it.generateEvent(tData)
@@ -3757,8 +3774,10 @@ def updateChildData(force = false) {
 				if(force || nforce || (oldProtData != pDataChecksum)) {
 					physDevLblHandler("protect", devId, it?.label, "protects", pData?.data?.name.toString(), "prot", overRideNames)
 					def t1 = it?.currentState("devVer")?.value?.toString()
-					atomicState?.pDevVer = t1 ?: ""
-					if(atomicState?.pDevVer != "" && (versionStr2Int(atomicState?.pDevVer) >= minVersions()?.protect?.val)) {
+					def sData = atomicState?.swVer ?: [:]
+					sData["pDevVer"] = t1 ?: ""
+					atomicState?.swVer = sData
+					if(sData?.pDevVer != "" && (versionStr2Int(sData?.pDevVer) >= minVersions()?.protect?.val)) {
 						//LogTrace("UpdateChildData >> Protect id: ${devId} | data: ${pData}")
 						LogTrace("UpdateChildData >> Protect id: ${devId} | oldProtData: ${oldProtData} pDataChecksum: ${pDataChecksum} force: $force  nforce: $nforce")
 						it.generateEvent(pData)
@@ -3767,7 +3786,7 @@ def updateChildData(force = false) {
 						if(atomicState?."lastUpdated${devId}Dt" == null) {
 							atomicState."lastUpdated${devId}Dt" = getDtNow()
 						} else {
-							LogAction("NEED SOFTWARE UPDATE: Protect ${devId} (v${atomicState?.pDevVer}) | REQUIRED: (v${minVersions()?.protect?.desc}) | Update the Device to latest", "error", true)
+							LogAction("NST PROTECT DEVICE UPDATE REQUIRED: Protect ${devId} (v${sData?.pDevVer}) | REQUIRED: (v${minVersions()?.protect?.desc}) | Update the Device code to the latest software in the IDE", "error", true)
 							appUpdateNotify()
 						}
 						it.generateEvent(pData)
@@ -3788,8 +3807,10 @@ def updateChildData(force = false) {
 				if(force || nforce || (oldCamData != cDataChecksum)) {
 					physDevLblHandler("camera", devId, it?.label, "cameras", camData?.data?.name.toString(), "cam", overRideNames)
 					def t1 = it?.currentState("devVer")?.value?.toString()
-					atomicState?.camDevVer = t1 ?: ""
-					if(atomicState?.camDevVer != "" && (versionStr2Int(atomicState?.camDevVer) >= minVersions()?.camera?.val)) {
+					def sData = atomicState?.swVer ?: [:]
+					sData["camDevVer"] = t1 ?: ""
+					atomicState?.swVer = sData
+					if(sData?.camDevVer != "" && (versionStr2Int(sData?.camDevVer) >= minVersions()?.camera?.val)) {
 						//LogTrace("UpdateChildData >> Camera id: ${devId} | data: ${camData}")
 						LogTrace("UpdateChildData >> Camera id: ${devId} | oldCamData: ${oldCamData} cDataChecksum: ${cDataChecksum} force: $force  nforce: $nforce")
 						it.generateEvent(camData)
@@ -3798,7 +3819,7 @@ def updateChildData(force = false) {
 						if(atomicState?."lastUpdated${devId}Dt" == null) {
 							atomicState."lastUpdated${devId}Dt" = getDtNow()
 						} else {
-							LogAction("NEED SOFTWARE UPDATE: Camera ${devId} (v${atomicState?.camDevVer}) | REQUIRED: (v${minVersions()?.camera?.desc}) | Update the Device to latest", "error", true)
+							LogAction("NST CAMERA DEVICE UPDATE REQUIRED: Camera ${devId} (v${sData?.camDevVer}) | REQUIRED: (v${minVersions()?.camera?.desc}) | Update the Device code to the latest software in the IDE", "error", true)
 							appUpdateNotify()
 						}
 						it.generateEvent(camData)
@@ -3817,8 +3838,10 @@ def updateChildData(force = false) {
 				if(force || nforce || (oldPresData != pDataChecksum)) {
 					virtDevLblHandler(devId, it?.label, "pres", "pres", overRideNames)
 					def t1 = it?.currentState("devVer")?.value?.toString()
-					atomicState?.presDevVer = t1 ?: ""
-					if(atomicState?.presDevVer != "" && (versionStr2Int(atomicState?.presDevVer) >= minVersions()?.presence?.val)) {
+					def sData = atomicState?.swVer ?: [:]
+					sData["presDevVer"] = t1 ?: ""
+					atomicState?.swVer = sData
+					if(sData?.presDevVer != "" && (versionStr2Int(sData?.presDevVer) >= minVersions()?.presence?.val)) {
 						LogTrace("UpdateChildData >> Presence id: ${devId} | oldPresData: ${oldPresData} pDataChecksum: ${pDataChecksum} force: $force  nforce: $nforce")
 						it.generateEvent(pData)
 						if(atomicState?."lastUpdated${devId}Dt" != null) { state.remove("lastUpdated${devId}Dt" as String) }
@@ -3826,7 +3849,7 @@ def updateChildData(force = false) {
 						if(atomicState?."lastUpdated${devId}Dt" == null) {
 							atomicState."lastUpdated${devId}Dt" = getDtNow()
 						} else {
-							LogAction("NEED SOFTWARE UPDATE: Presence ${devId} (v${atomicState?.presDevVer}) | REQUIRED: (v${minVersions()?.presence?.desc}) | Update the Device to latest", "error", true)
+							LogAction("NST PRESENCE DEVICE UPDATE REQUIRED: Presence ${devId} (v${sData?.presDevVer}) | REQUIRED: (v${minVersions()?.presence?.desc}) | Update the Device code to the latest software in the IDE", "error", true)
 							appUpdateNotify()
 						}
 						it.generateEvent(pData)
@@ -3848,8 +3871,10 @@ def updateChildData(force = false) {
 				if(force || nforce || (oldWeatherData != wDataChecksum)) {
 					virtDevLblHandler(devId, it?.label, "weather", "weath", overRideNames)
 					def t1 = it?.currentState("devVer")?.value?.toString()
-					atomicState?.weatDevVer = t1 ?: ""
-					if(atomicState?.weatDevVer != "" && (versionStr2Int(atomicState?.weatDevVer) >= minVersions()?.weather?.val)) {
+					def sData = atomicState?.swVer ?: [:]
+					sData["weatDevVer"] = t1 ?: ""
+					atomicState?.swVer = sData
+					if(sData?.weatDevVer != "" && (versionStr2Int(sData?.weatDevVer) >= minVersions()?.weather?.val)) {
 						LogTrace("UpdateChildData >> Weather id: ${devId} oldWeatherData: ${oldWeatherData} wDataChecksum: ${wDataChecksum} force: $force  nforce: $nforce")
 						it.generateEvent(wData)
 						if(atomicState?."lastUpdated${devId}Dt" != null) { state.remove("lastUpdated${devId}Dt" as String) }
@@ -3857,7 +3882,7 @@ def updateChildData(force = false) {
 						if(atomicState?."lastUpdated${devId}Dt" == null) {
 							atomicState."lastUpdated${devId}Dt" = getDtNow()
 						} else {
-							LogAction("NEED SOFTWARE UPDATE: Weather ${devId} (v${atomicState?.weatDevVer}) | REQUIRED: (v${minVersions()?.weather?.desc}) | Update the Device to latest", "error", true)
+							LogAction("NST WEATHER DEVICE UPDATE REQUIRED: Weather ${devId} (v${sData?.weatDevVer}) | REQUIRED: (v${minVersions()?.weather?.desc}) | Update the Device code to the latest software in the IDE", "error", true)
 							appUpdateNotify()
 						}
 						it.generateEvent(wData)
@@ -3930,7 +3955,7 @@ def updateChildData(force = false) {
 					def autoSchedData = reqSchedInfoRprt(it, false) as Map
 					def tData = ["data":data, "mt":useMt, "debug":dbg, "tz":nestTz, "apiIssues":api, "safetyTemps":safetyTemps, "comfortHumidity":comfortHumidity,
 						"comfortDewpoint":comfortDewpoint, "pres":locPresence, "childWaitVal":getChildWaitVal().toInteger(), "htmlInfo":htmlInfo, "allowDbException":allowDbException,
-						"latestVer":latestvStatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curExtTemp":curWeatherTemp, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
+						"latestVer":latestvStatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curWeatherData":curWeatherData, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
 						"mobileClientType":mobClientType, "enRemDiagLogging":remDiag, "autoSchedData":autoSchedData, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg, "showGraphs":showGraphs, "devBannerData":devBannerData, "isBeta":isBeta]
 
 					def oldTstatData = atomicState?."oldvStatData${devId}"
@@ -3940,8 +3965,10 @@ def updateChildData(force = false) {
 					if(force || nforce || (oldTstatData != tDataChecksum)) {
 						physDevLblHandler("vthermostat", devId, it?.label, "vThermostats", tData?.data?.name.toString(), "vtstat", overRideNames)
 						def t1 = it?.currentState("devVer")?.value?.toString()
-						atomicState?.vtDevVer = t1 ?: ""
-						if(atomicState?.vtDevVer != "" && (versionStr2Int(atomicState?.vtDevVer) >= minVersions()?.thermostat?.val)) {
+						def sData = atomicState?.swVer ?: [:]
+						sData["vtDevVer"] = t1 ?: ""
+						atomicState?.swVer = sData
+						if(sData?.vtDevVer != "" && (versionStr2Int(sData?.vtDevVer) >= minVersions()?.thermostat?.val)) {
 							LogTrace("UpdateChildData >> vThermostat id: ${devId} | oldvStatData: ${oldvStatData} tDataChecksum: ${tDataChecksum} force: $force  nforce: $nforce")
 							it.generateEvent(tData)
 							if(atomicState?."lastUpdated${devId}Dt" != null) { state.remove("lastUpdated${devId}Dt" as String) }
@@ -3949,7 +3976,7 @@ def updateChildData(force = false) {
 							if(atomicState?."lastUpdated${devId}Dt" == null) {
 								atomicState."lastUpdated${devId}Dt" = getDtNow()
 							} else {
-								LogAction("NEED SOFTWARE UPDATE: Thermostat ${devId} (v${atomicState?.tDevVer}) | REQUIRED: (v${minVersions()?.thermostat?.desc}) | Update the Device to latest", "error", true)
+								LogAction("NST THERMOSTAT DEVICE UPDATE REQUIRED: Thermostat ${devId} (v${sData?.vtDevVer}) | REQUIRED: (v${minVersions()?.thermostat?.desc}) | Update the Device code to the latest software in the IDE", "error", true)
 							}
 							it.generateEvent(tData)
 						}
@@ -5080,7 +5107,7 @@ def appUpdateNotify(badAuto=false) {
 		def tstatUpd = atomicState?.thermostats ? isTstatUpdateAvail() : false
 		def weatherUpd = atomicState?.weatherDevice ? isWeatherUpdateAvail() : false
 		def camUpd = atomicState?.cameras ? isCamUpdateAvail() : false
-		def streamUpd = atomicState?.streamDevVer ? isStreamUpdateAvail() : false
+		def streamUpd = atomicState?.restStreamingOn ? isStreamUpdateAvail() : false
 		def blackListed = (atomicState?.appData && !appDevType() && atomicState?.clientBlacklisted) ? true : false
 		//log.debug "appUpd: $appUpd || protUpd: $protUpd || presUpd: $presUpd || tstatUpd: $tstatUpd || weatherUpd: $weatherUpd || camUpd: $camUpd || blackListed: $blackListed || badAuto: $badAuto"
 		if(appUpd || autoappUpd || protUpd || presUpd || tstatUpd || weatherUpd || camUpd || streamUpd || blackListed || badAuto) {
@@ -5584,38 +5611,38 @@ def isAppUpdateAvail() {
 }
 
 def isAutoAppUpdateAvail() {
-	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.autoapp?.ver, atomicState?.autoSaVer, "automation")) { return true }
-	if(atomicState?.autoSaVer != "" && (versionStr2Int(atomicState?.autoSaVer) > minVersions()?.automation?.val) && !getDevOpt()) { return true } // check if too high
+	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.autoapp?.ver, atomicState?.swVer?.autoSaVer, "automation")) { return true }
+	if(atomicState?.swVer?.autoSaVer != "" && (versionStr2Int(atomicState?.swVer?.autoSaVer) > minVersions()?.automation?.val) && !getDevOpt()) { return true } // check if too high
 	return false
 }
 
 def isPresUpdateAvail() {
-	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.presence?.ver, atomicState?.presDevVer, "presence")) { return true }
+	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.presence?.ver, atomicState?.swVer?.presDevVer, "presence")) { return true }
 	return false
 }
 
 def isProtUpdateAvail() {
-	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.protect?.ver, atomicState?.pDevVer, "protect")) { return true }
+	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.protect?.ver, atomicState?.swVer?.pDevVer, "protect")) { return true }
 	return false
 }
 
 def isCamUpdateAvail() {
-	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.camera?.ver, atomicState?.camDevVer, "camera")) { return true }
+	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.camera?.ver, atomicState?.swVer?.camDevVer, "camera")) { return true }
 	return false
 }
 
 def isTstatUpdateAvail() {
-	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.thermostat?.ver, atomicState?.tDevVer, "thermostat")) { return true }
+	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.thermostat?.ver, atomicState?.swVer?.tDevVer, "thermostat")) { return true }
 	return false
 }
 
 def isWeatherUpdateAvail() {
-	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.weather?.ver, atomicState?.weatDevVer, "weather")) { return true }
+	if(isCodeUpdateAvailable(atomicState?.appData?.updater?.versions?.weather?.ver, atomicState?.swVer?.weatDevVer, "weather")) { return true }
 	return false
 }
 
 def isStreamUpdateAvail() {
-	if(isCodeUpdateAvailable(atomicState?.appData?.eventStreaming?.minVersion, atomicState?.streamDevVer, "stream")) { return true }
+	if(isCodeUpdateAvailable(atomicState?.appData?.eventStreaming?.minVersion, atomicState?.swVer?.streamDevVer, "stream")) { return true }
 	return false
 }
 
@@ -5628,9 +5655,6 @@ def reqSchedInfoRprt(child, report=true) {
 	if (tstat) {
 		def str = ""
 		def tstatAutoApp = getChildApps()?.find {
-			//def aa = it.getAutomationType()
-			//def bb = it.getTstatAutoDevId()
-			//LogTrace("aa: ${aa} bb: ${bb} dni: ${tstat?.deviceNetworkId}")
 			(it.getAutomationType() == "schMot" && it?.getTstatAutoDevId() == tstat?.deviceNetworkId)
 		}
 		//LogTrace("tstatAutoApp: ${tstatAutoApp}")
@@ -5670,16 +5694,17 @@ def reqSchedInfoRprt(child, report=true) {
 					if(tempSrcStr && curZoneTemp) {
 						def zTmp = curZoneTemp.toDouble()
 						str += "The ${tempSrcStr} has an ambient temperature of "
-						if(zTmp > adj_temp(78.0) && zTmp <= adj_temp(85.0)) { str += "a scorching " }
-						else if(zTmp > adj_temp(76.0) && zTmp <= adj_temp(80.0)) { str += "a roasting " }
-						else if(zTmp > adj_temp(74.0) && zTmp <= adj_temp(76.0)) { str += "a balmy " }
+						if(zTmp > adj_temp(90.0)) { str += "a scorching " }
+						else if(zTmp > adj_temp(84.0) && zTmp <= adj_temp(90.0)) { str += "a uncomfortable " }
+						else if(zTmp > adj_temp(78.0) && zTmp <= adj_temp(84.0)) { str += "a balmy " }
+						else if(zTmp > adj_temp(74.0) && zTmp <= adj_temp(78.0)) { str += "a tolerable " }
 						else if(zTmp >= adj_temp(68.0) && zTmp <= adj_temp(74.0)) { str += "a comfortable " }
 						else if(zTmp >= adj_temp(64.0) && zTmp <= adj_temp(68.0)) { str += "a breezy " }
 						else if(zTmp >= adj_temp(60.0) && zTmp < adj_temp(64.0)) { str += "a chilly " }
 						else if(zTmp < adj_temp(60.0)) { str += "a freezing " }
 						str += "${curZoneTemp}${tempScaleStr}"
 						str += curHum ? " with a humidity of ${curHum}%. " : ". "
-						if(zTmp < adj_temp(60.0)) { str += " (Make sure to dress warmly.  " }
+						if(zTmp < adj_temp(60.0)) { str += " (Please remember to dress warmly).  " }
 					}
 				}
 
@@ -5693,8 +5718,9 @@ def reqSchedInfoRprt(child, report=true) {
 				str += " in ${curMode} mode"
 				str += curMode in ["auto", "heat", "cool", "eco"] ? " with " : ". "
 				str += canHeat && curMode in ["auto", "heat", "eco"] ? "the Heat set to ${reqSenHeatSetPoint}${tempScaleStr}" : ""
-				str += canHeat && canCool && curMode == "auto" ? " and " : ". "
-				str += canCool && curMode in ["auto", "cool", "eco"] ? "the cool set to ${reqSenCoolSetPoint}${tempScaleStr}.  " : ""
+				str += canHeat && canCool && curMode == "auto" ? " and " : " "
+				str += canCool && curMode in ["auto", "cool", "eco"] ? "the cool set to ${reqSenCoolSetPoint}${tempScaleStr}" : ""
+				str += "."
 
 				if (str != "") {
 					LogAction("reqSchedInfoRprt: Sending voice report for [$str] to (${tstat})", "info", false)
@@ -5732,7 +5758,7 @@ def getVoiceRprtCnt() {
 
 def schedVoiceDesc(num, data, motion) {
 	def str = ""
-	str += data?.lbl  ? " The automation schedule slot active is number ${num} and is labeled ${data?.lbl}. " : ""
+	str += data?.lbl  ? " The automation schedule slot ${num} labeled ${data?.lbl} is currently active. " : ""
 	str += (!motion && (data?.ctemp || data?.htemp)) ? "The schedules desired temps" : ""
 	str += (motion && (data?.mctemp || data?.mhtemp)) ? "The schedules desired motion triggered temps" : ""
 	str += ((motion && data?.mhtemp) || (!motion && data?.htemp)) ? " are set to a heat temp of ${!motion ? fixTempSetting(data?.htemp) : fixTempSetting(data?.mhtemp)} degrees" : ""
@@ -6268,6 +6294,7 @@ def addRemoveDevices(uninst = null) {
 		}
 		else if(ex instanceof physicalgraph.app.exception.UnknownDeviceTypeException) {
 			def msg = "Error: Device Handlers are Missing or Not Published.  Please verify all device handlers are present before continuing."
+			appUpdateNotify()
 			sendPush(msg)
 			LogAction("addRemoveDevices Exception | $msg", "warn", true)
 		}
@@ -6893,7 +6920,7 @@ def stateCleanup() {
 
 	def data = [ "exLogs", "pollValue", "pollStrValue", "pollWaitVal", "tempChgWaitVal", "cmdDelayVal", "testedDhInst", "missedPollNotif", "updateMsgNotif", "updChildOnNewOnly", "disAppIcons",
 		"showProtAlarmStateEvts", "showAwayAsAuto", "cmdQlist", "cmdQ", "recentSendCmd", "currentWeather", "altNames", "locstr", "custLocStr", "autoAppInstalled", "nestStructures", "lastSentExceptionDataDt",
-		"tDevVer", "pDevVer", "camDevVer", "presDevVer", "weatDevVer", "vtDevVer", "streamDevVer", "dashSetup", "dashboardUrl", "apiIssues", "stateSize", "haveRun", "lastStMode", "lastPresSenAway",
+		"swVersion", "dashSetup", "dashboardUrl", "apiIssues", "stateSize", "haveRun", "lastStMode", "lastPresSenAway",
 		"automationsActive", "temperatures", "powers", "energies", "use24Time", "useMilitaryTime", "advAppDebug", "appDebug", "awayModes", "homeModes", "childDebug", "updNotifyWaitVal",
 		"appApiIssuesWaitVal", "misPollNotifyWaitVal", "misPollNotifyMsgWaitVal", "devHealthMsgWaitVal", "nestLocAway", "heardFromRestDt", "autoSaVer", "lastAnalyticUpdDt", "lastHeardFromRestDt",
 		"remDiagApp", "remDiagClientId", "restorationInProgress", "diagManagAppStateFilters", "diagChildAppStateFilters", "lastFinishedPoll",
@@ -6903,6 +6930,14 @@ def stateCleanup() {
 	data.each { item ->
 		state.remove(item?.toString())
 	}
+
+	data = [ "tDevVer", "pDevVer", "camDevVer", "presDevVer", "weatDevVer", "vtDevVer", "streamDevVer" ]
+	def sData = atomicState?.swVer ?: [:]
+	data.each { item ->
+		state.remove(item?.toString())
+		sData["${item}"] = null
+	}
+	atomicState?.swVer = sData
 
 	if(!atomicState?.cmdQlist) {
 		data = [ "cmdQ2", "cmdQ3", "cmdQ4", "cmdQ5", "cmdQ6", "cmdQ7", "cmdQ8", "cmdQ9", "cmdQ10", "cmdQ11", "cmdQ12", "cmdQ13", "cmdQ14", "cmdQ15", "lastCmdSentDt2", "lastCmdSentDt3",
@@ -7504,14 +7539,14 @@ def createInstallDataJson(returnMap=false) {
 	try {
 		generateInstallId()
 		def autoDesc = getInstAutoTypesDesc()			// This is a hack to get installedAutomations data updated without waiting for user to hit done
-		def tsVer = !atomicState?.tDevVer ? "Not Installed" : atomicState?.tDevVer
-		def ptVer = !atomicState?.pDevVer ? "Not Installed" : atomicState?.pDevVer
-		def cdVer = !atomicState?.camDevVer ? "Not Installed" : atomicState?.camDevVer
-		def pdVer = !atomicState?.presDevVer ? "Not Installed" : atomicState?.presDevVer
-		def wdVer = !atomicState?.weatDevVer ? "Not Installed" : atomicState?.weatDevVer
-		def vtsVer = !atomicState?.vtDevVer ? "Not Installed" : atomicState?.vtDevVer
-		def autoVer = !atomicState?.autoSaVer ? "Not Installed" : atomicState?.autoSaVer
-		def restVer = !atomicState?.restServiceData?.version ? "Not Installed" : atomicState?.restServiceData?.version
+		def tsVer = !atomicState?.swVer?.tDevVer ? "Not Installed" : atomicState?.swVer?.tDevVer
+		def ptVer = !atomicState?.swVer?.pDevVer ? "Not Installed" : atomicState?.swVer?.pDevVer
+		def cdVer = !atomicState?.swVer?.camDevVer ? "Not Installed" : atomicState?.swVer?.camDevVer
+		def pdVer = !atomicState?.swVer?.presDevVer ? "Not Installed" : atomicState?.swVer?.presDevVer
+		def wdVer = !atomicState?.swVer?.weatDevVer ? "Not Installed" : atomicState?.swVer?.weatDevVer
+		def vtsVer = !atomicState?.swVer?.vtDevVer ? "Not Installed" : atomicState?.swVer?.vtDevVer
+		def autoVer = !atomicState?.swVer?.autoSaVer ? "Not Installed" : atomicState?.swVer?.autoSaVer
+		def restVer = !atomicState?.swVer?.streamDevVer ? "Not Installed" : atomicState?.swVer?.streamDevVer
 
 		def versions = [
 			"apps":["manager":appVersion()?.toString(), "automation":autoVer, "service":restVer],

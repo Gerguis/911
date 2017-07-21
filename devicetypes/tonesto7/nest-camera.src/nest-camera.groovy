@@ -13,7 +13,7 @@ import groovy.time.TimeCategory
 
 preferences { }
 
-def devVer() { return "5.1.3" }
+def devVer() { return "5.1.4" }
 
 metadata {
 	definition (name: "${textDevName()}", author: "Anthony S.", namespace: "tonesto7") {
@@ -857,20 +857,25 @@ private getImageWidth() {
 	return 1280
 }
 
-private takePicture(url) {
+private takePicture(String url) {
 	try {
-		if(state?.isOnline && url) {
-			def imageBytes
-			def params = [
-				uri: url,
-				requestContentType: "application/x-www-form-urlencoded"
-			]
-			httpGet(params) { resp ->
-				imageBytes = resp?.data
-				if (imageBytes) {
-					storeImage(getPictureName(), imageBytes)
-					return true
+		if(state?.isOnline) {
+			if(url?.startsWith("https://")) {
+				ByteArrayInputStream imageBytes
+				def params = [
+					uri: url,
+					requestContentType: "application/x-www-form-urlencoded"
+				]
+				httpGet(params) { resp ->
+					imageBytes = resp?.data
+					if (imageBytes) {
+						storeImage(getPictureName(), imageBytes)
+						return true
+					}
 				}
+			} else {
+				exceptionDataHandler("takePicture Error: non-standard url received ($url)")
+				return
 			}
 		}
 	} catch (ex) {
