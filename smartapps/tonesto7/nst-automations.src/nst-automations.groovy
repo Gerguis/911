@@ -27,8 +27,8 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.5" }
-def appVerDate() { "7-16-2017" }
+def appVersion() { "5.1.6" }
+def appVerDate() { "7-20-2017" }
 
 preferences {
 	//startPage
@@ -240,7 +240,7 @@ def fixState() {
 */
 	} else {
 		if(!atomicState?.resetAllData && parent?.settings?.resetAllData) { // automation cleanup called from update() -> initAutoApp()
-			def data = getState()?.findAll { !(it?.key in [ "automationType", "disableAutomation", "oldremSenTstat", "leakWatRestoreMode", "conWatRestoreMode", "extTmpRestoreMode", "extTmpTstatOffRequested", "conWatTstatOffRequested", "leakWatTstatOffRequested", "resetAllData", "extTmpLastDesiredTemp", "restoreId", "restoredFromBackup", "restoreCompleted", "automationTypeFlag", "newAutomationFile", "installData", "remDiagLogDataStore" ]) }
+			def data = getState()?.findAll { !(it?.key in [ "automationType", "disableAutomation", "lastScheduleList", "oldremSenTstat", "leakWatRestoreMode", "conWatRestoreMode", "extTmpRestoreMode", "extTmpTstatOffRequested", "conWatTstatOffRequested", "leakWatTstatOffRequested", "resetAllData", "extTmpLastDesiredTemp", "restoreId", "restoredFromBackup", "restoreCompleted", "automationTypeFlag", "newAutomationFile", "installData", "remDiagLogDataStore" ]) }
 //  "watchDogAlarmActive", "extTmpAlarmActive", "conWatAlarmActive", "leakWatAlarmActive",
 			data.each { item ->
 				state.remove(item?.key.toString())
@@ -5726,8 +5726,7 @@ def schMotSchedulePage(params) {
 def getScheduleList() {
 	def cnt = parent ? parent?.state?.appData?.schedules?.count : null
 	def maxCnt = cnt ? cnt.toInteger() : 4
-	if(maxCnt < 4) { maxCnt = 4 }
-	if(maxCnt > 8) { maxCnt = 8 }
+	def maxCnt = Math.min( Math.max(remaining,4), 8)
 	if(maxCnt < atomicState?.lastScheduleList?.size()) {
 		maxCnt = atomicState?.lastScheduleList?.size()
 		LogAction("A schedule size issue has occurred. The configured schedule size is smaller than the previous configuration restoring previous schedule size.", "warn", true)
