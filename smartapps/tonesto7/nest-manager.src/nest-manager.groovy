@@ -36,15 +36,15 @@ definition(
 }
 
 def appVersion() { "5.1.9" }
-def appVerDate() { "7-20-2017" }
+def appVerDate() { "7-21-2017" }
 def minVersions() {
 	return [
 		"automation":["val":516, "desc":"5.1.6"],
-		"thermostat":["val":513, "desc":"5.1.3"],
+		"thermostat":["val":514, "desc":"5.1.4"],
 		"protect":["val":514, "desc":"5.1.4"],
 		"presence":["val":512, "desc":"5.1.2"],
 		"weather":["val":513, "desc":"5.1.3"],
-		"camera":["val":513, "desc":"5.1.2"],
+		"camera":["val":513, "desc":"5.1.3"],
 		"stream":["val":101, "desc":"1.0.1"]
 	]
 }
@@ -3698,11 +3698,12 @@ def updateChildData(force = false) {
 		def isBeta = betaMarker()
 		def camTakeSnapOnEvt = settings?.camTakeSnapOnEvt == false ? false : true
 
-		def curWeatherTemp
+		def curWeatherData = [:]
 		if(atomicState?.thermostats && getWeatherDeviceInst()) {
 			def cur = getWData()
 			if(cur) {
-				curWeatherTemp = getTemperatureScale() == "C" ? (cur?.current_observation?.temp_c ? Math.round(cur?.current_observation?.temp_c.toDouble()) : null) : (cur?.current_observation?.temp_f ? Math.round(cur?.current_observation?.temp_f).toInteger() : null)
+				curWeatherData["temp"] = getTemperatureScale() == "C" ? (cur?.current_observation?.temp_c ? Math.round(cur?.current_observation?.temp_c.toDouble()) : null) : (cur?.current_observation?.temp_f ? Math.round(cur?.current_observation?.temp_f).toInteger() : null)
+				curWeatherData["hum"] = cur?.current_observation?.relative_humidity ?: 0
 			}
 		}
 		def showGraphs = settings?.tstatShowHistoryGraph == false ? false : true
@@ -3731,7 +3732,7 @@ def updateChildData(force = false) {
 				def autoSchedData = reqSchedInfoRprt(it, false) as Map
 				def tData = ["data":atomicState?.deviceData?.thermostats[devId], "mt":useMt, "debug":dbg, "tz":nestTz, "apiIssues":api, "safetyTemps":safetyTemps, "comfortHumidity":comfortHumidity,
 						"comfortDewpoint":comfortDewpoint, "pres":locPresence, "childWaitVal":getChildWaitVal().toInteger(), "htmlInfo":htmlInfo, "allowDbException":allowDbException,
-						"latestVer":latestTstatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curExtTemp":curWeatherTemp, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
+						"latestVer":latestTstatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curWeatherData":curWeatherData, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
 						"mobileClientType":mobClientType, "enRemDiagLogging":remDiag, "autoSchedData":autoSchedData, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg, "showGraphs":showGraphs,
 						"devBannerData":devBannerData, "restStreaming":streamingActive, "isBeta":isBeta]
 				def oldTstatData = atomicState?."oldTstatData${devId}"
@@ -3954,7 +3955,7 @@ def updateChildData(force = false) {
 					def autoSchedData = reqSchedInfoRprt(it, false) as Map
 					def tData = ["data":data, "mt":useMt, "debug":dbg, "tz":nestTz, "apiIssues":api, "safetyTemps":safetyTemps, "comfortHumidity":comfortHumidity,
 						"comfortDewpoint":comfortDewpoint, "pres":locPresence, "childWaitVal":getChildWaitVal().toInteger(), "htmlInfo":htmlInfo, "allowDbException":allowDbException,
-						"latestVer":latestvStatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curExtTemp":curWeatherTemp, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
+						"latestVer":latestvStatVer()?.ver?.toString(), "vReportPrefs":vRprtPrefs, "clientBl":clientBl, "curWeatherData":curWeatherData, "logPrefix":logNamePrefix, "hcTimeout":hcTstatTimeout,
 						"mobileClientType":mobClientType, "enRemDiagLogging":remDiag, "autoSchedData":autoSchedData, "healthNotify":nPrefs?.dev?.devHealth?.healthMsg, "showGraphs":showGraphs, "devBannerData":devBannerData, "isBeta":isBeta]
 
 					def oldTstatData = atomicState?."oldvStatData${devId}"
@@ -5654,9 +5655,6 @@ def reqSchedInfoRprt(child, report=true) {
 	if (tstat) {
 		def str = ""
 		def tstatAutoApp = getChildApps()?.find {
-			//def aa = it.getAutomationType()
-			//def bb = it.getTstatAutoDevId()
-			//LogTrace("aa: ${aa} bb: ${bb} dni: ${tstat?.deviceNetworkId}")
 			(it.getAutomationType() == "schMot" && it?.getTstatAutoDevId() == tstat?.deviceNetworkId)
 		}
 		//LogTrace("tstatAutoApp: ${tstatAutoApp}")
@@ -5696,16 +5694,17 @@ def reqSchedInfoRprt(child, report=true) {
 					if(tempSrcStr && curZoneTemp) {
 						def zTmp = curZoneTemp.toDouble()
 						str += "The ${tempSrcStr} has an ambient temperature of "
-						if(zTmp > adj_temp(78.0) && zTmp <= adj_temp(85.0)) { str += "a scorching " }
-						else if(zTmp > adj_temp(76.0) && zTmp <= adj_temp(80.0)) { str += "a roasting " }
-						else if(zTmp > adj_temp(74.0) && zTmp <= adj_temp(76.0)) { str += "a balmy " }
+						if(zTmp > adj_temp(90.0)) { str += "a scorching " }
+						else if(zTmp > adj_temp(84.0) && zTmp <= adj_temp(90.0)) { str += "a uncomfortable " }
+						else if(zTmp > adj_temp(78.0) && zTmp <= adj_temp(84.0)) { str += "a balmy " }
+						else if(zTmp > adj_temp(74.0) && zTmp <= adj_temp(78.0)) { str += "a tolerable " }
 						else if(zTmp >= adj_temp(68.0) && zTmp <= adj_temp(74.0)) { str += "a comfortable " }
 						else if(zTmp >= adj_temp(64.0) && zTmp <= adj_temp(68.0)) { str += "a breezy " }
 						else if(zTmp >= adj_temp(60.0) && zTmp < adj_temp(64.0)) { str += "a chilly " }
 						else if(zTmp < adj_temp(60.0)) { str += "a freezing " }
 						str += "${curZoneTemp}${tempScaleStr}"
 						str += curHum ? " with a humidity of ${curHum}%. " : ". "
-						if(zTmp < adj_temp(60.0)) { str += " (Make sure to dress warmly.  " }
+						if(zTmp < adj_temp(60.0)) { str += " (Please remember to dress warmly).  " }
 					}
 				}
 
@@ -5719,8 +5718,9 @@ def reqSchedInfoRprt(child, report=true) {
 				str += " in ${curMode} mode"
 				str += curMode in ["auto", "heat", "cool", "eco"] ? " with " : ". "
 				str += canHeat && curMode in ["auto", "heat", "eco"] ? "the Heat set to ${reqSenHeatSetPoint}${tempScaleStr}" : ""
-				str += canHeat && canCool && curMode == "auto" ? " and " : ". "
-				str += canCool && curMode in ["auto", "cool", "eco"] ? "the cool set to ${reqSenCoolSetPoint}${tempScaleStr}.  " : ""
+				str += canHeat && canCool && curMode == "auto" ? " and " : " "
+				str += canCool && curMode in ["auto", "cool", "eco"] ? "the cool set to ${reqSenCoolSetPoint}${tempScaleStr}" : ""
+				str += "."
 
 				if (str != "") {
 					LogAction("reqSchedInfoRprt: Sending voice report for [$str] to (${tstat})", "info", false)
@@ -5758,7 +5758,7 @@ def getVoiceRprtCnt() {
 
 def schedVoiceDesc(num, data, motion) {
 	def str = ""
-	str += data?.lbl  ? " The automation schedule slot active is number ${num} and is labeled ${data?.lbl}. " : ""
+	str += data?.lbl  ? " The automation schedule slot ${num} labeled ${data?.lbl} is currently active. " : ""
 	str += (!motion && (data?.ctemp || data?.htemp)) ? "The schedules desired temps" : ""
 	str += (motion && (data?.mctemp || data?.mhtemp)) ? "The schedules desired motion triggered temps" : ""
 	str += ((motion && data?.mhtemp) || (!motion && data?.htemp)) ? " are set to a heat temp of ${!motion ? fixTempSetting(data?.htemp) : fixTempSetting(data?.mhtemp)} degrees" : ""
