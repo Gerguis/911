@@ -2351,13 +2351,23 @@ def fanCtrlCheck() {
 				atomicState.haveRunFan = false
 			}
 */
-			if( (hvacMode in ["cool"] && schMotFanRuleType in ["Cool_Circ"]) ||
-				(hvacMode in ["heat"] && schMotFanRuleType in ["Heat_Circ"]) ||
-				(hvacMode in ["auto"] && schMotFanRuleType in ["Heat_Cool_Circ"]) ||
-				(hvacMode in ["off", "eco"] && schMotFanRuleType in ["Circ"]) ) {
-				def sTemp = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint)
-				circulateFanControl(sTemp?.type?.toString(), curTstatTemp, sTemp?.req?.toDouble(), threshold)
+			def sTemp = getReqSetpointTemp(curTstatTemp, reqHeatSetPoint, reqCoolSetPoint)
+			def resultMode = sTemp?.type?.toString()
+			def can_Circ = false
+			if( 
+				!(hvacMode in ["off"]) && (
+					( hvacMode in ["cool"] && schMotFanRuleType in ["Cool_Circ"]) ||
+					( resultMode in ["cool"] && schMotFanRuleType in ["Cool_Circ", "Heat_Cool_Circ"]) ||
+					( hvacMode in ["heat"] && schMotFanRuleType in ["Heat_Circ"]) ||
+					( resultMode in ["heat"] && schMotFanRuleType in ["Heat_Circ", "Heat_Cool_Circ"]) ||
+					( hvacMode in ["auto"] && schMotFanRuleType in ["Heat_Cool_Circ"]) ||
+					( hvacMode in ["eco"] && schMotFanRuleType in ["Circ"])
+				)
+			) {
+
+				can_Circ = true
 			}
+			circulateFanControl(resultMode, curTstatTemp, sTemp?.req?.toDouble(), threshold, can_Circ)
 		}
 
 		if(isFanCtrlSwConfigured()) {
@@ -2380,6 +2390,9 @@ def getReqSetpointTemp(curTemp, reqHeatSetPoint, reqCoolSetPoint) {
 	def operState = tstat ? tstat?.currentThermostatOperatingState.toString() : null
 	def opType = hvacMode.toString()
 
+	if(hvacMode == "off") {
+		return ["req":null, "type":"off"]
+	}
 	if((hvacMode == "cool") || (operState == "cooling")) {
 		opType = "cool"
 	} else if((hvacMode == "heat") || (operState == "heating")) {
@@ -2529,7 +2542,7 @@ def getLastFanCtrlFanOffDtSec() { return !atomicState?.lastfanCtrlFanOffDt ? 100
 
 
 // CONTROLS THE THERMOSTAT FAN
-def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Double threshold) {
+def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Double threshold, can_Circ) {
 	def tstat = schMotTstat
 	def tstatsMir = schMotTstatMir
 
@@ -2538,7 +2551,7 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 	def curTstatFanMode = tstat?.currentThermostatFanMode.toString()
 	def fanOn = (curTstatFanMode == "on" || curTstatFanMode == "circulate") ? true : false
 
-	def returnToAuto = false
+	def returnToAuto = can_Circ ? false : true
 	if(hvacMode in ["off", "eco"]) { returnToAuto = true }
 
 	// Track approximate fan on / off times
@@ -2568,7 +2581,7 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 	}
 	def fanTempOk = getCirculateFanTempOk(curSenTemp, reqSetpointTemp, threshold, fanOn, operType)
 
-	if(hvacMode in ["heat", "auto", "cool"] && fanTempOk && !returnToAuto) {
+	if(hvacMode in ["heat", "auto", "cool", "eco"] && fanTempOk && !returnToAuto) {
 		if(!fanOn) {
 			def waitTimeVal = fanCtrlTimeBetweenRuns?.toInteger() ?: 1200
 			def timeSinceLastOffOk = (getLastFanCtrlFanOffDtSec() > waitTimeVal) ? true : false
@@ -5726,7 +5739,7 @@ def schMotSchedulePage(params) {
 def getScheduleList() {
 	def cnt = parent ? parent?.state?.appData?.schedules?.count : null
 	def maxCnt = cnt ? cnt.toInteger() : 4
-	def maxCnt = Math.min( Math.max(remaining,4), 8)
+	maxCnt = Math.min( Math.max(remaining,4), 8)
 	if(maxCnt < atomicState?.lastScheduleList?.size()) {
 		maxCnt = atomicState?.lastScheduleList?.size()
 		LogAction("A schedule size issue has occurred. The configured schedule size is smaller than the previous configuration restoring previous schedule size.", "warn", true)
