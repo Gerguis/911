@@ -13,7 +13,7 @@ import groovy.time.TimeCategory
 
 preferences { }
 
-def devVer() { return "5.1.3" }
+def devVer() { return "5.1.4" }
 
 metadata {
 	definition (name: "${textDevName()}", author: "Anthony S.", namespace: "tonesto7") {

@@ -1,4 +1,4 @@
-<p style="font-size: 15px;"><strong>V5.1.3 (July 21st, 2017):</strong><p>
+<p style="font-size: 15px;"><strong>V5.1.4 (July 21st, 2017):</strong><p>
 <hr noshade>
 <ul style="font-size: 12px; padding: 0 10px 0 10px; Margin: 0;">
     <li><strong>FIXED:</strong> The bug discovered with Storing the Images to ST is not entirely fixed but is now handled correctly and reporting the error.</li>
