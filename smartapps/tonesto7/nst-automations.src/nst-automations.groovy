@@ -27,8 +27,8 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.6" }
-def appVerDate() { "7-21-2017" }
+def appVersion() { "5.1.7" }
+def appVerDate() { "7-26-2017" }
 
 preferences {
 	//startPage
@@ -2081,9 +2081,19 @@ def fixTempSetting(Double temp) {
 	return newtemp
 }
 
+def setRemoteSenTstat(val) {
+	LogAction("setRemoteSenTstat $val", "info", true)
+	atomicState.remSenTstat = val
+}
+
 def getRemSenCoolSetTemp(curMode=null, useCurrent=true) {
 	def coolTemp
-	if(curMode != "eco") {
+	def theMode = curMode != null ? curMode : null
+	if(theMode == null) {
+		def tstat = schMotTstat
+		theMode = tstat ? tstat?.currentnestThermostatMode.toString() : null
+	}
+	if(theMode != "eco") {
 		if(getLastOverrideCoolSec() < (3600 * 4)) {
 			if(atomicState?.coolOverride != null) {
 				coolTemp = fixTempSetting(atomicState?.coolOverride.toDouble())
@@ -2119,7 +2129,12 @@ def getRemSenCoolSetTemp(curMode=null, useCurrent=true) {
 
 def getRemSenHeatSetTemp(curMode=null, useCurrent=true) {
 	def heatTemp
-	if(curMode != "eco") {
+	def theMode = curMode != null ? curMode : null
+	if(theMode == null) {
+		def tstat = schMotTstat
+		theMode = tstat ? tstat?.currentnestThermostatMode.toString() : null
+	}
+	if(theMode != "eco") {
 		if(getLastOverrideHeatSec() < (3600 * 4)) {
 			if(atomicState?.heatOverride != null) {
 				heatTemp = fixTempSetting(atomicState.heatOverride.toDouble())
@@ -3476,7 +3491,7 @@ def getConWatOnDelayVal() { return !settings?.conWatOnDelay ? 300 : (settings?.c
 def getConWatRestoreDelayBetweenVal() { return !settings?.conWatRestoreDelayBetween ? 600 : settings?.conWatRestoreDelayBetween.toInteger() }
 
 def conWatCheck(cTimeOut = false) {
-	//LogTrace("conWatCheck")
+	LogTrace("conWatCheck $cTimeOut")
 	//
 	// There should be monitoring of actual temps for min and max warnings given on/off automations
 	//
@@ -3498,7 +3513,7 @@ def conWatCheck(cTimeOut = false) {
 			def timeOut = atomicState."${pName}timeOutOn" ?: false
 			def curMode = conWatTstat ? conWatTstat?.currentnestThermostatMode.toString() : null
 			def modeEco = (curMode in ["eco"]) ? true : false
-			def curNestPres = getTstatPresence(conWatTstat)
+			//def curNestPres = getTstatPresence(conWatTstat)
 			def modeOff = (curMode in ["off", "eco"]) ? true : false
 			def openCtDesc = getOpenContacts(conWatContacts) ? " '${getOpenContacts(conWatContacts)?.join(", ")}' " : " a selected contact "
 			def allowNotif = settings?."${pName}NotificationsOn" ? true : false
@@ -3509,7 +3524,7 @@ def conWatCheck(cTimeOut = false) {
 			//log.debug "curMode: $curMode | modeOff: $modeOff | conWatRestoreOnClose: $conWatRestoreOnClose | lastMode: $lastMode"
 			//log.debug "conWatTstatOffRequested: ${atomicState?.conWatTstatOffRequested} | getConWatCloseDtSec(): ${getConWatCloseDtSec()}"
 
-			if(!modeOff) { atomicState."${pName}timeOutOn" = false; timeOut = false }
+			if(!modeEco) { atomicState."${pName}timeOutOn" = false; timeOut = false }
 
 // if we requested off; and someone switched us on or nMode took over...
 			if( atomicState?.conWatTstatOffRequested && (!modeEco || (modeEco && parent.setNModeActive(null))) ) {  // so reset timer and states
@@ -3527,7 +3542,7 @@ def conWatCheck(cTimeOut = false) {
 
 			def safetyOk = getSafetyTempsOk(conWatTstat)
 			def schedOk = conWatScheduleOk()
-			def okToRestore = (modeOff && atomicState?.conWatTstatOffRequested) ? true : false
+			def okToRestore = (modeEco && atomicState?.conWatTstatOffRequested) ? true : false
 			def contactsOk = getConWatContactsOk()
 
 			if(contactsOk || timeOut || !safetyOk || !schedOk) {
@@ -3550,6 +3565,7 @@ def conWatCheck(cTimeOut = false) {
 								atomicState?.conWatOpenDt = getDtNow()
 								atomicState."${pName}timeOutOn" = false
 								unschedTimeoutRestore(pName)
+								modeEco = false
 								modeOff = false
 
 								if(conWatTstatMir) {
@@ -3680,7 +3696,7 @@ def conWatContactEvt(evt) {
 	else {
 		def conWatTstat = settings?.schMotTstat
 		def curMode = conWatTstat?.currentnestThermostatMode.toString()
-		def isModeOff = (curMode in ["off", "eco"]) ? true : false
+		def isModeOff = (curMode in ["eco"]) ? true : false
 		def conOpen = (evt?.value == "open") ? true : false
 		def canSched = false
 		def timeVal
@@ -3690,8 +3706,8 @@ def conWatContactEvt(evt) {
 			canSched = true
 		}
 		else if(!conOpen && getConWatContactsOk()) {
+			atomicState.conWatCloseDt = getDtNow()
 			if(isModeOff) {
-				atomicState.conWatCloseDt = getDtNow()
 				timeVal = ["valNum":getConWatOnDelayVal(), "valLabel":getEnumValue(longTimeSecEnum(), getConWatOnDelayVal())]
 				canSched = true
 			}
@@ -3757,7 +3773,7 @@ def leakWatCheck() {
 			//atomicState?.lastEvalDt = getDtNow()
 
 			def curMode = leakWatTstat?.currentThermostatMode.toString()
-			def curNestPres = getTstatPresence(leakWatTstat)
+			//def curNestPres = getTstatPresence(leakWatTstat)
 			def modeOff = (curMode == "off") ? true : false
 			def wetCtDesc = getWetWaterSensors(leakWatSensors) ? " '${getWetWaterSensors(leakWatSensors)?.join(", ")}' " : " a selected leak sensor "
 			def allowNotif = settings?."${pName}NotificationsOn" ? true : false
@@ -4442,7 +4458,7 @@ private checkRestriction(cnt) {
 		def apprestrict = atomicState?."sched${cnt}restrictions"
 
 		if (apprestrict?.m && apprestrict?.m.size() && !(location.mode in apprestrict?.m)) {
-			restriction = "a mode mismatch"
+			restriction = "a SmartThings MODE mismatch"
 		} else if (apprestrict?.w && apprestrict?.w.size() && !(getDayOfWeekName() in apprestrict?.w)) {
 			restriction = "a day of week mismatch"
 		} else if (apprestrict?.tf && apprestrict?.tt && !(checkTimeCondition(apprestrict?.tf, apprestrict?.tfc, apprestrict?.tfo, apprestrict?.tt, apprestrict?.ttc, apprestrict?.tto))) {
