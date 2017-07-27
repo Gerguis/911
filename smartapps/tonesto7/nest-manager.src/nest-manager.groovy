@@ -37,7 +37,7 @@ definition(
 }
 
 def appVersion() { "5.2.0" }
-def appVerDate() { "7-26-2017" }
+def appVerDate() { "7-27-2017" }
 def minVersions() {
 	return [
 		"automation":["val":517, "desc":"5.1.7"],
@@ -2210,6 +2210,8 @@ def createSavedNest() {
 				bbb.b_thermostats_as = settings?.thermostats && dData && atomicState?.thermostats ? t1 : [:]
 				bbb.b_thermostats_setting = settings?.thermostats ?: []
 
+				dData = atomicState?.deviceData
+				t0 = [:]
 				t0 = dData?.protects?.findAll { it.key.toString() in settings?.protects }
 				LogAction("createSavedNest ${settings?.protects} ${t0?.size()}", "info", true)
 				t1 = [:]
@@ -2224,6 +2226,8 @@ def createSavedNest() {
 				bbb.c_protects_as = settings?.protects && dData && atomicState?.protects ? t1 : [:]
 				bbb.c_protects_settings = settings?.protects ?: []
 
+				dData = atomicState?.deviceData
+				t0 = [:]
 				t0 = dData?.cameras?.findAll { it.key.toString() in settings?.cameras }
 				LogAction("createSavedNest ${settings?.cameras} ${t0?.size()}", "info", false)
 				t1 = [:]
@@ -4480,7 +4484,6 @@ void physDevLblHandler(devType, devId, devLbl, devStateName, apiName, abrevStr, 
 	if(settings?."${abrevStr}_${deflblval}_lbl") { settingUpdate("${abrevStr}_${deflblval}_lbl", "") } // clean up old stuff
 }
 
-					//virtDevLblHandler(devId, it?.label, "pres", "pres", overRideNames)
 void virtDevLblHandler(devId, devLbl, devMethAbrev, abrevStr, ovrRideNames) {
 	def curlbl = devLbl?.toString()
 	def newlbl = "getNest${devMethAbrev.capitalize()}Label"()
