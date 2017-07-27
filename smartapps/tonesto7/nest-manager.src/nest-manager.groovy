@@ -2196,8 +2196,8 @@ def createSavedNest() {
 				def dData = atomicState?.deviceData
 				def t0 = [:]
 
-				t0 = dData?.thermostats?.findAll { it.key in settings?.thermostats }
-				LogAction("createSavedNest ${settings?.thermostats} ${t0?.size()}", "info", false)
+				t0 = dData?.thermostats?.findAll { it.key.toString() in settings?.thermostats }
+				LogAction("createSavedNest ${settings?.thermostats} ${t0?.size()}", "info", true)
 				def t1 = [:]
 				t0.each { devItem ->
 					LogAction("createSavedNest found ${devItem?.value?.name}", "info", false)
@@ -2210,8 +2210,8 @@ def createSavedNest() {
 				bbb.b_thermostats_as = settings?.thermostats && dData && atomicState?.thermostats ? t1 : [:]
 				bbb.b_thermostats_setting = settings?.thermostats ?: []
 
-				t0 = dData?.protects?.findAll { it.key in settings?.protects }
-				LogAction("createSavedNest ${settings?.protects} ${t0?.size()}", "info", false)
+				t0 = dData?.protects?.findAll { it.key.toString() in settings?.protects }
+				LogAction("createSavedNest ${settings?.protects} ${t0?.size()}", "info", true)
 				t1 = [:]
 				t0.each { devItem ->
 					LogAction("createSavedNest found ${devItem?.value?.name}", "info", false)
@@ -2224,7 +2224,7 @@ def createSavedNest() {
 				bbb.c_protects_as = settings?.protects && dData && atomicState?.protects ? t1 : [:]
 				bbb.c_protects_settings = settings?.protects ?: []
 
-				t0 = dData?.cameras?.findAll { it.key in settings?.cameras }
+				t0 = dData?.cameras?.findAll { it.key.toString() in settings?.cameras }
 				LogAction("createSavedNest ${settings?.cameras} ${t0?.size()}", "info", false)
 				t1 = [:]
 				t0.each { devItem ->
@@ -2303,7 +2303,7 @@ def checkRemapping() {
 					myRC = atomicState.ReallyChanged
 				}
 				if(myRC || getDevOpt()) {
-					mySettingUpdate("structures", newStructures_settings, "enum")
+					mySettingUpdate("structures", newStructures_settings)
 					if(myRC) { atomicState.structures = settings?.structures }
 					def newStrucName = newStructures_settings ? atomicState?.structData[newStructures_settings]?.name : null
 					LogAction("checkRemapping: newStructures ${newStructures_settings} | name: ${newStrucName} | to settings & as structures: ${settings?.structures}", "info", true)
@@ -2527,40 +2527,40 @@ def checkRemapping() {
 					}
 
 					if(myRC) {
-						if(settings?.thermostats) { atomicState.thermostats = settings?.thermostats ? statState(settings?.thermostats) : null }
-						if(settings?.protects) { atomicState.protects = settings?.protects ? coState(settings?.protects) : null }
-						if(settings?.cameras) { atomicState.cameras = settings?.cameras ? camState(settings?.cameras) : null }
-						atomicState.presDevice = settings?.presDevice ?: null
-						atomicState.weatherDevice = settings?.weatherDevice ?: null
+						fixDevAS()
 					}
 
 					// fix presence
-					LogAction("oldPresId $oldPresId", "debug", false)
-					if(settings?.presDevice && oldPresId) {
-						def dev = getChildDevice(oldPresId)
-						def newId = getNestPresId()
-						def ndev = getChildDevice(newId)
-						if(dev && newId && ndev) { LogAction("all good presence", "info", true) }
-						else if(!dev) { LogAction("where is the pres device?", "warn", true) }
-						else if(dev && newId && !ndev) {
-							LogAction("need to fix things presence", "warn", true)
-							if(myRC) { dev.deviceNetworkId = newId }
-						}
-						else { LogAction("${dev?.label} $newId ${ndev?.label}", "error", true) }
+					LogAction("oldPresId $oldPresId", "debug", true)
+					if(settings?.presDevice) {
+						if(oldPresId) {
+							def dev = getChildDevice(oldPresId)
+							def newId = getNestPresId()
+							def ndev = getChildDevice(newId)
+							LogAction("checkRemapping ${oldPresId} | DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} ", "info", false)
+							if(dev && newId && ndev) { LogAction("all good presence", "info", true) }
+							else if(!dev) { LogAction("where is the pres device?", "warn", true) }
+							else if(dev && newId && !ndev) {
+								LogAction("need to fix things presence", "warn", true)
+								if(myRC) { dev.deviceNetworkId = newId }
+							} else { LogAction("${dev?.label} $newId ${ndev?.label}", "error", true) }
+						} else { LogAction("no oldPresId", "error", true) }
 					}
 					// fix weather
-					LogAction("oldWeatId $oldWeatId", "debug", false)
-					if(settings?.weatherDevice && oldWeatId) {
-						def dev = getChildDevice(oldWeatId)
-						def newId = getNestWeatherId()
-						def ndev = getChildDevice(newId)
-						if(dev && newId && ndev) { LogAction("all good weather", "info", true) }
-						else if(!dev) { LogAction("where is the weather device?", "warn", true) }
-						else if(dev && newId && !ndev) {
-							LogAction("need to fix things weather", "warn", true)
-							if(myRC) { dev.deviceNetworkId = newId }
-						}
-						else { LogAction("${dev?.label} $newId ${ndev?.label}", "error", true) }
+					LogAction("oldWeatId $oldWeatId", "debug", true)
+					if(settings?.weatherDevice) {
+						if(oldWeatId) {
+							def dev = getChildDevice(oldWeatId)
+							def newId = getNestWeatherId()
+							def ndev = getChildDevice(newId)
+							LogAction("checkRemapping ${oldWeatId} | DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} ", "info", false)
+							if(dev && newId && ndev) { LogAction("all good weather", "info", true) }
+							else if(!dev) { LogAction("where is the weather device?", "warn", true) }
+							else if(dev && newId && !ndev) {
+								LogAction("need to fix things weather", "warn", true)
+								if(myRC) { dev.deviceNetworkId = newId }
+							} else { LogAction("${dev?.label} $newId ${ndev?.label}", "error", true) }
+						} else { LogAction("no oldWeatId", "error", true) }
 					}
 
 				} else { LogAction("no changes or no data a:${settings?.structures} b: ${newStructures_settings}", "info", true) }
@@ -7309,9 +7309,10 @@ void finishFixState() {
 
 			atomicState.structures = settings?.structures ?: null
 
+			def structs = getNestStructures()
+
 /* initManagerApp will do this
 			if(settings?.structures && atomicState?.structures && !atomicState.structName) {
-				def structs = getNestStructures()
 				if(structs && structs?."${atomicState?.structures}") {
 					atomicState.structName = "${structs[atomicState?.structures]}"
 				}
@@ -7322,11 +7323,8 @@ void finishFixState() {
 */
 
 // TODO ERS
-			if(settings?.thermostats && !atomicState?.thermostats) { atomicState.thermostats = settings?.thermostats ? statState(settings?.thermostats) : null }
-			if(settings?.protects && !atomicState?.protects) { atomicState.protects = settings?.protects ? coState(settings?.protects) : null }
-			if(settings?.cameras && !atomicState?.cameras) { atomicState.cameras = settings?.cameras ? camState(settings?.cameras) : null }
-			atomicState.presDevice = settings?.presDevice ?: null
-			atomicState.weatherDevice = settings?.weatherDevice ?: null
+			fixDevAS()
+
 			if(settings?.thermostats || settings?.protects || settings?.cameras || settings?.presDevice || settings?.weatherDevice) {
 				atomicState.isInstalled = true
 				atomicState.newSetupComplete = true
@@ -7347,6 +7345,14 @@ void finishFixState() {
 	} else {
 		LogAction("finishFixState called as CHILD", "error", true)
 	}
+}
+
+def fixDevAS() {
+	if(settings?.thermostats && !atomicState?.thermostats) { atomicState.thermostats = settings?.thermostats ? statState(settings?.thermostats) : null }
+	if(settings?.protects && !atomicState?.protects) { atomicState.protects = settings?.protects ? coState(settings?.protects) : null }
+	if(settings?.cameras && !atomicState?.cameras) { atomicState.cameras = settings?.cameras ? camState(settings?.cameras) : null }
+	atomicState.presDevice = settings?.presDevice ?: null
+	atomicState.weatherDevice = settings?.weatherDevice ?: null
 }
 
 void settingUpdate(name, value, type=null) {

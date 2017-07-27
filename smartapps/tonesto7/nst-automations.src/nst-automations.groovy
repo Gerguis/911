@@ -888,7 +888,7 @@ def subscribeToEvents() {
 	//Nest Mode Subscriptions
 	if(autoType == "nMode") {
 		if(isNestModesConfigured()) {
-			if(!settings?.nModePresSensor && !settings?.nModeSwitch && (settings?.nModeHomeModes || settings?.nModeAwayModes)) { subscribe(location, "mode", nModeGenericEvt, [filterEvents: false]) }
+			if(!settings?.nModePresSensor && !settings?.nModeSwitch && (settings?.nModeHomeModes || settings?.nModeAwayModes)) { subscribe(location, "mode", nModeGenericEvt) }
 			if(settings?.nModePresSensor && !settings?.nModeSwitch) { subscribe(nModePresSensor, "presence", nModeGenericEvt) }
 			if(settings?.nModeSwitch && !settings?.nModePresSensor) { subscribe(nModeSwitch, "switch", nModeGenericEvt) }
 
@@ -950,7 +950,7 @@ def subscribeToEvents() {
 				if(isHumCtrlConfigured()) {
 					subscribe(humCtrlSwitches, "switch", automationGenericEvt)
 					subscribe(humCtrlHumidity, "humidity", automationGenericEvt)
-					if(!settings?.humCtrlUseWeather && settings?.humCtrlTempSensor) { subscribe(humCtrlTempSensor, "temperature", automationGenericEvt, [filterEvents: false]) }
+					if(!settings?.humCtrlUseWeather && settings?.humCtrlTempSensor) { subscribe(humCtrlTempSensor, "temperature", automationGenericEvt) }
 					if(settings?.humCtrlUseWeather) {
 						atomicState.NeedwUpd = true
 						if(parent?.getWeatherDeviceInst()) {
@@ -997,7 +997,7 @@ def subscribeToEvents() {
 							subscribe(sw, "switch", automationGenericEvt)
 						}
 					}
-					if(!settings?.extTmpUseWeather && settings?.extTmpTempSensor) { subscribe(extTmpTempSensor, "temperature", extTmpGenericEvt, [filterEvents: false]) }
+					if(!settings?.extTmpUseWeather && settings?.extTmpTempSensor) { subscribe(extTmpTempSensor, "temperature", extTmpGenericEvt) }
 					atomicState.extTmpChgWhileOnDt = getDtNow()
 					atomicState.extTmpChgWhileOffDt = getDtNow()
 				}
@@ -1132,7 +1132,7 @@ def subscribeToEvents() {
 			subscribe(schMotTstat, "safetyTempExceeded", automationSafetyTempEvt)
 			subscribe(location, "sunset", automationGenericEvt)
 			subscribe(location, "sunrise", automationGenericEvt)
-			subscribe(location, "mode", automationGenericEvt, [filterEvents: false])
+			subscribe(location, "mode", automationGenericEvt)
 		}
 	}
 	//watchDog Subscriptions
@@ -1152,7 +1152,7 @@ def subscribeToEvents() {
 					subscribe(d1, "nestThermostatMode", automationGenericEvt)
 					subscribe(d1, "thermostatMode", automationGenericEvt)
 					subscribe(d1, "presence", automationGenericEvt)
-					subscribe(location, "mode", automationGenericEvt, [filterEvents: false])
+					subscribe(location, "mode", automationGenericEvt)
 				}
 				return d1
 			}
