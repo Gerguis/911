@@ -1245,9 +1245,9 @@ def scheduleAutomationEval(schedtime = defaultAutomationTime()) {
 		def t0 = atomicState?.evalSchedLastTime
 		if(t0 == null) { t0 = 0 }
 		def timeLeftPrev = t0 - getLastAutomationSchedSec()
-		if(timeLeftPrev > (theTime + 15) && !waitOverride) {
+		if(timeLeftPrev > (theTime + 5) || waitOverride) {
 			runIn(theTime, "runAutomationEval", [overwrite: true])
-			LogAction("scheduleAutomationEval: shortened time ${timeLeftPrev} to ${theTime}", "debug", true)
+			LogAction("scheduleAutomationEval: changed time ${timeLeftPrev} to ${theTime}", "debug", true)
 		} else { LogAction("scheduleAutomationEval: skipped time ${theTime} because ${timeLeftPrev}", "debug", true) }
 	}
 }

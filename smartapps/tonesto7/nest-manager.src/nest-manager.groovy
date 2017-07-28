@@ -2212,7 +2212,7 @@ def createSavedNest() {
 
 				dData = atomicState?.deviceData
 				t0 = [:]
-				t0 = dData?.protects?.findAll { it.key.toString() in settings?.protects }
+				t0 = dData?.smoke_co_alarms?.findAll { it.key.toString() in settings?.protects }
 				LogAction("createSavedNest ${settings?.protects} ${t0?.size()}", "info", true)
 				t1 = [:]
 				t0.each { devItem ->
