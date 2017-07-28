@@ -2272,12 +2272,12 @@ def checkRemapping() {
 	atomicState.ReallyChanged = false
 	def myRC = atomicState.ReallyChanged
 	if(atomicState?.isInstalled && settings?.structures) {
+		def structs = getNestStructures()
 		def sData = atomicState?.structData
 		def dData = atomicState?.deviceData
 		def mData = atomicState?.metaData
 		def savedNest = atomicState?.savedNestSettings
 		if(sData && dData && mData && savedNest) {
-			def structs = getNestStructures()
 			if(structs && !getDevOpt() ) {
 				LogAction("checkRemapping: nothing to do ${structs}", "info", true)
 				return
@@ -6965,9 +6965,9 @@ def callback() {
 				atomicState.needStrPoll = true
 				atomicState?.needDevPoll = true
 				atomicState?.needMetaPoll = true
-				str = getApiData("str")
-				dev = getApiData("dev")
-				meta = getApiData("meta")
+				def str = getApiData("str")
+				def dev = getApiData("dev")
+				def meta = getApiData("meta")
 // ERSERS check remapping
 				checkRemapping()
 
