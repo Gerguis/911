@@ -2229,7 +2229,7 @@ def createSavedNest() {
 				dData = atomicState?.deviceData
 				t0 = [:]
 				t0 = dData?.cameras?.findAll { it.key.toString() in settings?.cameras }
-				LogAction("createSavedNest ${settings?.cameras} ${t0?.size()}", "info", false)
+				LogAction("createSavedNest ${settings?.cameras} ${t0?.size()}", "info", true)
 				t1 = [:]
 				t0.each { devItem ->
 					LogAction("createSavedNest found ${devItem?.value?.name}", "info", false)
@@ -2442,12 +2442,12 @@ def checkRemapping() {
 						} else { LogAction("thermostat sizes don't match ${t0} ${t1} ${t3}", "warn", true) }
 					}
 
-					savedNest?.b_protects_as.each { dni ->
+					savedNest?.c_protects_as.each { dni ->
 						def t0 = dni.key
 						def dev = getChildDevice(t0)
 						if(dev) {
 							def gotIt = false
-							dData?.protects?.each{ devItem ->
+							dData?.smoke_co_alarms?.each { devItem ->
 								def t21 = devItem.key
 								def t22 = devItem.value
 								def newDevStructId = [t22?.structure_id].join('.')
@@ -2477,7 +2477,7 @@ def checkRemapping() {
 					}
 					if(settings?.protects) {
 						def t0 = settings?.protects?.size()
-						def t1 = savedNest?.b_protects_as?.size()
+						def t1 = savedNest?.c_protects_as?.size()
 						def t2 = newProtects_settings?.size()
 						if(t0 == t1 && t1 == t2) {
 							mySettingUpdate("protects", newProtects_settings, "enum")
@@ -2486,12 +2486,12 @@ def checkRemapping() {
 						} else { LogAction("protect sizes don't match ${t0} ${t1} ${t3}", "warn", true) }
 					}
 
-					savedNest?.b_cameras_as.each { dni ->
+					savedNest?.d_cameras_as.each { dni ->
 						def t0 = dni.key
 						def dev = getChildDevice(t0)
 						if(dev) {
 							def gotIt = false
-							dData?.cameras?.each{ devItem ->
+							dData?.cameras?.each { devItem ->
 								def t21 = devItem.key
 								def t22 = devItem.value
 								def newDevStructId = [t22?.structure_id].join('.')
@@ -2521,7 +2521,7 @@ def checkRemapping() {
 					}
 					if(settings?.cameras) {
 						def t0 = settings?.cameras?.size()
-						def t1 = savedNest?.b_cameras_as?.size()
+						def t1 = savedNest?.d_cameras_as?.size()
 						def t2 = newCameras_settings?.size()
 						if(t0 == t1 && t1 == t2) {
 							mySettingUpdate("cameras", newCameras_settings, "enum")
