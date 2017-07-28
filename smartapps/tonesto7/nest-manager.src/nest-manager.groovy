@@ -4881,7 +4881,7 @@ def sendNestApiCmd(cmdTypeId, cmdType, cmdObj, cmdObjVal, childId) {
 		LogAction("sendNestApiCmd no auth token", "warn", true)
 		return false
 	}
-	
+
 	try {
 		if(cmdTypeId) {
 			def qnum = getQueueNumber(cmdTypeId, childId)
@@ -8174,7 +8174,7 @@ def renderDiagHome() {
 		def sPerc = getStateSizePerc() ?: 0
 		def instData = atomicState?.installData
 		def cmdDesc = lastCmdDesc().toString().replaceAll("\n", "<br>")
-		def newHtml = getWebData([uri: "https://raw.githubusercontent.com/${gitPath()}/Documents/html/diagHome.html", contentType: "text/plain; charset=UTF-8"], "newHtml").toString()
+		//def newHtml = getWebData([uri: "https://raw.githubusercontent.com/${gitPath()}/Documents/html/diagHome.html", contentType: "text/plain; charset=UTF-8"], "newHtml").toString()
 		//log.debug "newHtml: $newHtml"
 		def html = """
 		<head>
@@ -8332,7 +8332,7 @@ def renderDiagHome() {
 	"""
 /* """ */
 
-		render contentType: "text/html", data: newHtml
+		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
 }
 
