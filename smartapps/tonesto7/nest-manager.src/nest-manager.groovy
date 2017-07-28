@@ -4877,6 +4877,11 @@ def setTargetTempHigh(child, unit, temp, virtual=false) {
 
 def sendNestApiCmd(cmdTypeId, cmdType, cmdObj, cmdObjVal, childId) {
 	LogAction("sendNestApiCmd $cmdTypeId, $cmdType, $cmdObj, $cmdObjVal, $childId", "info", false)
+	if(!atomicState?.authToken) {
+		LogAction("sendNestApiCmd no auth token", "warn", true)
+		return false
+	}
+	
 	try {
 		if(cmdTypeId) {
 			def qnum = getQueueNumber(cmdTypeId, childId)
