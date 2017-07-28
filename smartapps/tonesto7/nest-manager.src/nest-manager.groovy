@@ -8174,6 +8174,8 @@ def renderDiagHome() {
 		def sPerc = getStateSizePerc() ?: 0
 		def instData = atomicState?.installData
 		def cmdDesc = lastCmdDesc().toString().replaceAll("\n", "<br>")
+		def newHtml = getWebData([uri: "https://raw.githubusercontent.com/${gitPath()}/Documents/html/diagHome.html", contentType: "text/plain; charset=UTF-8"], "newHtml").toString()
+		//log.debug "newHtml: $newHtml"
 		def html = """
 		<head>
 			<meta charset="utf-8">
@@ -8329,7 +8331,8 @@ def renderDiagHome() {
 		</body>
 	"""
 /* """ */
-		render contentType: "text/html", data: html
+
+		render contentType: "text/html", data: newHtml
 	} catch (ex) { log.error "renderDiagUrl Exception:", ex }
 }
 
@@ -8416,7 +8419,7 @@ def mapDescValHtmlCls(value) {
 	if(!value) { return "" }
 }
 
-def preSymObj() { [1:"•", 2:"│", 3:"├", 4:"└", 5:"    ", 6:"┌"] }
+def preSymObj() { [1:"•", 2:"│", 3:"├", 4:"└", 5:"    ", 6:"┌", 7:"├──", 8:"└── "] }
 
 def getMapDescStr(data) {
 	def str = ""
