@@ -2272,12 +2272,15 @@ def checkRemapping() {
 	atomicState.ReallyChanged = false
 	def myRC = atomicState.ReallyChanged
 	if(atomicState?.isInstalled && settings?.structures) {
-		def structs = getNestStructures()
+		def aastr = getApiData("str")
+		def aadev = getApiData("dev")
+		//def aameta = getApiData("meta")
 		def sData = atomicState?.structData
 		def dData = atomicState?.deviceData
-		def mData = atomicState?.metaData
+		//def mData = atomicState?.metaData
 		def savedNest = atomicState?.savedNestSettings
-		if(sData && dData && mData && savedNest) {
+		if(sData && dData /* && mData */ && savedNest) {
+			def structs = getNestStructures()
 			if(structs && !getDevOpt() ) {
 				LogAction("checkRemapping: nothing to do ${structs}", "info", true)
 				return
@@ -2302,11 +2305,15 @@ def checkRemapping() {
 					}
 				}
 
-				if(settings?.structures && newStructures_settings && (settings.structures != newStructures_settings) ) {
-					atomicState.ReallyChanged = true
-					myRC = atomicState.ReallyChanged
-				}
-				if(myRC || getDevOpt()) {
+				if(settings?.structures && newStructures_settings) {
+					if(settings.structures != newStructures_settings) {
+						atomicState.ReallyChanged = true
+						myRC = atomicState.ReallyChanged
+					} else {
+						LogAction("checkRemapping: NOTHING REALLY CHANGED DEVELOPER  MODE", "warn", true)
+					}
+				} else { LogAction("checkRemapping: no new structure found", "warn", true) }
+				if(myRC || (newStructures_setting && getDevOpt())) {
 					mySettingUpdate("structures", newStructures_settings)
 					if(myRC) { atomicState.structures = settings?.structures }
 					def newStrucName = newStructures_settings ? atomicState?.structData[newStructures_settings]?.name : null
@@ -2572,15 +2579,6 @@ def checkRemapping() {
 				atomicState?.pollBlocked = false
 				atomicState?.pollBlockedReason = ""
 				return
-
-/*
-
-def setDeviceLabel(devId, labelStr) {
-	def dev = getChildDevice(devId)
-	if(labelStr) { dev.label = labelStr.toString() }
-}
-				ca?.device.deviceNetworkId = 
-*/
 			}
 		} else { LogAction("don't have our data", "warn", true) }
 	} else { LogAction("not installed, no structure", "warn", true) }
@@ -2926,7 +2924,7 @@ def setPollingState() {
 		unschedule("poll")
 		atomicState.streamPolling = false
 	} else {
-		if(!atomicState?.pollingOn) {
+		if(!atomicState?.pollingOn && atomicState?.authToken) {
 			//LogAction("Polling is ACTIVE", "info", true)
 			atomicState.pollingOn = true
 			def pollTime = !settings?.pollValue ? 180 : settings?.pollValue.toInteger()
@@ -2974,10 +2972,12 @@ private gcd(input = []) {
 }
 
 def onAppTouch(event) {
+/*
 	if(createSavedNest()) {
 		checkRemapping()
 	}
 	return
+*/
 	stateCleanup()
 	fixStuckMigration()
 	poll(true)
@@ -4578,7 +4578,7 @@ def ok2PollStruct() {
 
 
 def isPollAllowed() {
-	return (atomicState?.pollingOn &&
+	return (atomicState?.pollingOn && atomicState?.authToken &&
 		!atomicState?.clientBlacklisted &&
 		(atomicState?.thermostats || atomicState?.protects || atomicState?.weatherDevice || atomicState?.cameras)) ? true : false
 }
@@ -6965,14 +6965,10 @@ def callback() {
 				atomicState.needStrPoll = true
 				atomicState?.needDevPoll = true
 				atomicState?.needMetaPoll = true
-				def str = getApiData("str")
-				def dev = getApiData("dev")
-				def meta = getApiData("meta")
-// ERSERS check remapping
-				checkRemapping()
+				runIn(20, "runRemap", [overwrite: true])
 
-				sendInstallSlackNotif(false)
 				success()
+
 			} else {
 				LogAction("Failure Generating Nest AuthToken", "error", true)
 				fail()
@@ -6983,6 +6979,13 @@ def callback() {
 		log.error "Oauth Callback Exception:", ex
 		sendExceptionData(ex, "callback")
 	}
+}
+
+// ERSERS check remapping
+def runRemap() {
+	checkRemapping()
+	sendInstallSlackNotif(false)
+	initManagerApp()
 }
 
 def revokeNestToken() {
@@ -7015,10 +7018,12 @@ def revokeNestToken() {
 				return false
 			}
 		}
-	}
+	} else { revokeCleanState() }
 }
 
 def revokeCleanState() {
+	unschedule()
+	unsubscribe()
 	atomicState.authToken = null
 	atomicState.authTokenCreatedDt = null
 	atomicState.authTokenExpires = getDtNow()
@@ -7028,6 +7033,7 @@ def revokeCleanState() {
 	atomicState?.lastStrucDataUpd = null
 	atomicState?.lastDevDataUpd = null
 	atomicState?.lastMetaDataUpd = null
+	atomicState?.pollingOn = false
 	atomicState?.pollBlocked = false
 	atomicState?.pollBlockedReason = "No Auth Token"
 }
