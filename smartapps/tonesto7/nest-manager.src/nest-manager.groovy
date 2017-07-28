@@ -2334,7 +2334,7 @@ def checkRemapping() {
 									def t6 = [t22?.device_id].join('.')
 									def t7 = [ "${t6}":dni.value ]
 									def newDevId
-									t7.collect { ba -> 
+									t7.collect { ba ->
 										newDevId = getNestTstatDni(ba)
 									}
 									newThermostats_settings << newDevId
@@ -2463,7 +2463,7 @@ def checkRemapping() {
 									def t6 = [t22?.device_id].join('.')
 									def t7 = [ "${t6}":dni.value ]
 									def newDevId
-									t7.collect { ba -> 
+									t7.collect { ba ->
 										newDevId = getNestProtDni(ba)
 									}
 									newProtects_settings << newDevId
@@ -2507,7 +2507,7 @@ def checkRemapping() {
 									def t6 = [t22?.device_id].join('.')
 									def t7 = [ "${t6}":dni.value ]
 									def newDevId
-									t7.collect { ba -> 
+									t7.collect { ba ->
 										newDevId = getNestCamDni(ba)
 									}
 									newCameras_settings << newDevId
@@ -7093,9 +7093,11 @@ def connectionStatus(message, redirectUrl = null) {
 				}
 				.container {
 						width: 90%;
+						height: 100%
 						padding: 4%;
 						/*background: #eee;*/
 						text-align: center;
+						top: 0;
 				}
 				img {
 						vertical-align: middle;
@@ -7111,13 +7113,17 @@ def connectionStatus(message, redirectUrl = null) {
 				span {
 						font-family: 'Swiss 721 W01 Light';
 				}
+				.logo {
+					width: 30%;
+					max-width: 130px;
+				}
 		</style>
 		</head>
 		<body>
 			<div class="container">
-				<img src="https://s3.amazonaws.com/smartapp-icons/Partner/support/st-logo%402x.png" alt="SmartThings logo" />
+				<img class="logo" src="https://s3.amazonaws.com/smartapp-icons/Partner/support/st-logo%402x.png" alt="SmartThings logo" />
 				<img src="https://s3.amazonaws.com/smartapp-icons/Partner/support/connected-device-icn%402x.png" alt="connected device icon" />
-				<img src="${getAppImg("nst_manager_icon%402x.png")}" alt="nest icon" width="215" height="215"/>
+				<img class="logo" src="${getAppImg("nst_manager_icon%402x.png")}" alt="nest icon"/>
 				${message}
 			</div>
 		</body>
