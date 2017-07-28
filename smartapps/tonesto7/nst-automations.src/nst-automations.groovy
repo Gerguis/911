@@ -1228,7 +1228,7 @@ def scheduleAutomationEval(schedtime = defaultAutomationTime()) {
 				theTime = (schWaitVal - t0)
 				waitOverride = true
 			}
-			//theTime = Math.min( Math.max(theTime,defaultAutomationTime()), 60)
+			//theTime = Math.min( Math.max(theTime,defaultAutomationTime()), 120)
 			break
 		case "watchDog":
 			if(theTime == defaultAutomationTime()) {
@@ -5201,7 +5201,7 @@ def schMotModePage() {
 			}
 
 			section("Settings:") {
-				input "schMotWaitVal", "enum", title: "Minimum Wait Time between Evaluations?", required: false, defaultValue: 60, metadata: [values:[30:"30 Seconds", 60:"60 Seconds"]], image: getAppImg("delay_time_icon.png")
+				input "schMotWaitVal", "enum", title: "Minimum Wait Time between Evaluations?", required: false, defaultValue: 60, metadata: [values:[30:"30 Seconds", 60:"60 Seconds",90:"90 Seconds",120:"120 Seconds"]], image: getAppImg("delay_time_icon.png")
 			}
 		}
 		if(atomicState?.showHelp) {
