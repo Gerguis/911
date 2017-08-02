@@ -7506,7 +7506,11 @@ def getChildAppVer(appName)	{ return appName?.appVersion() ? "v${appName?.appVer
 def getUse24Time()		{ return useMilitaryTime ? true : false }
 
 //Returns app State Info
-def getStateSize()	{ return state?.toString().length() }
+def getStateSize() {
+	def resultJson = new groovy.json.JsonOutput().toJson(state)
+	return resultJson?.toString().length()
+	//return state?.toString().length()
+}
 def getStateSizePerc()  { return (int) ((stateSize / 100000)*100).toDouble().round(0) } //
 
 def debugStatus() { return !appDebug ? "Off" : "On" }
