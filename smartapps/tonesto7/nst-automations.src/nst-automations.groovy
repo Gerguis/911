@@ -28,7 +28,7 @@ definition(
 }
 
 def appVersion() { "5.1.7" }
-def appVerDate() { "7-27-2017" }
+def appVerDate() { "8-2-2017" }
 
 preferences {
 	//startPage
@@ -1246,8 +1246,10 @@ def scheduleAutomationEval(schedtime = defaultAutomationTime()) {
 		if(t0 == null) { t0 = 0 }
 		def timeLeftPrev = t0 - getLastAutomationSchedSec()
 		if(timeLeftPrev > (theTime + 5) || waitOverride) {
-			runIn(theTime, "runAutomationEval", [overwrite: true])
-			LogAction("scheduleAutomationEval: changed time ${timeLeftPrev} to ${theTime}", "debug", true)
+			if(Math.abs(timeLeftPrev - theTime) > 3) {
+				runIn(theTime, "runAutomationEval", [overwrite: true])
+				LogAction("scheduleAutomationEval: changed time ${timeLeftPrev} to ${theTime}", "debug", true)
+			}
 		} else { LogAction("scheduleAutomationEval: skipped time ${theTime} because ${timeLeftPrev}", "debug", true) }
 	}
 }

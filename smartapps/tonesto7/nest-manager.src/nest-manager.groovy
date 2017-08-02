@@ -37,7 +37,7 @@ definition(
 }
 
 def appVersion() { "5.2.0" }
-def appVerDate() { "7-27-2017" }
+def appVerDate() { "8-2-2017" }
 def minVersions() {
 	return [
 		"automation":["val":517, "desc":"5.1.7"],
