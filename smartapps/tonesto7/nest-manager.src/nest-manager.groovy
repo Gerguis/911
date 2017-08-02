@@ -8019,10 +8019,10 @@ def getDeviceMetricCnts() {
 				//log.debug "mData: ${mData}"
 				mData?.each { md ->
 					def objKey = md?.key.toString()
-					def objVal = md?.value.toInteger()
+					def objVal = md?.value?.toInteger() ?: 0
 					if(data?.containsKey("${objKey}")) {
 						def newVal = 0
-						def prevVal = data?.get("${objKey}")
+						def prevVal = data?.get("${objKey}") ?: 0
 						newVal = prevVal?.toInteger()+objVal
 						//log.debug "$objKey Data: [prevVal: $prevVal | objVal: $objVal | newVal: $newVal]"
 						data << ["${objKey}":newVal]
@@ -9202,7 +9202,7 @@ def processFirebaseSlackResponse(resp, data) {
 		else {
 			LogAction("processFirebaseSlackResponse: 'Unexpected' Response: ${resp?.status}", "warn", true)
 		}
-		if(resp.hasError()) {
+		if(resp?.hasError()) {
 			LogAction("processFirebaseSlackResponse: errorData: $resp.errorData  errorMessage: $resp.errorMessage", "error", true)
 		}
 	} catch(ex) {
