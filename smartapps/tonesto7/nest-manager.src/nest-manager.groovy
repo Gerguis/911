@@ -2315,7 +2315,7 @@ def checkRemapping() {
 				} else { LogAction("checkRemapping: no new structure found", "warn", true) }
 				if(myRC || (newStructures_setting && getDevOpt())) {
 					mySettingUpdate("structures", newStructures_settings)
-					if(myRC) { atomicState.structures = settings?.structures }
+					if(myRC) { atomicState.structures = newStructures_settings }
 					def newStrucName = newStructures_settings ? atomicState?.structData[newStructures_settings]?.name : null
 					LogAction("checkRemapping: newStructures ${newStructures_settings} | name: ${newStrucName} | to settings & as structures: ${settings?.structures}", "info", true)
 
@@ -2438,6 +2438,7 @@ def checkRemapping() {
 							LogAction("checkRemapping: newThermostats_settings: ${newThermostats_settings} settings.thermostats: ${settings?.thermostats}", "info", true)
 
 							//LogAction("as.thermostats: ${atomicState?.thermostats}", "warn", true)
+							atomicState.thermostats = null
 							def t4 = newvThermostats ? newvThermostats?.size() : 0
 							def t5 = atomicState?.vThermostats ?  atomicState?.vThermostats.size() : 0
 							if(t4 || t5) {
@@ -2446,7 +2447,7 @@ def checkRemapping() {
 									if(myRC) { atomicState.vThermostats = newvThermostats }
 								} else { LogAction("vthermostat sizes don't match ${t4} ${t5}", "warn", true) }
 							}
-						} else { LogAction("thermostat sizes don't match ${t0} ${t1} ${t3}", "warn", true) }
+						} else { LogAction("thermostat sizes don't match ${t0} ${t1} ${t2}", "warn", true) }
 					}
 
 					savedNest?.c_protects_as.each { dni ->
@@ -2490,7 +2491,8 @@ def checkRemapping() {
 							mySettingUpdate("protects", newProtects_settings, "enum")
 							LogAction("checkRemapping: newProtects: ${newProtects_settings} settings.protects: ${settings?.protects}", "info", true)
 							//LogAction("as.protects: ${atomicState?.protects}", "warn", true)
-						} else { LogAction("protect sizes don't match ${t0} ${t1} ${t3}", "warn", true) }
+							atomicState.protects = null
+						} else { LogAction("protect sizes don't match ${t0} ${t1} ${t2}", "warn", true) }
 					}
 
 					savedNest?.d_cameras_as.each { dni ->
@@ -2534,7 +2536,8 @@ def checkRemapping() {
 							mySettingUpdate("cameras", newCameras_settings, "enum")
 							LogAction("checkRemapping: newCameras_settings: ${newCameras_settings} settings.cameras: ${settings?.cameras}", "info", true)
 							//LogAction("as.cameras: ${atomicState?.cameras}", "warn", true)
-						} else { LogAction("camera sizes don't match ${t0} ${t1} ${t3}", "warn", true) }
+							atomicState.cameras = null
+						} else { LogAction("camera sizes don't match ${t0} ${t1} ${t2}", "warn", true) }
 					}
 
 					if(myRC) {
@@ -2542,13 +2545,13 @@ def checkRemapping() {
 					}
 
 					// fix presence
-					LogAction("oldPresId $oldPresId", "debug", true)
+					LogAction("oldPresId $oldPresId", "debug", false)
 					if(settings?.presDevice) {
 						if(oldPresId) {
 							def dev = getChildDevice(oldPresId)
 							def newId = getNestPresId()
 							def ndev = getChildDevice(newId)
-							LogAction("checkRemapping ${oldPresId} | DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} ", "info", false)
+							LogAction("checkRemapping ${oldPresId} | DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} ", "info", true)
 							if(dev && newId && ndev) { LogAction("all good presence", "info", true) }
 							else if(!dev) { LogAction("where is the pres device?", "warn", true) }
 							else if(dev && newId && !ndev) {
@@ -2558,13 +2561,13 @@ def checkRemapping() {
 						} else { LogAction("no oldPresId", "error", true) }
 					}
 					// fix weather
-					LogAction("oldWeatId $oldWeatId", "debug", true)
+					LogAction("oldWeatId $oldWeatId", "debug", false)
 					if(settings?.weatherDevice) {
 						if(oldWeatId) {
 							def dev = getChildDevice(oldWeatId)
 							def newId = getNestWeatherId()
 							def ndev = getChildDevice(newId)
-							LogAction("checkRemapping ${oldWeatId} | DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} ", "info", false)
+							LogAction("checkRemapping ${oldWeatId} | DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} ", "info", true)
 							if(dev && newId && ndev) { LogAction("all good weather", "info", true) }
 							else if(!dev) { LogAction("where is the weather device?", "warn", true) }
 							else if(dev && newId && !ndev) {
