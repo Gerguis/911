@@ -37,7 +37,7 @@ definition(
 }
 
 def appVersion() { "5.2.0" }
-def appVerDate() { "8-4-2017" }
+def appVerDate() { "8-6-2017" }
 def minVersions() {
 	return [
 		"automation":["val":517, "desc":"5.1.7"],
@@ -2427,6 +2427,8 @@ def checkRemapping() {
 												}
 
 											} else { rstr += ", DID NOT FIND VIRTUAL DEVICE" }
+											def t11 = "oldvStatDatav${t0}"
+											state.remove(t11.toString())
 										} else { rstr += ", vstat formality check failed" }
 									} else { rstr += ", no vstat" }
 
@@ -2436,6 +2438,8 @@ def checkRemapping() {
 							}
 							if(!gotIt) { LogAction("${str}: NOT matched dev oldId: ${t0}", "warn", true) }
 						} else { LogAction("${str}: NOT found dev oldId: ${t0}", "error", true) }
+						def t10 = "oldTstatData${t0}"
+						state.remove(t10.toString())
 					}
 					astr = ""
 					if(settings?.thermostats) {
@@ -2493,6 +2497,8 @@ def checkRemapping() {
 							}
 							if(!gotIt) { LogAction("${str}: NOT matched dev oldId: ${t0}", "warn", true) }
 						} else { LogAction("${str}: NOT found dev oldId: ${t0}", "error", true) }
+						def t10 = "oldProtData${t0}"
+						state.remove(t10.toString())
 					}
 					if(settings?.protects) {
 						def t0 = settings?.protects?.size()
@@ -2540,6 +2546,8 @@ def checkRemapping() {
 							}
 							if(!gotIt) { LogAction("${str}: NOT matched dev oldId: ${t0}", "warn", true) }
 						} else { LogAction("${str}: NOT found dev oldId: ${t0}", "error", true) }
+						def t10 = "oldCamData${t0}"
+						state.remove(t10.toString())
 					}
 					if(settings?.cameras) {
 						def t0 = settings?.cameras?.size()
@@ -2568,6 +2576,8 @@ def checkRemapping() {
 							def newId = getNestPresId()
 							def ndev = getChildDevice(newId)
 							astr += "| DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} "
+							def t10 = "oldPresData${dev?.deviceNetworkId}"
+							state.remove(t10.toString())
 							if(dev && newId && ndev) { astr += " all good presence" }
 							else if(!dev) { astr += "where is the pres device?" }
 							else if(dev && newId && !ndev) {
@@ -2585,6 +2595,8 @@ def checkRemapping() {
 							def newId = getNestWeatherId()
 							def ndev = getChildDevice(newId)
 							astr += "| DEV ${dev?.deviceNetworkId} | NEWID $newId |  NDEV: ${ndev?.deviceNetworkId} "
+							def t10 = "oldWeatherData${dev?.deviceNetworkId}"
+							state.remove(t10.toString())
 							if(dev && newId && ndev) { astr += " all good weather " }
 							else if(!dev) { LogAction("where is the weather device?", "warn", true) }
 							else if(dev && newId && !ndev) {
