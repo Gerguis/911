@@ -5638,7 +5638,7 @@ def sendMsg(msgType, msg, showEvt=true, people = null, sms = null, push = null, 
 						sent = true
 					}
 				} else {
-					LogAction("ContactBook is NOT Enabled on your SmartThings Account", "warn", true)
+					LogAction("ContactBook is NOT Enabled on your SmartThings Account", "warn", false)
 					if(push || settings?.usePush) {
 						sentstr = "Push Message"
 						sendPush(newMsg)	// sends push and notification feed
