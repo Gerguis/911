@@ -3647,19 +3647,29 @@ def getApiData(type = null) {
 	def result = false
 	if(!type || !atomicState?.authToken) { return result }
 
+	switch(type) {
+		case "str":
+		case "dev":
+		case "meta":
+			break
+		default:
+			return result
+	}
 	def tPath = (type == "str") ? "/structures" : ((type == "dev") ? "/devices" : "/")
+	def params = [
+		uri: getNestApiUrl(),
+		path: "$tPath",
+		headers: ["Content-Type": "text/json", "Authorization": "Bearer ${atomicState?.authToken}"]
+	]
 	try {
-		def params = [
-			uri: getNestApiUrl(),
-			path: "$tPath",
-			headers: ["Content-Type": "text/json", "Authorization": "Bearer ${atomicState?.authToken}"]
-		]
-		if(type == "str") {
-			httpGet(params) { resp ->
-				if(resp?.status == 200) {
-					apiIssueEvent(false)
-					atomicState?.apiRateLimited = false
-					atomicState?.apiCmdFailData = null
+		httpGet(params) { resp ->
+			if(resp?.status == 200) {
+				atomicState?.lastHeardFromNestDt = getDtNow()
+				apiIssueEvent(false)
+				atomicState?.apiRateLimited = false
+				atomicState?.apiCmdFailData = null
+
+				if(type == "str") {
 					def t0 = resp?.data
 					//LogTrace("API Structure Resp.Data: ${t0}")
 					def chg = didChange(atomicState?.structData, t0, "str", "poll")
@@ -3667,49 +3677,29 @@ def getApiData(type = null) {
 						result = true
 						def newStrucName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
 						atomicState.structName = newStrucName ?: atomicState?.structName
-						//atomicState.structName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
 						locationPresNotify(getLocationPresence())
 					}
 					incApiStrReqCnt()
-				} else {
-					LogAction("getApiStructureData - Received: Resp (${resp?.status})", "error", true)
-					apiRespHandler(resp?.status, resp?.data, "getApiData(str)", "structure poll")
 				}
-			}
-		}
-		else if(type == "dev") {
-			httpGet(params) { resp ->
-				if(resp?.status == 200) {
-					atomicState?.lastHeardFromNestDt = getDtNow()
-					apiIssueEvent(false)
-					atomicState?.apiRateLimited = false
-					atomicState?.apiCmdFailData = null
+				else if(type == "dev") {
 					def t0 = resp?.data
 					//LogTrace("API Device Resp.Data: ${t0}")
 					def chg = didChange(atomicState?.deviceData, t0, "dev", "poll")
 					if(chg) { result = true }
 					incApiDevReqCnt()
-				} else {
-					LogAction("getApiDeviceData - Received Resp (${resp?.status})", "error", true)
-					apiRespHandler(resp?.status, resp?.data, "getApiData(dev)", "device poll")
 				}
-			}
-		}
-		else if(type == "meta") {
-			httpGet(params) { resp ->
-				if(resp?.status == 200) {
+				else if(type == "meta") {
 					//LogTrace("API Metadata Resp.Data: ${resp?.data}")
-					apiIssueEvent(false)
-					atomicState?.apiRateLimited = false
-					atomicState?.apiCmdFailData = null
 					def nresp = resp?.data?.metadata
 					def chg = didChange(atomicState?.metaData, nresp, "meta", "poll")
 					if(chg) { result = true }
 					incApiMetaReqCnt()
-				} else {
-					LogAction("getApiMetaData - Received Resp (${resp?.status})", "error", true)
-					apiRespHandler(resp?.status, resp?.data, "getApiData(meta)", "metadata poll")
 				}
+			} else {
+				LogAction("getApiData - ${type} Received: Resp (${resp?.status})", "error", true)
+				apiRespHandler(resp?.status, resp?.data, "getApiData(${type})", "${type} Poll")
+				apiIssueEvent(true)
+				atomicState.forceChildUpd = true
 			}
 		}
 	} catch (ex) {
@@ -3718,7 +3708,7 @@ def getApiData(type = null) {
 		atomicState.forceChildUpd = true
 		if(ex instanceof groovyx.net.http.HttpResponseException) {
 			if(ex?.response) {
-				apiRespHandler(ex?.response?.status, ex?.response?.data, "getApiData(ex catch)", "sync poll")
+				apiRespHandler(ex?.response?.status, ex?.response?.data, "getApiData(ex catch)", "Sync Poll")
 			}
 		} else {
 			log.error "getApiData (type: $type) Exception:", ex
@@ -3797,7 +3787,6 @@ def procNestResponse(resp, data) {
 					str = true
 					def newStrucName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
 					atomicState.structName = newStrucName ?: atomicState?.structName
-					//atomicState.structName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
 					locationPresNotify(getLocationPresence())
 				}
 				atomicState.qstrRequested = false
@@ -3885,7 +3874,6 @@ def receiveEventData() {
 				if(chg) {
 					def newStrucName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
 					atomicState.structName = newStrucName ?: atomicState?.structName
-					//atomicState.structName = atomicState?.structData && atomicState?.structures ? atomicState?.structData[atomicState?.structures]?.name : null
 					locationPresNotify(getLocationPresence())
 				} else {
 					LogTrace("got structData")
