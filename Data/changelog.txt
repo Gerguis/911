@@ -1,8 +1,24 @@
+V5.2.0 (July 22nd, 2017):
+▔▔▔▔▔▔▔▔▔▔▔
+Manager App:
+ • FIXED: NP issues
+
+Automation App 5.1.7:
+• FIXED: NP issues
+
+V5.1.9 (July 21st, 2017):
+▔▔▔▔▔▔▔▔▔▔▔
+Manager App:
+ • FIXED: Thermostat voice reports
+
+Automation App 5.1.6:
+• FIXED: FanCtrl automation cleanups/fixes
+
 V5.1.8 (July 16th, 2017):
 ▔▔▔▔▔▔▔▔▔▔▔
 Manager App:
  • FIXED: Optimized UI and performance, Improved Error handling and reporting
- 
+
 Automation App 5.1.5:
 • FIXED: Version checks for automations, improved performance, improved error handling
 

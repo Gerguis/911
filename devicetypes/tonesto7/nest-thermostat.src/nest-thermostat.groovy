@@ -13,7 +13,7 @@
 import java.text.SimpleDateFormat
 import groovy.time.*
 
-def devVer() { return "5.1.3" }
+def devVer() { return "5.1.5" }
 
 // for the UI
 metadata {
@@ -474,7 +474,7 @@ void processEvent(data) {
 			state?.childWaitVal = eventData?.childWaitVal.toInteger()
 			state.clientBl = eventData?.clientBl == true ? true : false
 			state.mobileClientType = eventData?.mobileClientType
-			state.curExtTemp = eventData?.curExtTemp
+			state.curWeatData = eventData?.curWeatherData
 			state.nestTimeZone = eventData.tz ?: null
 			tempUnitEvent(getTemperatureScale())
 			if(eventData?.data?.is_locked != null) { tempLockOnEvent(eventData?.data?.is_locked.toString() == "true" ? true : false) }
@@ -1263,7 +1263,7 @@ def hasFan(hasFan) {
 		sendEvent(name: "hasFan", value: hasFan.toString())
 	}
 	if(state.has_fan) {
-		supportedFanModes = ["auto","on"] 
+		supportedFanModes = ["auto","on"]
 	}
 	if(state?.supportedThermostatFanModes != supportedFanModes) {
 		sendEvent(name: "supportedThermostatFanModes", value: supportedFanModes)
@@ -2342,7 +2342,7 @@ String getDataString(Integer seriesIndex) {
 	def myhas_fan = state?.has_fan && false ? true : false    // false because not graphing fan operation now
 
 	def has_weather = false
-	if( !(state?.curExtTemp == null || state?.curExtTemp == [:])) { has_weather = true }
+	if( !(state?.curWeatData == null || state?.curWeatData == [:])) { has_weather = true }
 
 	def datacolumns
 
@@ -3059,8 +3059,7 @@ def addNewData() {
 	def currentoperatingState = getHvacState()
 	def currenthumidity = getHumidity()
 	def currentfanMode = getFanMode()
-	def currentExternal = null
-	if( !(state?.curExtTemp == null || state?.curExtTemp == [:])) { currentExternal = state?.curExtTemp }
+	def currentExternal = state?.curWeatData?.temp ?: null
 
 	def temperatureTable = state?.temperatureTable
 	def operatingStateTable = state?.operatingStateTable
@@ -3080,7 +3079,7 @@ def addNewData() {
 	state.humidityTable = addValue(humidityTable, hr, mins, currenthumidity)
 	state.coolSetpointTable = addValue(coolSetpointTable, hr, mins, currentcoolSetPoint)
 	state.heatSetpointTable = addValue(heatSetpointTable, hr, mins, currentheatSetPoint)
-	if(!(currentExternal instanceof Map)) { state.extTempTable = addValue(extTempTable, hr, mins, currentExternal) }
+	if(currentExternal != null) { state.extTempTable = addValue(extTempTable, hr, mins, currentExternal) }
 	state.fanModeTable = addValue(fanModeTable, hr, mins, currentfanMode)
 }
 
@@ -3147,10 +3146,12 @@ def getStartTime() {
 	return startTime
 }
 
-def getMinTemp() {
-	def has_weather = false
-	if( !(state?.curExtTemp == null || state?.curExtTemp == [:])) { has_weather = true }
+def extWeatTempAvail() {
+	return (state?.curWeatData?.temp != null) ? true : false
+}
 
+def getMinTemp() {
+	def has_weather = extWeatTempAvail()
 	def list = []
 	if(state?.temperatureTableYesterday?.size() > 0) { list.add(state?.temperatureTableYesterday?.min { it[2] }[2].toInteger()) }
 	if(state?.temperatureTable?.size() > 0) { list.add(state?.temperatureTable.min { it[2] }[2].toInteger()) }
@@ -3162,9 +3163,7 @@ def getMinTemp() {
 }
 
 def getMaxTemp() {
-	def has_weather = false
-	if( !(state?.curExtTemp == null || state?.curExtTemp == [:])) { has_weather = true }
-
+	def has_weather = extWeatTempAvail()
 	def list = []
 	if(state?.temperatureTableYesterday?.size() > 0) { list.add(state?.temperatureTableYesterday.max { it[2] }[2].toInteger()) }
 	if(state?.temperatureTable?.size() > 0) { list.add(state?.temperatureTable.max { it[2] }[2].toInteger()) }
@@ -3525,9 +3524,8 @@ def showChartHtml() {
 	def canHeat = state?.can_heat == true ? true : false
 	def canCool = state?.can_cool == true ? true : false
 	def hasFan = state?.has_fan == true ? true : false
-	def has_weather = false
-	def commastr = ""
-	if( !(state?.curExtTemp == null || state?.curExtTemp == [:])) { has_weather = true; commastr = "," }
+	def has_weather = extWeatTempAvail()
+	def commastr = has_weather ? "," : ""
 
 	def coolstr1
 	def coolstr2
@@ -3961,17 +3959,19 @@ def getMetricCntData() {
 def getExtTempVoiceDesc() {
 	def str = ""
 	if(state?.voiceReportPrefs?.vRprtExtWeat != true || state?.voiceReportPrefs?.vRprtExtWeat == null) { return str }
-	def extTmp = !(state?.curExtTemp == null || state?.curExtTemp == [:]) ? state?.curExtTemp.toDouble() : null
+	def extTmp = state?.curWeatData?.temp != null ? state?.curWeatData?.temp.toDouble() : null
+	def extHum = state?.curWeatData?.hum ?: null
 	if(extTmp) {
 		str += "Looking Outside the current external temp is "
-		if(extTmp > adj_temp(78.0) && extTmp <= adj_temp(85.0)) { str += "a scorching " }
-		else if(extTmp > adj_temp(76.0) && extTmp <= adj_temp(80.0)) { str += "a roasting " }
-		else if(extTmp > adj_temp(74.0) && extTmp <= adj_temp(76.0)) { str += "a balmy " }
+		if(extTmp > adj_temp(90.0)) { str += "a scorching " }
+		else if(extTmp > adj_temp(84.0) && extTmp <= adj_temp(90.0)) { str += "a uncomfortable " }
+		else if(extTmp > adj_temp(78.0) && extTmp <= adj_temp(84.0)) { str += "a balmy " }
+		else if(extTmp > adj_temp(74.0) && extTmp <= adj_temp(78.0)) { str += "a tolerable " }
 		else if(extTmp >= adj_temp(68.0) && extTmp <= adj_temp(74.0)) { str += "a comfortable " }
 		else if(extTmp >= adj_temp(64.0) && extTmp <= adj_temp(68.0)) { str += "a breezy " }
 		else if(extTmp >= adj_temp(50.0) && extTmp < adj_temp(64.0)) { str += "a chilly " }
 		else if(extTmp < adj_temp(50.0)) { str += "a freezing " }
-		str += "${extTmp} degrees. "
+		str += "${extTmp} degrees${extHum ? " with a humidity of ${extHum}. " : ". "}"
 	}
 	return str
 }
@@ -4004,7 +4004,7 @@ def getUsageVoiceReport(type) {
 def generateUsageText(timeType, timeMap) {
 	def str = ""
 	if(timeType && timeMap) {
-		def hData = null; def cData = null;	def iData = null; def f1Data = null; def f0Data = null; fData = null;
+		def hData = null; def cData = null;	def iData = null; def f1Data = null; def f0Data = null; def fData = null;
 
 		timeMap?.each { item ->
 			def type = item?.key.toString()
@@ -4023,7 +4023,7 @@ def generateUsageText(timeType, timeMap) {
 			//}
 		}
 		if(hData || cData || iData || fData) {// || f1Data || f0Data) {
-			str += " Based on the devices activity so far today. "
+			str += " Based on the devices activity. "
 			def showAnd = hData || cData //|| f0Data || f1Data
 			def iTime = 0; def hTime = 0; def cTime = 0; def fTime = 0;
 			def iTmStr; def hTmStr; def cTmStr; def fTmStr;
@@ -4097,7 +4097,7 @@ def generateUsageText(timeType, timeMap) {
 			str += " There doesn't appear to have been any usage data collected yet.  "
 		}
 	}
-	str += " That is all for the current nest report. Check back later and have a wonderful day..."
+	str += " That is all for the current nest report. Check back at any time and have a wonderful day..."
 	//log.debug "generateUsageText: $str"
 	return str
 }
@@ -4106,7 +4106,7 @@ def getIdleUsageDesc(perc, tmStr, timeType) {
 	def str = ""
 	if(timeType == "today") {
 		if(perc>0 && perc <=100) {
-			str += " The device has been idle ${perc} percent of the day at "
+			str += " The device has been idle so far today ${perc} percent of the day at "
 			str += tmStr
 		}
 	}
@@ -4150,11 +4150,11 @@ def getCoolUsageDesc(perc, tmStr, timeType) {
 	def str = ""
 	if(timeType == "today") {
 		if(perc>=66 && perc<=100) {
-			str += " it must have been scorching outside because is was cooling for "
+			str += " it must be hot outside because is was cooling for "
 			str += tmStr
 		}
 		else if(perc>=34 && perc<66) {
-			str += " it must have been a beautiful day because your device only cooled for "
+			str += " it must be a decent day because your device only cooled for "
 			str += tmStr
 		}
 		else if(perc>0 && perc<34) {
