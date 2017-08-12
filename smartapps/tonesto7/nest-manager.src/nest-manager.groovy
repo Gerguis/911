@@ -3706,10 +3706,10 @@ def getApiData(type = null) {
 		apiIssueEvent(true)
 		atomicState?.apiRateLimited = false
 		atomicState.forceChildUpd = true
+		log.error "getApiData (type: $type) Exception:", ex
 		if(ex instanceof groovyx.net.http.HttpResponseException && ex?.response) {
 			apiRespHandler(ex?.response?.status, ex?.response?.data, "getApiData(ex catch)", "${type} Poll")
 		} else {
-			log.error "getApiData (type: $type) Exception:", ex
 			if(type == "str") { atomicState.needStrPoll = true }
 			else if(type == "dev") { atomicState?.needDevPoll = true }
 			else if(type == "meta") { atomicState?.needMetaPoll = true }
@@ -5362,9 +5362,9 @@ def procNestApiCmd(uri, typeId, type, obj, objVal, qnum, redir = false) {
 		if (ex instanceof groovyx.net.http.HttpResponseException && ex?.response) {
 			apiRespHandler(ex?.response?.status, ex?.response?.data, "procNestApiCmd", "procNestApiCmd")
 		} else {
-			log.error "procNestApiCmd Exception: ($type | $obj:$objVal)", ex
 			sendExceptionData(ex, "procNestApiCmd")
 		}
+		log.error "procNestApiCmd Exception: ($type | $obj:$objVal)", ex
 	}
 	return result
 }
@@ -8635,7 +8635,7 @@ def renderManagerData() {
  			   	</script>
 			</body>
 		"""
-/* "" */
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderManagerData Exception:", ex }
 }
@@ -8822,7 +8822,6 @@ def navJsBuilder(btnId, divId) {
 /* """ */
 	return "\n${res}"
 }
-
 
 def renderDeviceData() {
 	try {
@@ -9098,7 +9097,7 @@ def renderHtmlMapDesc(title, heading, datamap) {
   			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""
-	/* """ */
+	/* "" */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "getAppDataFile Exception:", ex }
 }
