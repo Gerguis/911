@@ -27,8 +27,8 @@ definition(
 	appSetting "devOpt"
 }
 
-def appVersion() { "5.1.6" }
-def appVerDate() { "7-21-2017" }
+def appVersion() { "5.1.7" }
+def appVerDate() { "8-2-2017" }
 
 preferences {
 	//startPage
@@ -706,6 +706,7 @@ def initAutoApp() {
 	state.remove("schedule{8}TimeActive")
 	state.remove("lastaway")
 
+	state.remove("evalSched")
 	state.remove("debugAppendAppName")   // cause Automations to re-check with parent for value
 	state.remove("enRemDiagLogging")   // cause Automations to re-check with parent for value after updated is called
 	state.remove("weatherDeviceInst")   // cause Automations to re-check with parent for value after updated is called
@@ -888,7 +889,7 @@ def subscribeToEvents() {
 	//Nest Mode Subscriptions
 	if(autoType == "nMode") {
 		if(isNestModesConfigured()) {
-			if(!settings?.nModePresSensor && !settings?.nModeSwitch && (settings?.nModeHomeModes || settings?.nModeAwayModes)) { subscribe(location, "mode", nModeGenericEvt, [filterEvents: false]) }
+			if(!settings?.nModePresSensor && !settings?.nModeSwitch && (settings?.nModeHomeModes || settings?.nModeAwayModes)) { subscribe(location, "mode", nModeGenericEvt) }
 			if(settings?.nModePresSensor && !settings?.nModeSwitch) { subscribe(nModePresSensor, "presence", nModeGenericEvt) }
 			if(settings?.nModeSwitch && !settings?.nModePresSensor) { subscribe(nModeSwitch, "switch", nModeGenericEvt) }
 
@@ -950,7 +951,7 @@ def subscribeToEvents() {
 				if(isHumCtrlConfigured()) {
 					subscribe(humCtrlSwitches, "switch", automationGenericEvt)
 					subscribe(humCtrlHumidity, "humidity", automationGenericEvt)
-					if(!settings?.humCtrlUseWeather && settings?.humCtrlTempSensor) { subscribe(humCtrlTempSensor, "temperature", automationGenericEvt, [filterEvents: false]) }
+					if(!settings?.humCtrlUseWeather && settings?.humCtrlTempSensor) { subscribe(humCtrlTempSensor, "temperature", automationGenericEvt) }
 					if(settings?.humCtrlUseWeather) {
 						atomicState.NeedwUpd = true
 						if(parent?.getWeatherDeviceInst()) {
@@ -997,7 +998,7 @@ def subscribeToEvents() {
 							subscribe(sw, "switch", automationGenericEvt)
 						}
 					}
-					if(!settings?.extTmpUseWeather && settings?.extTmpTempSensor) { subscribe(extTmpTempSensor, "temperature", extTmpGenericEvt, [filterEvents: false]) }
+					if(!settings?.extTmpUseWeather && settings?.extTmpTempSensor) { subscribe(extTmpTempSensor, "temperature", extTmpGenericEvt) }
 					atomicState.extTmpChgWhileOnDt = getDtNow()
 					atomicState.extTmpChgWhileOffDt = getDtNow()
 				}
@@ -1132,7 +1133,7 @@ def subscribeToEvents() {
 			subscribe(schMotTstat, "safetyTempExceeded", automationSafetyTempEvt)
 			subscribe(location, "sunset", automationGenericEvt)
 			subscribe(location, "sunrise", automationGenericEvt)
-			subscribe(location, "mode", automationGenericEvt, [filterEvents: false])
+			subscribe(location, "mode", automationGenericEvt)
 		}
 	}
 	//watchDog Subscriptions
@@ -1152,7 +1153,7 @@ def subscribeToEvents() {
 					subscribe(d1, "nestThermostatMode", automationGenericEvt)
 					subscribe(d1, "thermostatMode", automationGenericEvt)
 					subscribe(d1, "presence", automationGenericEvt)
-					subscribe(location, "mode", automationGenericEvt, [filterEvents: false])
+					subscribe(location, "mode", automationGenericEvt)
 				}
 				return d1
 			}
@@ -1199,38 +1200,57 @@ def heartbeatAutomation() {
 	}
 }
 
-def scheduleAutomationEval(schedtime = 20) {
+def defaultAutomationTime() {
+	return 20
+}
+
+def scheduleAutomationEval(schedtime = defaultAutomationTime()) {
 	def theTime = schedtime
-	if(theTime < 20) { theTime = 20 }
+	if(theTime < defaultAutomationTime()) { theTime = defaultAutomationTime() }
 	def autoType = getAutoType()
 	def random = new Random()
 	def random_int = random.nextInt(6)  // this randomizes a bunch of automations firing at same time off same event
+	def waitOverride = false
 	switch(autoType) {
 		case "nMode":
-			if(theTime == 20) {
+			if(theTime == defaultAutomationTime()) {
 				theTime = 14 + random_int  // this has nMode fire first as it may change the Nest Mode
 			}
 			break
 		case "schMot":
-			if(theTime == 20) {
-				theTime = 20 + random_int
+			if(theTime == defaultAutomationTime()) {
+				theTime += random_int
 			}
 			def schWaitVal = settings?.schMotWaitVal?.toInteger() ?: 60
-			if(schWaitVal > 60) { schWaitVal = 60 }
-			def t0 = getLastschMotEvalSec() + theTime
-			if(t0 < schWaitVal) {
-				theTime = theTime + (schWaitVal - t0)  // avoid too soon wakeups
+			if(schWaitVal > 120) { schWaitVal = 120 }
+			def t0 = getLastschMotEvalSec()
+			if((schWaitVal - t0) >= theTime ) {
+				theTime = (schWaitVal - t0)
+				waitOverride = true
 			}
+			//theTime = Math.min( Math.max(theTime,defaultAutomationTime()), 120)
 			break
 		case "watchDog":
-			if(theTime == 20) {
+			if(theTime == defaultAutomationTime()) {
 				theTime = 35 + random_int  // this has watchdog fire last so other automations can finish changes
 			}
 			break
 	}
-	if(getLastAutomationSchedSec() > 11) {
-		atomicState?.lastAutomationSchedDt = getDtNow()
+	if(!atomicState?.evalSched) {
 		runIn(theTime, "runAutomationEval", [overwrite: true])
+		atomicState?.lastAutomationSchedDt = getDtNow()
+		atomicState.evalSched = true
+		atomicState.evalSchedLastTime = theTime
+	} else {
+		def t0 = atomicState?.evalSchedLastTime
+		if(t0 == null) { t0 = 0 }
+		def timeLeftPrev = t0 - getLastAutomationSchedSec()
+		if(timeLeftPrev > (theTime + 5) || waitOverride) {
+			if(Math.abs(timeLeftPrev - theTime) > 3) {
+				runIn(theTime, "runAutomationEval", [overwrite: true])
+				LogAction("scheduleAutomationEval: changed time ${timeLeftPrev} to ${theTime}", "debug", true)
+			}
+		} else { LogAction("scheduleAutomationEval: skipped time ${theTime} because ${timeLeftPrev}", "debug", true) }
 	}
 }
 
@@ -1239,6 +1259,7 @@ def getLastAutomationSchedSec() { return !atomicState?.lastAutomationSchedDt ? 1
 def runAutomationEval() {
 	LogTrace("runAutomationEval")
 	def autoType = getAutoType()
+	atomicState.evalSched = false
 	switch(autoType) {
 		case "nMode":
 			if(isNestModesConfigured()) {
@@ -1582,7 +1603,7 @@ def automationMotionEvt(evt) {
 							atomicState."${sLbl}MotionInActiveDt" = getDtNow()
 						}
 					}
-					LogAction("Updating Schedule Motion Sensor State | Schedule: (${cnt} - ${getSchedLbl(cnt)})  | Previous Active: (${oldActive}) | Current Status: ($newActive)", "trace", true)
+					LogAction("Updating Schedule Motion Sensor State | Schedule: (${cnt} - ${getSchedLbl(cnt)}) | Previous Active: (${oldActive}) | Current Status: ($newActive)", "trace", true)
 					if(cnt == mySched) { dorunIn = true }
 				}
 			}
@@ -1595,7 +1616,7 @@ def automationMotionEvt(evt) {
 */
 		if(dorunIn) {
 			LogAction("Automation Schedule Motion | Scheduling Delay Check: ($delay sec) | Schedule: ($mySched - ${getSchedLbl(mySched)})", "trace", true)
-			def val = Math.min( Math.max(delay,20), 60)
+			def val = Math.min( Math.max(delay,defaultAutomationTime()), 60)
 			scheduleAutomationEval(val)
 		} else {
 			def str = "Motion Event | Skipping Motion Check: "
@@ -2081,9 +2102,19 @@ def fixTempSetting(Double temp) {
 	return newtemp
 }
 
+def setRemoteSenTstat(val) {
+	LogAction("setRemoteSenTstat $val", "info", true)
+	atomicState.remSenTstat = val
+}
+
 def getRemSenCoolSetTemp(curMode=null, useCurrent=true) {
 	def coolTemp
-	if(curMode != "eco") {
+	def theMode = curMode != null ? curMode : null
+	if(theMode == null) {
+		def tstat = schMotTstat
+		theMode = tstat ? tstat?.currentnestThermostatMode.toString() : null
+	}
+	if(theMode != "eco") {
 		if(getLastOverrideCoolSec() < (3600 * 4)) {
 			if(atomicState?.coolOverride != null) {
 				coolTemp = fixTempSetting(atomicState?.coolOverride.toDouble())
@@ -2119,7 +2150,12 @@ def getRemSenCoolSetTemp(curMode=null, useCurrent=true) {
 
 def getRemSenHeatSetTemp(curMode=null, useCurrent=true) {
 	def heatTemp
-	if(curMode != "eco") {
+	def theMode = curMode != null ? curMode : null
+	if(theMode == null) {
+		def tstat = schMotTstat
+		theMode = tstat ? tstat?.currentnestThermostatMode.toString() : null
+	}
+	if(theMode != "eco") {
 		if(getLastOverrideHeatSec() < (3600 * 4)) {
 			if(atomicState?.heatOverride != null) {
 				heatTemp = fixTempSetting(atomicState.heatOverride.toDouble())
@@ -2588,7 +2624,7 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 			if(!timeSinceLastOffOk) {
 				def remaining = waitTimeVal - getLastFanCtrlFanOffDtSec()
 				LogAction("Circulate Fan: Want to RUN Fan | Delaying for wait period ${waitTimeVal}, remaining ${remaining} seconds", "info", true)
-				def val = Math.min( Math.max(remaining,20), 60)
+				def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 				scheduleAutomationEval(val)
 				return
 			}
@@ -2614,7 +2650,7 @@ def circulateFanControl(operType, Double curSenTemp, Double reqSetpointTemp, Dou
 				if(!timeSinceLastRunOk) {
 					def remaining = fanOnTimeVal - getLastFanCtrlFanRunDtSec()
 					LogAction("Circulate Fan Run: Want to STOP Fan | Delaying for run period ${fanOnTimeVal}, remaining ${remaining} seconds", "info", true)
-					def val = Math.min( Math.max(remaining,20), 60)
+					def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 					scheduleAutomationEval(val)
 					return
 				}
@@ -3312,7 +3348,7 @@ def extTmpTempCheck(cTimeOut = false) {
 						if(safetyOk) {
 							def remaining = getExtTmpOnDelayVal() - getExtTmpWhileOffDtSec()
 							LogAction("extTmpTempCheck: Delaying restore for wait period ${getExtTmpOnDelayVal()}, remaining ${remaining}", "info", true)
-							def val = Math.min( Math.max(remaining,20), 60)
+							def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 							scheduleAutomationEval(val)
 						}
 					}
@@ -3363,7 +3399,7 @@ def extTmpTempCheck(cTimeOut = false) {
 					} else {
 						def remaining = getExtTmpOffDelayVal() - getExtTmpWhileOnDtSec()
 						LogAction("extTmpTempCheck: Delaying ECO for wait period ${getExtTmpOffDelayVal()} seconds | Wait time remaining: ${remaining} seconds", "info", true)
-						def val = Math.min( Math.max(remaining,20), 60)
+						def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 						scheduleAutomationEval(val)
 					}
 				} else {
@@ -3418,7 +3454,7 @@ def extTmpDpOrTempEvt(type) {
 				atomicState.extTmpChgWhileOffDt = getDtNow()
 				timeVal = ["valNum":onVal, "valLabel":getEnumValue(longTimeSecEnum(), onVal)]
 			}
-			def val = Math.min( Math.max(timeVal?.valNum,20), 60)
+			def val = Math.min( Math.max(timeVal?.valNum,defaultAutomationTime()), 60)
 			LogAction("${type} | External Temp Check scheduled for (${timeVal.valLabel}) HVAC mode: ${curMode}", "info", true)
 			scheduleAutomationEval(val)
 		} else {
@@ -3476,7 +3512,7 @@ def getConWatOnDelayVal() { return !settings?.conWatOnDelay ? 300 : (settings?.c
 def getConWatRestoreDelayBetweenVal() { return !settings?.conWatRestoreDelayBetween ? 600 : settings?.conWatRestoreDelayBetween.toInteger() }
 
 def conWatCheck(cTimeOut = false) {
-	//LogTrace("conWatCheck")
+	LogTrace("conWatCheck $cTimeOut")
 	//
 	// There should be monitoring of actual temps for min and max warnings given on/off automations
 	//
@@ -3498,7 +3534,7 @@ def conWatCheck(cTimeOut = false) {
 			def timeOut = atomicState."${pName}timeOutOn" ?: false
 			def curMode = conWatTstat ? conWatTstat?.currentnestThermostatMode.toString() : null
 			def modeEco = (curMode in ["eco"]) ? true : false
-			def curNestPres = getTstatPresence(conWatTstat)
+			//def curNestPres = getTstatPresence(conWatTstat)
 			def modeOff = (curMode in ["off", "eco"]) ? true : false
 			def openCtDesc = getOpenContacts(conWatContacts) ? " '${getOpenContacts(conWatContacts)?.join(", ")}' " : " a selected contact "
 			def allowNotif = settings?."${pName}NotificationsOn" ? true : false
@@ -3509,7 +3545,7 @@ def conWatCheck(cTimeOut = false) {
 			//log.debug "curMode: $curMode | modeOff: $modeOff | conWatRestoreOnClose: $conWatRestoreOnClose | lastMode: $lastMode"
 			//log.debug "conWatTstatOffRequested: ${atomicState?.conWatTstatOffRequested} | getConWatCloseDtSec(): ${getConWatCloseDtSec()}"
 
-			if(!modeOff) { atomicState."${pName}timeOutOn" = false; timeOut = false }
+			if(!modeEco) { atomicState."${pName}timeOutOn" = false; timeOut = false }
 
 // if we requested off; and someone switched us on or nMode took over...
 			if( atomicState?.conWatTstatOffRequested && (!modeEco || (modeEco && parent.setNModeActive(null))) ) {  // so reset timer and states
@@ -3527,7 +3563,7 @@ def conWatCheck(cTimeOut = false) {
 
 			def safetyOk = getSafetyTempsOk(conWatTstat)
 			def schedOk = conWatScheduleOk()
-			def okToRestore = (modeOff && atomicState?.conWatTstatOffRequested) ? true : false
+			def okToRestore = (modeEco && atomicState?.conWatTstatOffRequested) ? true : false
 			def contactsOk = getConWatContactsOk()
 
 			if(contactsOk || timeOut || !safetyOk || !schedOk) {
@@ -3550,6 +3586,7 @@ def conWatCheck(cTimeOut = false) {
 								atomicState?.conWatOpenDt = getDtNow()
 								atomicState."${pName}timeOutOn" = false
 								unschedTimeoutRestore(pName)
+								modeEco = false
 								modeOff = false
 
 								if(conWatTstatMir) {
@@ -3596,7 +3633,7 @@ def conWatCheck(cTimeOut = false) {
 						if(safetyOk) {
 							def remaining = getConWatOnDelayVal() - getConWatCloseDtSec()
 							LogAction("conWatCheck: Delaying restore for wait period ${getConWatOnDelayVal()}, remaining ${remaining}", "info", true)
-							def val = Math.min( Math.max(remaining,20), 60)
+							def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 							scheduleAutomationEval(val)
 						}
 					}
@@ -3645,12 +3682,12 @@ def conWatCheck(cTimeOut = false) {
 						if(getConWatRestoreDelayBetweenDtSec() < (getConWatRestoreDelayBetweenVal() - 2)) {
 							def remaining = getConWatRestoreDelayBetweenVal() - getConWatRestoreDelayBetweenDtSec()
 							LogAction("conWatCheck: | Skipping ECO change: delay since last restore not met (${getEnumValue(longTimeSecEnum(), conWatRestoreDelayBetween)})", "info", false)
-							def val = Math.min( Math.max(remaining,20), 60)
+							def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 							scheduleAutomationEval(val)
 						} else {
 							def remaining = getConWatOffDelayVal() - getConWatOpenDtSec()
 							LogAction("conWatCheck: Delaying ECO for wait period ${getConWatOffDelayVal()} seconds | Wait time remaining: ${remaining} seconds", "info", true)
-							def val = Math.min( Math.max(remaining,20), 60)
+							def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 							scheduleAutomationEval(val)
 						}
 					}
@@ -3680,7 +3717,7 @@ def conWatContactEvt(evt) {
 	else {
 		def conWatTstat = settings?.schMotTstat
 		def curMode = conWatTstat?.currentnestThermostatMode.toString()
-		def isModeOff = (curMode in ["off", "eco"]) ? true : false
+		def isModeOff = (curMode in ["eco"]) ? true : false
 		def conOpen = (evt?.value == "open") ? true : false
 		def canSched = false
 		def timeVal
@@ -3690,8 +3727,8 @@ def conWatContactEvt(evt) {
 			canSched = true
 		}
 		else if(!conOpen && getConWatContactsOk()) {
+			atomicState.conWatCloseDt = getDtNow()
 			if(isModeOff) {
-				atomicState.conWatCloseDt = getDtNow()
 				timeVal = ["valNum":getConWatOnDelayVal(), "valLabel":getEnumValue(longTimeSecEnum(), getConWatOnDelayVal())]
 				canSched = true
 			}
@@ -3699,7 +3736,7 @@ def conWatContactEvt(evt) {
 		storeLastEventData(evt)
 		if(canSched) {
 			LogAction("conWatContactEvt: Contact Check scheduled for (${timeVal?.valLabel})", "info", false)
-			def val = Math.min( Math.max(timeVal?.valNum,20), 60)
+			def val = Math.min( Math.max(timeVal?.valNum,defaultAutomationTime()), 60)
 			scheduleAutomationEval(val)
 		} else {
 			LogAction("conWatContactEvt: Skipping Event", "info", false)
@@ -3757,7 +3794,7 @@ def leakWatCheck() {
 			//atomicState?.lastEvalDt = getDtNow()
 
 			def curMode = leakWatTstat?.currentThermostatMode.toString()
-			def curNestPres = getTstatPresence(leakWatTstat)
+			//def curNestPres = getTstatPresence(leakWatTstat)
 			def modeOff = (curMode == "off") ? true : false
 			def wetCtDesc = getWetWaterSensors(leakWatSensors) ? " '${getWetWaterSensors(leakWatSensors)?.join(", ")}' " : " a selected leak sensor "
 			def allowNotif = settings?."${pName}NotificationsOn" ? true : false
@@ -3831,7 +3868,7 @@ def leakWatCheck() {
 						if(safetyOk) {
 							def remaining = getLeakWatOnDelayVal() - getLeakWatDryDtSec()
 							LogAction("leakWatCheck: Delaying restore for wait period ${getLeakWatOnDelayVal()}, remaining ${remaining}", "info", true)
-							def val = Math.min( Math.max(remaining,20), 60)
+							def val = Math.min( Math.max(remaining,defaultAutomationTime()), 60)
 							scheduleAutomationEval(val)
 						}
 					}
@@ -3917,8 +3954,7 @@ def leakWatSensorEvt(evt) {
 		storeLastEventData(evt)
 		if(canSched) {
 			LogAction("leakWatSensorEvt: Leak Check scheduled (${timeVal?.valLabel})", "info", false)
-			def val = timeVal?.valNum > 20 ? timeVal?.valNum : 20
-			val = timeVal?.valNum < 60 ? timeVal?.valNum : 60
+			def val = Math.min( Math.max(timeVal?.valNum,defaultAutomationTime()), 60)
 			scheduleAutomationEval(val)
 		} else {
 			LogAction("leakWatSensorEvt: Skipping Event", "info", true)
@@ -4045,8 +4081,8 @@ def nModeGenericEvt(evt) {
 	if(atomicState?.disableAutomation) { return }
 	storeLastEventData(evt)
 	if(nModeDelay) {
-		def delay = nModeDelayVal.toInteger()
-		if(delay > 20) {
+		def delay = nModeDelayVal.toInteger() ?: 60
+		if(delay > defaultAutomationTime()) {
 			LogAction("Event | A Check is scheduled (${getEnumValue(longTimeSecEnum(), nModeDelayVal)})", "info", false)
 			scheduleAutomationEval(delay)
 		} else { scheduleAutomationEval() }
@@ -4442,7 +4478,7 @@ private checkRestriction(cnt) {
 		def apprestrict = atomicState?."sched${cnt}restrictions"
 
 		if (apprestrict?.m && apprestrict?.m.size() && !(location.mode in apprestrict?.m)) {
-			restriction = "a mode mismatch"
+			restriction = "a SmartThings MODE mismatch"
 		} else if (apprestrict?.w && apprestrict?.w.size() && !(getDayOfWeekName() in apprestrict?.w)) {
 			restriction = "a day of week mismatch"
 		} else if (apprestrict?.tf && apprestrict?.tt && !(checkTimeCondition(apprestrict?.tf, apprestrict?.tfc, apprestrict?.tfo, apprestrict?.tt, apprestrict?.ttc, apprestrict?.tto))) {
@@ -5167,7 +5203,7 @@ def schMotModePage() {
 			}
 
 			section("Settings:") {
-				input "schMotWaitVal", "enum", title: "Minimum Wait Time between Evaluations?", required: false, defaultValue: 60, metadata: [values:[30:"30 Seconds", 60:"60 Seconds"]], image: getAppImg("delay_time_icon.png")
+				input "schMotWaitVal", "enum", title: "Minimum Wait Time between Evaluations?", required: false, defaultValue: 60, metadata: [values:[30:"30 Seconds", 60:"60 Seconds",90:"90 Seconds",120:"120 Seconds"]], image: getAppImg("delay_time_icon.png")
 			}
 		}
 		if(atomicState?.showHelp) {
@@ -6177,9 +6213,10 @@ def schMotCheck() {
 	try {
 		if(atomicState?.disableAutomation) { return }
 		def schWaitVal = settings?.schMotWaitVal?.toInteger() ?: 60
-		if(schWaitVal > 60) { schWaitVal = 60 }
-		if(getLastschMotEvalSec() < schWaitVal) {
-			def schChkVal = ((schWaitVal - getLastschMotEvalSec()) < 30) ? 30 : (schWaitVal - getLastschMotEvalSec())
+		if(schWaitVal > 120) { schWaitVal = 120 }
+		def t0 = getLastschMotEvalSec()
+		if(t0 < schWaitVal) {
+			def schChkVal = ((schWaitVal - t0) < 30) ? 30 : (schWaitVal - t0)
 			scheduleAutomationEval(schChkVal)
 			LogAction("Too Soon to Evaluate Actions; Re-Evaluation in (${schChkVal} seconds)", "info", true)
 			return
@@ -6224,6 +6261,7 @@ def schMotCheck() {
 			}
 		}
 
+		atomicState?.lastschMotEval = getDtNow()
 		storeExecutionHistory((now() - execTime), "schMotCheck")
 	} catch (ex) {
 		log.error "schMotCheck Exception:", ex
@@ -7808,7 +7846,11 @@ def getChildAppVer(appName) { return appName?.appVersion() ? "v${appName?.appVer
 def getUse24Time()			{ return useMilitaryTime ? true : false }
 
 //Returns app State Info
-def getStateSize()			{ return state?.toString().length() }
+def getStateSize() {
+	def resultJson = new groovy.json.JsonOutput().toJson(state)
+	return resultJson?.toString().length()
+        //return state?.toString().length()
+}
 def getStateSizePerc()		{ return (int) ((stateSize / 100000)*100).toDouble().round(0) } //
 
 def getLocationModes() {
