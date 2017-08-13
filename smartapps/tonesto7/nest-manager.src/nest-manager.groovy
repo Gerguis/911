@@ -37,7 +37,7 @@ definition(
 }
 
 def appVersion() { "5.2.0" }
-def appVerDate() { "8-6-2017" }
+def appVerDate() { "8-12-2017" }
 def minVersions() {
 	return [
 		"automation":["val":517, "desc":"5.1.7"],
@@ -3706,12 +3706,10 @@ def getApiData(type = null) {
 		apiIssueEvent(true)
 		atomicState?.apiRateLimited = false
 		atomicState.forceChildUpd = true
-		if(ex instanceof groovyx.net.http.HttpResponseException) {
-			if(ex?.response) {
-				apiRespHandler(ex?.response?.status, ex?.response?.data, "getApiData(ex catch)", "Sync Poll")
-			}
+		log.error "getApiData (type: $type) Exception:", ex
+		if(ex instanceof groovyx.net.http.HttpResponseException && ex?.response) {
+			apiRespHandler(ex?.response?.status, ex?.response?.data, "getApiData(ex catch)", "${type} Poll")
 		} else {
-			log.error "getApiData (type: $type) Exception:", ex
 			if(type == "str") { atomicState.needStrPoll = true }
 			else if(type == "dev") { atomicState?.needDevPoll = true }
 			else if(type == "meta") { atomicState?.needMetaPoll = true }
@@ -3832,8 +3830,21 @@ def procNestResponse(resp, data) {
 
 	} catch (ex) {
 		log.error "procNestResponse (type: $type) Exception:", ex
+		def tstr = (type == "str") ? "Structure" : ((type == "dev") ? "Device" : "Metadata")
+		tstr += " Poll async"
+		//LogAction("procNestResponse - Received $tstr: Resp (${resp?.status})", "error", true)
+		if(ex instanceof groovyx.net.http.HttpResponseException && ex?.response) {
+			apiRespHandler(ex?.response?.status, ex?.response?.data, "procNestResponse($type)", tstr)
+		} else {
+			if(resp?.hasError()) {
+				def rCode = resp?.getStatus() ?: null
+				def errJson = resp?.getErrorJson() ?: null
+				//log.debug "rCode: $rCode | errJson: $errJson"
+				apiRespHandler(rCode, errJson, "procNestResponse($type)", tstr)
+			}
+		}
 		apiIssueEvent(true)
-		atomicState?.apiRateLimited = false
+		//atomicState?.apiRateLimited = false
 		atomicState.forceChildUpd = true
 		atomicState.qstrRequested = false
 		atomicState.qdevRequested = false
@@ -5275,7 +5286,7 @@ def nestCmdResponse(resp, data) {
 			apiIssueEvent(true)
 			atomicState?.lastCmdSentStatus = "failed"
 			if(resp?.hasError()) {
-				apiRespHandler((resp?.getStatus() ?: null), (resp?.getErrorJson() ?: null), "nestCmdResponse")
+				apiRespHandler((resp?.getStatus() ?: null), (resp?.getErrorJson() ?: null), "nestCmdResponse", "nestCmdResponse ${qnum} ($type{$obj:$objVal})", true)
 			}
 		}
 		finishWorkQ(command, result)
@@ -5285,6 +5296,9 @@ def nestCmdResponse(resp, data) {
 		sendExceptionData(ex, "nestCmdResponse")
 		apiIssueEvent(true)
 		atomicState?.lastCmdSentStatus = "failed"
+		if(resp?.hasError()) {
+			apiRespHandler((resp?.getStatus() ?: null), (resp?.getErrorJson() ?: null), "nestCmdResponse", "nestCmdResponse ${qnum} ($type{$obj:$objVal})", true)
+		}
 		cmdProcState(false)
 	}
 }
@@ -5326,7 +5340,7 @@ def procNestApiCmd(uri, typeId, type, obj, objVal, qnum, redir = false) {
 				}
 			}
 			else if(resp?.status == 200) {
-				LogAction("nestCmdResponse Processed queue: ${qnum} ($type{$obj:$objVal}) SUCCESSFULLY!", "info", true)
+				LogAction("procNestApiCmd Processed queue: ${qnum} ($type{$obj:$objVal}) SUCCESSFULLY!", "info", true)
 				apiIssueEvent(false)
 				incCmdCnt()
 				atomicState?.lastCmdSentStatus = "ok"
@@ -5338,27 +5352,28 @@ def procNestApiCmd(uri, typeId, type, obj, objVal, qnum, redir = false) {
 				apiIssueEvent(true)
 				atomicState?.lastCmdSentStatus = "failed"
 				result = false
-				apiRespHandler(resp?.status, resp?.data, "procNestApiCmd")
+				apiRespHandler(resp?.status, resp?.data, "procNestApiCmd", "procNestApiCmd ${qnum} ($type{$obj:$objVal})", true)
 			}
 		}
 	} catch (ex) {
 		apiIssueEvent(true)
 		atomicState?.lastCmdSentStatus = "failed"
 		cmdProcState(false)
-		if (ex instanceof groovyx.net.http.HttpResponseException) {
-			apiRespHandler(ex?.response?.status, ex?.response?.data, "procNestApiCmd")
+		if (ex instanceof groovyx.net.http.HttpResponseException && ex?.response) {
+			apiRespHandler(ex?.response?.status, ex?.response?.data, "procNestApiCmd", "procNestApiCmd ${qnum} ($type{$obj:$objVal})", true)
 		} else {
-			log.error "procNestApiCmd Exception: ($type | $obj:$objVal)", ex
 			sendExceptionData(ex, "procNestApiCmd")
 		}
+		log.error "procNestApiCmd Exception: ($type | $obj:$objVal)", ex
 	}
 	return result
 }
 
-def apiRespHandler(code, errJson, methodName, tstr=null) {
+def apiRespHandler(code, errJson, methodName, tstr=null, isCmd=false) {
 	LogAction("[$methodName] | Status: (${code}) | Error Message: ${errJson}", "warn", true)
 	if (!(code?.toInteger() in [200, 307])) {
 		def result = ""
+		def notif = true
 		def errMsg = errJson?.message != null ? errJson?.message : null
 		switch(code) {
 			case 400:
@@ -5378,17 +5393,22 @@ def apiRespHandler(code, errJson, methodName, tstr=null) {
 				break
 			case 500:
 				result =  !errMsg ? "Internal Nest Error:" : errMsg
+				notif = false
 				break
 			case 503:
 				result =  !errMsg ? "There is currently a Nest Service Issue..." : errMsg
+				notif = false
 				break
 			default:
 				result =  !errMsg ? "Received Response..." : errMsg
+				notif = false
 				break
 		}
 		def failData = ["code":code, "msg":result, "method":methodName, "dt":getDtNow()]
 		atomicState?.apiCmdFailData = failData
-		failedCmdNotify(failData, tstr)
+		if(notif || isCmd) {
+			failedCmdNotify(failData, tstr)
+		}
 		LogAction("$methodName error - (Status: $code - $result) - [ErrorLink: ${errJson?.type}]", "error", true)
 	}
 }
@@ -8615,7 +8635,7 @@ def renderManagerData() {
  			   	</script>
 			</body>
 		"""
-/* "" */
+/* """ */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "renderManagerData Exception:", ex }
 }
@@ -8802,7 +8822,6 @@ def navJsBuilder(btnId, divId) {
 /* """ */
 	return "\n${res}"
 }
-
 
 def renderDeviceData() {
 	try {
@@ -9078,7 +9097,7 @@ def renderHtmlMapDesc(title, heading, datamap) {
   			   	<script src="https://rawgit.com/tonesto7/nest-manager/master/Documents/js/diagpages.js"></script>
 			</body>
 		"""
-	/* """ */
+	/* "" */
 		render contentType: "text/html", data: html
 	} catch (ex) { log.error "getAppDataFile Exception:", ex }
 }
