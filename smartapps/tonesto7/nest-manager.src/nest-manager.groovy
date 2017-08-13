@@ -5286,7 +5286,7 @@ def nestCmdResponse(resp, data) {
 			apiIssueEvent(true)
 			atomicState?.lastCmdSentStatus = "failed"
 			if(resp?.hasError()) {
-				apiRespHandler((resp?.getStatus() ?: null), (resp?.getErrorJson() ?: null), "nestCmdResponse", "nestCmdResponse")
+				apiRespHandler((resp?.getStatus() ?: null), (resp?.getErrorJson() ?: null), "nestCmdResponse", "nestCmdResponse ${qnum} ($type{$obj:$objVal})", true)
 			}
 		}
 		finishWorkQ(command, result)
@@ -5297,7 +5297,7 @@ def nestCmdResponse(resp, data) {
 		apiIssueEvent(true)
 		atomicState?.lastCmdSentStatus = "failed"
 		if(resp?.hasError()) {
-			apiRespHandler((resp?.getStatus() ?: null), (resp?.getErrorJson() ?: null), "nestCmdResponse", "nestCmdResponse")
+			apiRespHandler((resp?.getStatus() ?: null), (resp?.getErrorJson() ?: null), "nestCmdResponse", "nestCmdResponse ${qnum} ($type{$obj:$objVal})", true)
 		}
 		cmdProcState(false)
 	}
@@ -5352,7 +5352,7 @@ def procNestApiCmd(uri, typeId, type, obj, objVal, qnum, redir = false) {
 				apiIssueEvent(true)
 				atomicState?.lastCmdSentStatus = "failed"
 				result = false
-				apiRespHandler(resp?.status, resp?.data, "procNestApiCmd", "procNestApiCmd")
+				apiRespHandler(resp?.status, resp?.data, "procNestApiCmd", "procNestApiCmd ${qnum} ($type{$obj:$objVal})", true)
 			}
 		}
 	} catch (ex) {
@@ -5360,7 +5360,7 @@ def procNestApiCmd(uri, typeId, type, obj, objVal, qnum, redir = false) {
 		atomicState?.lastCmdSentStatus = "failed"
 		cmdProcState(false)
 		if (ex instanceof groovyx.net.http.HttpResponseException && ex?.response) {
-			apiRespHandler(ex?.response?.status, ex?.response?.data, "procNestApiCmd", "procNestApiCmd")
+			apiRespHandler(ex?.response?.status, ex?.response?.data, "procNestApiCmd", "procNestApiCmd ${qnum} ($type{$obj:$objVal})", true)
 		} else {
 			sendExceptionData(ex, "procNestApiCmd")
 		}
@@ -5369,7 +5369,7 @@ def procNestApiCmd(uri, typeId, type, obj, objVal, qnum, redir = false) {
 	return result
 }
 
-def apiRespHandler(code, errJson, methodName, tstr=null) {
+def apiRespHandler(code, errJson, methodName, tstr=null, isCmd=false) {
 	LogAction("[$methodName] | Status: (${code}) | Error Message: ${errJson}", "warn", true)
 	if (!(code?.toInteger() in [200, 307])) {
 		def result = ""
@@ -5406,7 +5406,7 @@ def apiRespHandler(code, errJson, methodName, tstr=null) {
 		}
 		def failData = ["code":code, "msg":result, "method":methodName, "dt":getDtNow()]
 		atomicState?.apiCmdFailData = failData
-		if(notif) {
+		if(notif || isCmd) {
 			failedCmdNotify(failData, tstr)
 		}
 		LogAction("$methodName error - (Status: $code - $result) - [ErrorLink: ${errJson?.type}]", "error", true)
